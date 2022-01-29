@@ -1,0 +1,21 @@
+cmake_minimum_required(VERSION 3.10)
+
+
+add_executable(${PROJECT_NAME}
+	main.cpp
+	GlobalContext.cpp
+)
+
+target_include_directories(${PROJECT_NAME} PRIVATE "./")
+
+target_link_libraries(${PROJECT_NAME} PRIVATE
+	glfw glad ImGui eigen ${CMAKE_DL_LIBS}
+)
+
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
+
+# Add definition to get the compilation path
+target_compile_definitions(${PROJECT_NAME} PUBLIC PROJECT_DIR="${CMAKE_BINARY_DIR}")
+
+# Set as default project for visual studio
+set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})
