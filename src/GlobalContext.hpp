@@ -34,4 +34,8 @@ private:
 
 	// Windows
 	bool m_show_imgui_demo_window = true;
+
+	bool m_file_picker_open = false;
+
+	void handle_file_picker();
 };

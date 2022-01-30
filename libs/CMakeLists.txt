@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.10)
 
 add_subdirectory(glad)
 add_subdirectory(imgui)
+add_subdirectory(ImGuiFileDialog)
 
 add_library(eigen INTERFACE)
 target_include_directories(eigen INTERFACE eigen/)
