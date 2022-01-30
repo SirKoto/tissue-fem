@@ -1,6 +1,9 @@
 #pragma once
 
 #include <Eigen/Dense>
+#include <list>
+
+#include "meshes/TetMesh.hpp"
 
 class GlobalContext
 {
@@ -37,5 +40,10 @@ private:
 
 	bool m_file_picker_open = false;
 
+	// Models
+	std::list<TetMesh> m_meshes;
+
+	std::string m_file_picker_error;
 	void handle_file_picker();
+
 };

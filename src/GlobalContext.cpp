@@ -3,6 +3,10 @@
 #include <GLFW/glfw3.h>
 #include <imgui.h>
 #include <ImGuiFileDialog.h>
+#include <iostream>
+#include <filesystem>
+
+#include "meshes/TetMesh.hpp"
 
 
 const char* STRING_IGFD_LOAD_MODEL = "FilePickerModel";
@@ -65,6 +69,12 @@ void GlobalContext::render()
 
 void GlobalContext::handle_file_picker()
 {
+
+	if (ImGui::BeginPopup("PopupErrorFileDialog")) {
+		ImGui::Text(m_file_picker_error.c_str());
+		ImGui::EndPopup();
+	}
+
 	if (!m_file_picker_open) {
 		return;
 	}
@@ -77,6 +87,15 @@ void GlobalContext::handle_file_picker()
 
 		if (filedialog->IsOk()) {
 
+			std::filesystem::path file = filedialog->GetFilePathName();
+
+			TetMesh mesh;
+			if (!mesh.load_tetgen(file, &m_file_picker_error)) {
+				ImGui::OpenPopup("PopupErrorFileDialog");
+			}
+			else {
+				m_meshes.push_back(std::move(mesh));
+			}
 		}
 
 		filedialog->Close();
