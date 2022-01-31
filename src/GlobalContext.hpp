@@ -4,6 +4,7 @@
 #include <list>
 
 #include "meshes/TetMesh.hpp"
+#include "Camera.hpp"
 
 class GlobalContext
 {
@@ -29,6 +30,7 @@ public:
 	float delta_time() const { return m_delta_time; }
 
 private:
+	Camera m_camera;
 	Eigen::Vector3f m_clear_color;
 
 	float m_time = 0.0f;
@@ -37,7 +39,7 @@ private:
 
 	// Windows
 	bool m_show_imgui_demo_window = true;
-
+	bool m_show_camera_window = false;
 	bool m_file_picker_open = false;
 
 	// Models

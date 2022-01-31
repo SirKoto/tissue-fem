@@ -22,6 +22,8 @@ void GlobalContext::update()
 	m_time = (float)glfwGetTime();
 
 	m_delta_time = ImGui::GetIO().DeltaTime;
+
+	m_camera.update();
 }
 
 void GlobalContext::update_ui()
@@ -48,7 +50,7 @@ void GlobalContext::update_ui()
 		if (ImGui::BeginMenu("View"))
 		{			
 			ImGui::Checkbox("ImGui Demo Window", &m_show_imgui_demo_window);
-
+			ImGui::Checkbox("Camera Window", &m_show_camera_window);
 			ImGui::EndMenu();
 		}
 
@@ -58,6 +60,13 @@ void GlobalContext::update_ui()
 
 	if (m_show_imgui_demo_window) {
 		ImGui::ShowDemoWindow(&m_show_imgui_demo_window);
+	}
+
+	if (m_show_camera_window) {
+		if (ImGui::Begin("Camera", &m_show_camera_window)) {
+			m_camera.render_ui();
+		}
+		ImGui::End();
 	}
 
 	this->handle_file_picker();

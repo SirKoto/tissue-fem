@@ -5,6 +5,8 @@ add_subdirectory(glad)
 add_subdirectory(imgui)
 add_subdirectory(ImGuiFileDialog)
 
+add_subdirectory(glm)
+
 add_library(eigen INTERFACE)
 target_include_directories(eigen INTERFACE eigen/)
 
