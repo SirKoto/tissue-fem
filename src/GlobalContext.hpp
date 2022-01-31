@@ -3,7 +3,7 @@
 #include <Eigen/Dense>
 #include <list>
 
-#include "meshes/TetMesh.hpp"
+#include "GameObject.hpp"
 #include "Camera.hpp"
 #include "graphics/ShaderProgram.hpp"
 
@@ -43,10 +43,13 @@ private:
 	// Windows
 	bool m_show_imgui_demo_window = true;
 	bool m_show_camera_window = false;
+	bool m_show_inspector_window = false;
+
 	bool m_file_picker_open = false;
 
 	// Models
-	std::list<TetMesh> m_meshes;
+	std::list<GameObject> m_gameObjects;
+	std::list<GameObject>::iterator m_selected_object;
 
 	std::string m_file_picker_error;
 	void handle_file_picker();

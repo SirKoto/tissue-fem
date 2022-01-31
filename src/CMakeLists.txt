@@ -5,6 +5,7 @@ add_executable(${PROJECT_NAME}
 	main.cpp
 	GlobalContext.hpp	GlobalContext.cpp
 	Camera.hpp			Camera.cpp
+	GameObject.hpp		GameObject.cpp
 
 	meshes/TetMesh.hpp	meshes/TetMesh.cpp
 

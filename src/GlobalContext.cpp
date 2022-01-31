@@ -26,6 +26,8 @@ GlobalContext::GlobalContext() :
 	};
 	m_mesh_draw_program = ShaderProgram(mesh_shaders.data(), (uint32_t)mesh_shaders.size());
 
+
+	m_selected_object = m_gameObjects.end();
 }
 
 void GlobalContext::update()
@@ -62,6 +64,18 @@ void GlobalContext::update_ui()
 		{			
 			ImGui::Checkbox("ImGui Demo Window", &m_show_imgui_demo_window);
 			ImGui::Checkbox("Camera Window", &m_show_camera_window);
+			ImGui::Checkbox("Inspector Window", &m_show_inspector_window);
+			ImGui::EndMenu();
+		}
+
+		if (ImGui::BeginMenu("GameObjects"))
+		{
+			for (auto it = m_gameObjects.begin(); it != m_gameObjects.end(); ++it) {
+				if (ImGui::MenuItem(it->get_name().c_str())) {
+					m_selected_object = it;
+					m_show_inspector_window = true;
+				}
+			}
 			ImGui::EndMenu();
 		}
 
@@ -80,6 +94,13 @@ void GlobalContext::update_ui()
 		ImGui::End();
 	}
 
+	if (m_show_inspector_window) {
+		if (ImGui::Begin("Inspector", &m_show_inspector_window)) {
+			m_selected_object->update_ui();
+		}
+		ImGui::End();
+	}
+
 	this->handle_file_picker();
 }
 
@@ -91,8 +112,8 @@ void GlobalContext::render()
 	glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(glm::mat4(1.0f)));
 	glUniformMatrix4fv(1, 1, GL_FALSE, glm::value_ptr(view_proj_mat));
 
-	for (const TetMesh& mesh : m_meshes) {
-		mesh.draw_triangles();
+	for (const GameObject& obj : m_gameObjects) {
+		obj.draw();
 	}
 }
 
@@ -118,12 +139,12 @@ void GlobalContext::handle_file_picker()
 
 			std::filesystem::path file = filedialog->GetFilePathName();
 
-			TetMesh mesh;
-			if (!mesh.load_tetgen(file, &m_file_picker_error)) {
+			GameObject obj;
+			if (!obj.load_tetgen(file, &m_file_picker_error)) {
 				ImGui::OpenPopup("PopupErrorFileDialog");
 			}
 			else {
-				m_meshes.push_back(std::move(mesh));
+				m_gameObjects.push_back(std::move(obj));
 			}
 		}
 
