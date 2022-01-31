@@ -1,13 +1,36 @@
 #include "TetMesh.hpp"
 
 #include <fstream>
+#include <glad/glad.h>
 
-TetMesh::TetMesh(const TetMesh&& o)
+TetMesh::TetMesh()
+{
+	glGenVertexArrays(1, &m_vao);
+	glGenBuffers(sizeof(m_vbos) / sizeof(*m_vbos), m_vbos);
+	glBindVertexArray(m_vao);
+	this->gl_bind_to_vao();
+	glBindVertexArray(0);
+}
+
+TetMesh::TetMesh(TetMesh&& o)
 {
 	m_vertices = std::move(o.m_vertices);
 	m_surface_faces = std::move(o.m_surface_faces);
 	m_surface_vertices_normals = std::move(o.m_surface_vertices_normals);
 	m_elements = std::move(o.m_elements);
+
+	m_vao = o.m_vao;
+	o.m_vao = 0;
+	std::memcpy(m_vbos, o.m_vbos, sizeof(m_vbos));
+	std::memset(o.m_vbos, 0, sizeof(m_vbos));
+}
+
+TetMesh::~TetMesh()
+{
+	if (m_vao != 0) {
+		glDeleteVertexArrays(1, &m_vao);
+		glDeleteBuffers(sizeof(m_vbos) / sizeof(*m_vbos), m_vbos);
+	}
 }
 
 bool TetMesh::load_tetgen(std::filesystem::path path, std::string* out_err)
@@ -133,7 +156,62 @@ bool TetMesh::load_tetgen(std::filesystem::path path, std::string* out_err)
 	}
 	stream.close();
 
+	this->generate_normals();
+
+	this->upload_to_gpu();
+
 	return true;
+}
+
+void TetMesh::upload_to_gpu(bool dynamic_verts, bool dynamic_indices) const
+{
+	glBindBuffer(GL_ARRAY_BUFFER, m_vbo_vertices);
+	glBufferData(GL_ARRAY_BUFFER,
+		m_vertices.size() * sizeof(Eigen::Vector3f),
+		m_vertices.data(),
+		dynamic_verts ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ARRAY_BUFFER, m_vbo_normals);
+	glBufferData(GL_ARRAY_BUFFER,
+		m_surface_vertices_normals.size() * sizeof(Eigen::Vector3f),
+		m_surface_vertices_normals.data(),
+		dynamic_verts ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_vbo_indices);
+
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+		m_surface_faces.size() * sizeof(Eigen::Vector3i),
+		m_surface_faces.data(),
+		dynamic_indices ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
+
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+}
+
+void TetMesh::draw_triangles() const
+{
+	glBindVertexArray(m_vao);
+	glDrawElements(GL_TRIANGLES,
+		3 * (GLsizei)m_surface_faces.size(),
+		GL_UNSIGNED_INT, (void*)0);
+	glBindVertexArray(0);
+}
+
+void TetMesh::gl_bind_to_vao() const
+{
+	glBindBuffer(GL_ARRAY_BUFFER, m_vbo_vertices);
+
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Eigen::Vector3f), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, m_vbo_normals);
+
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Eigen::Vector3f), (void*)0);
+	glEnableVertexAttribArray(1);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_vbo_indices);
 }
 
 void TetMesh::clear()
@@ -142,4 +220,48 @@ void TetMesh::clear()
 	m_surface_faces.clear();
 	m_surface_vertices_normals.clear();
 	m_elements.clear();
+}
+
+void TetMesh::generate_normals()
+{
+	m_surface_vertices_normals.clear();
+	m_surface_vertices_normals.resize(m_vertices.size());
+
+	// Compute the planes of all triangles
+	std::vector<Eigen::Vector3f> triangleNormals(m_surface_faces.size());
+	for (uint32_t t = 0; t < (uint32_t)m_surface_faces.size(); ++t) {
+		const Eigen::Vector3f& v0 = m_vertices[m_surface_faces[t][0]];
+		const Eigen::Vector3f& v1 = m_vertices[m_surface_faces[t][1]];
+		const Eigen::Vector3f& v2 = m_vertices[m_surface_faces[t][2]];
+
+		Eigen::Vector3f n = (v1 - v0).cross(v2 - v0);
+		triangleNormals[t] = n.normalized();
+	}
+
+	// Compute V:{F}
+	std::vector<std::vector<uint32_t>> vert2faces(m_vertices.size());
+	std::vector<uint32_t> vertexArity(m_vertices.size(), 0);
+	for (uint32_t t = 0; t < (uint32_t)m_surface_faces.size(); ++t) {
+		vertexArity[m_surface_faces[t][0]] += 1;
+		vertexArity[m_surface_faces[t][1]] += 1;
+		vertexArity[m_surface_faces[t][2]] += 1;
+	}
+	for (uint32_t v = 0; v < (uint32_t)m_vertices.size(); ++v) {
+		vert2faces[v].reserve(vertexArity[v]);
+	}
+	for (uint32_t t = 0; t < (uint32_t)m_surface_faces.size(); ++t) {
+		vert2faces[m_surface_faces[t][0]].push_back(t);
+		vert2faces[m_surface_faces[t][1]].push_back(t);
+		vert2faces[m_surface_faces[t][2]].push_back(t);
+	}
+
+	for (uint32_t v = 0; v < (uint32_t)m_surface_vertices_normals.size(); ++v) {
+		m_surface_vertices_normals[v] = Eigen::Vector3f::Zero();
+
+		for (const uint32_t& f : vert2faces[v]) {
+			m_surface_vertices_normals[v] += triangleNormals[f];
+		}
+		// TODO: compute weighted average normals
+		m_surface_vertices_normals[v] /= (float)vert2faces[v].size();
+	}
 }

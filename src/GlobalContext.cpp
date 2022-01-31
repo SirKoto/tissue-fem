@@ -1,10 +1,13 @@
 #include "GlobalContext.hpp"
 
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <imgui.h>
 #include <ImGuiFileDialog.h>
 #include <iostream>
 #include <filesystem>
+#include <glm/gtc/type_ptr.hpp>
+
 
 #include "meshes/TetMesh.hpp"
 
@@ -14,6 +17,14 @@ const char* STRING_IGFD_LOAD_MODEL = "FilePickerModel";
 GlobalContext::GlobalContext() :
 	m_clear_color(0.45f, 0.55f, 0.60f)
 {
+	const std::filesystem::path proj_dir(PROJECT_DIR);
+	const std::filesystem::path shad_dir = proj_dir / "resources/shaders";
+
+	std::array<Shader, 2> mesh_shaders = {
+		Shader((shad_dir / "mesh.vert"), Shader::Type::Vertex),
+		Shader((shad_dir / "mesh.frag"), Shader::Type::Fragment)
+	};
+	m_mesh_draw_program = ShaderProgram(mesh_shaders.data(), (uint32_t)mesh_shaders.size());
 
 }
 
@@ -74,6 +85,15 @@ void GlobalContext::update_ui()
 
 void GlobalContext::render()
 {
+	const glm::mat4 view_proj_mat = m_camera.getProjView();
+
+	m_mesh_draw_program.use_program();
+	glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(glm::mat4(1.0f)));
+	glUniformMatrix4fv(1, 1, GL_FALSE, glm::value_ptr(view_proj_mat));
+
+	for (const TetMesh& mesh : m_meshes) {
+		mesh.draw_triangles();
+	}
 }
 
 void GlobalContext::handle_file_picker()

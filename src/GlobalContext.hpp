@@ -5,6 +5,7 @@
 
 #include "meshes/TetMesh.hpp"
 #include "Camera.hpp"
+#include "graphics/ShaderProgram.hpp"
 
 class GlobalContext
 {
@@ -32,6 +33,8 @@ public:
 private:
 	Camera m_camera;
 	Eigen::Vector3f m_clear_color;
+
+	ShaderProgram m_mesh_draw_program;
 
 	float m_time = 0.0f;
 	float m_delta_time = 0.0f;
