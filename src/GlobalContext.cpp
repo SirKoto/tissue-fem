@@ -95,8 +95,13 @@ void GlobalContext::update_ui()
 	}
 
 	if (m_show_inspector_window) {
-		if (ImGui::Begin("Inspector", &m_show_inspector_window)) {
-			m_selected_object->update_ui();
+		char buff[128];
+		std::snprintf(buff, 128, "Inspector -- %s###InspectorWin", (m_selected_object != m_gameObjects.end()) ? m_selected_object->get_name().c_str() : "");
+		ImGui::SetNextWindowSize(ImVec2(350, 280), ImGuiCond_FirstUseEver);
+		if (ImGui::Begin(buff, &m_show_inspector_window)) {
+			if (m_selected_object != m_gameObjects.end()) {
+				m_selected_object->update_ui();
+			}
 		}
 		ImGui::End();
 	}
@@ -131,7 +136,7 @@ void GlobalContext::handle_file_picker()
 
 	IGFD::FileDialog *filedialog = ImGuiFileDialog::Instance();
 
-	if (filedialog->Display(STRING_IGFD_LOAD_MODEL)) {
+	if (filedialog->Display(STRING_IGFD_LOAD_MODEL, ImGuiWindowFlags_NoCollapse, ImVec2(0, 280))) {
 		
 		m_file_picker_open = false;
 

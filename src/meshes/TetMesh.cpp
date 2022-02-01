@@ -190,6 +190,30 @@ void TetMesh::upload_to_gpu(bool dynamic_verts, bool dynamic_indices) const
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
+void TetMesh::apply_transform(const glm::mat4& m)
+{
+	std::vector<glm::vec3>& vertices = reinterpret_cast<std::vector<glm::vec3>&>(m_vertices);
+
+	for (glm::vec3& v : vertices) {
+		v = glm::vec3(m * glm::vec4(v, 1.0f));
+	}
+
+	for (Eigen::Vector3f& n : m_surface_vertices_normals) {
+		n = -n;
+	}
+
+	this->upload_to_gpu();
+}
+
+void TetMesh::flip_face_orientation()
+{
+	for (Eigen::Vector3i& face : m_surface_faces) {
+		std::swap(face[0], face[1]);
+	}
+
+	upload_to_gpu();
+}
+
 void TetMesh::draw_triangles() const
 {
 	glBindVertexArray(m_vao);

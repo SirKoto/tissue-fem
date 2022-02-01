@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <Eigen/Dense>
+#include <glm/glm.hpp>
 #include <filesystem>
 
 class TetMesh
@@ -19,6 +20,12 @@ public:
 	bool load_tetgen(std::filesystem::path path, std::string* out_err);
 
 	void upload_to_gpu(bool dynamic_verts = false, bool dynamic_indices = false) const;
+
+	void apply_transform(const glm::mat4& m);
+
+	void flip_face_orientation();
+
+	void generate_normals();
 
 	void draw_triangles() const;
 
@@ -42,6 +49,5 @@ private:
 		uint32_t m_vbos[3];
 	};
 
-	void generate_normals();
 	void gl_bind_to_vao() const;
 };
