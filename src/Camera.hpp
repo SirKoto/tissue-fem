@@ -11,7 +11,9 @@ public:
 	void update();
 
 	// Get the Projection matrix mutliplied by the view matrix
-	glm::mat4 getProjView() const { return mProjView;  }
+	const glm::mat4& getProjView() const { return mProjView; }
+	const glm::mat4& getProj() const { return mProj; }
+	const glm::mat4& getView() const { return mView; }
 
 	// Render some information into the UI
 	void render_ui();
@@ -26,11 +28,13 @@ private:
 	float mYaw, mPitch;
 
 	glm::mat4 mProjView;
+	glm::mat4 mProj;
+	glm::mat4 mView;
 
 	float mMouseSensitivity;
 	float mSpeed;
 	float mZoom;
 
-	glm::mat4 computeProjView() const;
+	void computeProjView();
 	void updateCameraVectors();
 };

@@ -198,10 +198,6 @@ void TetMesh::apply_transform(const glm::mat4& m)
 		v = glm::vec3(m * glm::vec4(v, 1.0f));
 	}
 
-	for (Eigen::Vector3f& n : m_surface_vertices_normals) {
-		n = -n;
-	}
-
 	this->upload_to_gpu();
 }
 
@@ -209,6 +205,10 @@ void TetMesh::flip_face_orientation()
 {
 	for (Eigen::Vector3i& face : m_surface_faces) {
 		std::swap(face[0], face[1]);
+	}
+
+	for (Eigen::Vector3f& n : m_surface_vertices_normals) {
+		n = -n;
 	}
 
 	upload_to_gpu();

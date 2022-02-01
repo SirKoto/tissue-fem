@@ -1,7 +1,7 @@
 project(ImGui)
 
 add_library(${PROJECT_NAME}
-    imgui.cpp
+    imgui.cpp   imgui.h
     imgui_tables.cpp
     backends/imgui_impl_glfw.cpp
     backends/imgui_impl_opengl3.cpp

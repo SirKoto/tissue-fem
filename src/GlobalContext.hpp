@@ -26,9 +26,13 @@ public:
 		return m_clear_color;
 	}
 
+	const Camera& camera() const { return m_camera; }
+
 	float get_time() const { return m_time; }
 
 	float delta_time() const { return m_delta_time; }
+
+	void add_manipulation_guizmo(glm::mat4* transform) const;
 
 private:
 	Camera m_camera;
@@ -46,6 +50,17 @@ private:
 	bool m_show_inspector_window = false;
 
 	bool m_file_picker_open = false;
+	bool m_show_world_grid = true;
+	bool m_show_guizmos = true;
+
+	// guizmos interaction
+	enum class GuizmosInteraction {
+		eTranslate = 0,
+		eRotate = 1,
+		eScale = 2
+	};
+	GuizmosInteraction m_guizmos_mode = GuizmosInteraction::eTranslate;
+	bool m_use_local_space_interaction = true;
 
 	// Models
 	std::list<GameObject> m_gameObjects;

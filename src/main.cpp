@@ -3,6 +3,7 @@
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
+#include <ImGuizmo.h>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
@@ -48,6 +49,9 @@ void main_loop(GLFWwindow* window) {
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
+        const ImGuiIO& io = ImGui::GetIO();
+        ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
+        ImGuizmo::BeginFrame();
 
         gc.update_ui();
 
@@ -131,6 +135,8 @@ int main(){
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 430 core");
 
+    // Setup imgizmo
+    ImGuizmo::SetImGuiContext(ImGui::GetCurrentContext());
 
     // run program
     main_loop(window);

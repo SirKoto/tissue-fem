@@ -1,6 +1,7 @@
 #include "Camera.hpp"
 
 #include <imgui.h>
+#include <ImGuizmo.h>
 #include <GLFW/glfw3.h>
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -21,7 +22,7 @@ void Camera::update()
 
 	// movement
 	if (io.MouseDown[ImGuiMouseButton_Right]) {
-
+		ImGuizmo::Enable(false);
 		// Keyboard
 		if (!io.WantCaptureKeyboard) {
 			float speed = mSpeed * io.DeltaTime;
@@ -48,24 +49,31 @@ void Camera::update()
 		// update Front, Right and Up Vectors using the updated Euler angles
 		updateCameraVectors();
 	}
+	else {
+		ImGuizmo::Enable(true);
+	}
 
 
 	// zoom
 	mZoom -= io.MouseWheel;
 	mZoom = glm::clamp(mZoom, 1.0f, 45.0f);
 
-	// Update matrix
-	mProjView = this->computeProjView();
+	// Update matrices
+	this->computeProjView();
 }
 
-glm::mat4 Camera::computeProjView() const
+void Camera::computeProjView()
 {
 	ImGuiIO& io = ImGui::GetIO();
 	if (io.DisplaySize.y == 0 || io.DisplaySize.x == 0) {
-		return glm::mat4(1.0f);
+		mView = glm::mat4(1.0f);
+		mProj = glm::mat4(1.0f);
+		mProjView = glm::mat4(1.0f);
+		return;
 	}
-	return glm::perspective(glm::radians(mZoom), io.DisplaySize.x / io.DisplaySize.y, 0.1f, 100.0f)  *
-		glm::lookAt(mPosition, mPosition + mFront, mUp);
+	mView = glm::lookAt(mPosition, mPosition + mFront, mUp);
+	mProj = glm::perspective(glm::radians(mZoom), io.DisplaySize.x / io.DisplaySize.y, 0.1f, 100.0f);
+	mProjView = mProj * mView;
 }
 
 void Camera::render_ui()

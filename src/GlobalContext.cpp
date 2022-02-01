@@ -3,6 +3,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <imgui.h>
+#include <ImGuizmo.h>
 #include <ImGuiFileDialog.h>
 #include <iostream>
 #include <filesystem>
@@ -34,9 +35,23 @@ void GlobalContext::update()
 {
 	m_time = (float)glfwGetTime();
 
-	m_delta_time = ImGui::GetIO().DeltaTime;
+	ImGuiIO& io = ImGui::GetIO();
+
+	m_delta_time = io.DeltaTime;
 
 	m_camera.update();
+
+	if (!io.WantCaptureKeyboard) {
+		if (io.KeysDown[GLFW_KEY_E]) {
+			m_guizmos_mode = GuizmosInteraction::eScale;
+		}
+		else if (io.KeysDown[GLFW_KEY_R]) {
+			m_guizmos_mode = GuizmosInteraction::eRotate;
+		}
+		else if (io.KeysDown[GLFW_KEY_T]) {
+			m_guizmos_mode = GuizmosInteraction::eTranslate;
+		}
+	}
 }
 
 void GlobalContext::update_ui()
@@ -65,6 +80,42 @@ void GlobalContext::update_ui()
 			ImGui::Checkbox("ImGui Demo Window", &m_show_imgui_demo_window);
 			ImGui::Checkbox("Camera Window", &m_show_camera_window);
 			ImGui::Checkbox("Inspector Window", &m_show_inspector_window);
+			ImGui::EndMenu();
+		}
+
+		if (ImGui::BeginMenu("Guizmos")) {
+			ImGui::Checkbox("Enable World Grid", &m_show_world_grid);
+			ImGui::Checkbox("Enable Guizmos", &m_show_guizmos);
+			ImGui::TextDisabled("Interaction Space");
+			if (ImGui::RadioButton("Local", m_use_local_space_interaction)) {
+				m_use_local_space_interaction = true;
+			}
+			ImGui::SameLine();
+			if (ImGui::RadioButton("World", !m_use_local_space_interaction)) {
+				m_use_local_space_interaction = false;
+			}
+			ImGui::TextDisabled("Interaction Type"); ImGui::SameLine();
+			ImGui::TextDisabled("(?)");
+			if (ImGui::IsItemHovered())
+			{
+				ImGui::BeginTooltip();
+				ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+				ImGui::TextUnformatted("You can also use 'e', 'r' and 't' keys to change between different interaction types.");
+				ImGui::PopTextWrapPos();
+				ImGui::EndTooltip();
+			}
+			if (ImGui::RadioButton("Translate", m_guizmos_mode == GuizmosInteraction::eTranslate)) {
+				m_guizmos_mode = GuizmosInteraction::eTranslate;
+			}
+			ImGui::SameLine();
+			if (ImGui::RadioButton("Rotate", m_guizmos_mode == GuizmosInteraction::eRotate)) {
+				m_guizmos_mode = GuizmosInteraction::eRotate;
+			}
+			ImGui::SameLine();
+			if (ImGui::RadioButton("Scale", m_guizmos_mode == GuizmosInteraction::eScale)) {
+				m_guizmos_mode = GuizmosInteraction::eScale;
+			}
+
 			ImGui::EndMenu();
 		}
 
@@ -100,10 +151,14 @@ void GlobalContext::update_ui()
 		ImGui::SetNextWindowSize(ImVec2(350, 280), ImGuiCond_FirstUseEver);
 		if (ImGui::Begin(buff, &m_show_inspector_window)) {
 			if (m_selected_object != m_gameObjects.end()) {
-				m_selected_object->update_ui();
+				m_selected_object->update_ui(*this);
 			}
 		}
 		ImGui::End();
+	}
+
+	if (m_show_world_grid) {
+		ImGuizmo::DrawGrid(glm::value_ptr(camera().getView()), glm::value_ptr(camera().getProj()), glm::value_ptr(glm::mat4(1.0f)), 100.f);
 	}
 
 	this->handle_file_picker();
@@ -120,6 +175,39 @@ void GlobalContext::render()
 	for (const GameObject& obj : m_gameObjects) {
 		obj.draw();
 	}
+}
+
+void GlobalContext::add_manipulation_guizmo(glm::mat4* transform) const
+{
+	assert(transform != nullptr);
+
+	if (!m_show_guizmos) {
+		return;
+	}
+
+	ImGuizmo::OPERATION op;
+	switch (m_guizmos_mode)
+	{
+	case GlobalContext::GuizmosInteraction::eTranslate:
+		op = ImGuizmo::OPERATION::TRANSLATE;
+		break;
+	case GlobalContext::GuizmosInteraction::eRotate:
+		op = ImGuizmo::OPERATION::ROTATE;
+		break;
+	case GlobalContext::GuizmosInteraction::eScale:
+		op = ImGuizmo::OPERATION::SCALE;
+		break;
+	default:
+		assert(false);
+		return;
+	}
+
+	ImGuizmo::Manipulate(
+		glm::value_ptr(camera().getView()),
+		glm::value_ptr(camera().getProj()),
+		op,
+		m_use_local_space_interaction ? ImGuizmo::MODE::LOCAL : ImGuizmo::MODE::WORLD,
+		glm::value_ptr(*transform));
 }
 
 void GlobalContext::handle_file_picker()

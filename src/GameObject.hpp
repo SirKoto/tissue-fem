@@ -4,6 +4,7 @@
 
 #include "meshes/TetMesh.hpp"
 
+class GlobalContext;
 class GameObject
 {
 public:
@@ -15,7 +16,9 @@ public:
 
 	void draw() const;
 
-	void update_ui();
+	void update_ui(const GlobalContext& gc);
+
+	const glm::mat4& get_model_matrix() const { return m_transform; }
 
 	const std::string& get_name() const { return m_name; }
 
@@ -25,10 +28,7 @@ private:
 
 	TetMesh m_mesh;
 
-	glm::vec3 m_scale = glm::vec3(1.0f);
-	glm::vec3 m_translation = glm::vec3(0.0f);
+	glm::mat4 m_transform = glm::mat4(1.0f);
 
-
-	glm::mat4 get_model_matrix() const;
 };
 
