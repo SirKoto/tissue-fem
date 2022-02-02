@@ -22,7 +22,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 
 # Add definition to get the compilation path
-target_compile_definitions(${PROJECT_NAME} PUBLIC PROJECT_DIR="${CMAKE_BINARY_DIR}")
+target_compile_definitions(${PROJECT_NAME} PUBLIC PROJECT_DIR=$<IF:$<BOOL:${USE_RELATIVE_PATH}>,"./","${CMAKE_BINARY_DIR}">)
 
 # Set as default project for visual studio
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})

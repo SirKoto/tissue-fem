@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.10)
 
 project(tissue-fem)
 
+option(USE_RELATIVE_PATH "Use the relative path for finding resources" OFF)
+
 # Find and build libraries
 
 add_subdirectory(src)
