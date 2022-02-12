@@ -23,7 +23,9 @@ bool GameObject::load_tetgen(const std::filesystem::path& path, std::string* out
 void GameObject::draw() const
 {
 	glm::mat4 model = get_model_matrix();
+	glm::mat3 inv_t = glm::transpose(glm::inverse(glm::mat3(model)));
 	glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(model));
+	glUniformMatrix3fv(1, 1, GL_FALSE, glm::value_ptr(glm::mat3(inv_t)));
 
 	m_mesh.draw_triangles();
 }
@@ -56,4 +58,14 @@ void GameObject::update_ui(const GlobalContext& gc)
 	gc.add_manipulation_guizmo(&m_transform);
 
 	ImGui::PopID();
+}
+
+void GameObject::scale_model(float k)
+{
+	m_transform = glm::scale(m_transform, glm::vec3(k));
+}
+
+void GameObject::rotate_model(const glm::vec3& axis, float rad)
+{
+	m_transform = glm::rotate(m_transform, rad, axis);
 }

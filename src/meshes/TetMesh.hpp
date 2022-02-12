@@ -17,7 +17,7 @@ public:
 
 	~TetMesh();
 
-	bool load_tetgen(std::filesystem::path path, std::string* out_err);
+	bool load_tetgen(std::filesystem::path path, std::string* out_err = nullptr);
 
 	void upload_to_gpu(bool dynamic_verts = false, bool dynamic_indices = false) const;
 

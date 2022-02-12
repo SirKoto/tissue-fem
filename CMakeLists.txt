@@ -13,10 +13,15 @@ add_subdirectory(libs)
 # include resources to project
 set(RESOURCES_PATH "resources")
 set(SHADER_PATH "${RESOURCES_PATH}/shaders")
+set(MODEL_PATH "${RESOURCES_PATH}/models")
+
 
 set(COPY_DATA
-
     ${SHADER_PATH}/mesh.vert   ${SHADER_PATH}/mesh.frag
+
+    ${MODEL_PATH}/armadilloSimp/armadSimp.ele
+    ${MODEL_PATH}/armadilloSimp/armadSimp.face
+    ${MODEL_PATH}/armadilloSimp/armadSimp.node
 )
 
 foreach(data ${COPY_DATA})

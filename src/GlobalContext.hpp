@@ -2,6 +2,7 @@
 
 #include <Eigen/Dense>
 #include <list>
+#include <memory>
 
 #include "GameObject.hpp"
 #include "Camera.hpp"
@@ -50,7 +51,7 @@ private:
 	bool m_show_inspector_window = false;
 
 	bool m_file_picker_open = false;
-	bool m_show_world_grid = true;
+	bool m_show_world_grid = false;
 	bool m_show_guizmos = true;
 
 	// guizmos interaction
@@ -63,8 +64,8 @@ private:
 	bool m_use_local_space_interaction = true;
 
 	// Models
-	std::list<GameObject> m_gameObjects;
-	std::list<GameObject>::iterator m_selected_object;
+	std::list<std::shared_ptr<GameObject>> m_gameObjects;
+	std::list<std::shared_ptr<GameObject>>::iterator m_selected_object;
 
 	std::string m_file_picker_error;
 	void handle_file_picker();

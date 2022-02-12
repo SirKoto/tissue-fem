@@ -12,7 +12,7 @@ public:
 	GameObject();
 
 
-	bool load_tetgen(const std::filesystem::path& path, std::string* out_err);
+	bool load_tetgen(const std::filesystem::path& path, std::string* out_err = nullptr);
 
 	void draw() const;
 
@@ -21,6 +21,12 @@ public:
 	const glm::mat4& get_model_matrix() const { return m_transform; }
 
 	const std::string& get_name() const { return m_name; }
+
+	const TetMesh& get_mesh() const { return m_mesh; }
+	TetMesh& get_mesh() { return m_mesh; }
+
+	void scale_model(float k);
+	void rotate_model(const glm::vec3& axis, float rad);
 
 private:
 

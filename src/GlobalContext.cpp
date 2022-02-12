@@ -72,6 +72,22 @@ void GlobalContext::update_ui()
 				);
 			}
 
+			if (ImGui::BeginMenu("Example models")) {
+
+				if (ImGui::MenuItem("Armadillo Simple")) {
+					const std::filesystem::path proj_dir(PROJECT_DIR);
+					const std::filesystem::path file = proj_dir / "resources/models/armadilloSimp/armadSimp.ele";
+					GameObject obj;
+					bool loaded = obj.load_tetgen(file);
+					assert(loaded);
+					obj.scale_model(0.01f);
+					obj.rotate_model(glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(180.0f));
+					obj.get_mesh().flip_face_orientation();
+					m_gameObjects.push_back(std::make_shared<GameObject>(std::move(obj)));
+				}
+				ImGui::EndMenu();
+			}
+
 			ImGui::EndMenu();
 		}
 
@@ -122,7 +138,7 @@ void GlobalContext::update_ui()
 		if (ImGui::BeginMenu("GameObjects"))
 		{
 			for (auto it = m_gameObjects.begin(); it != m_gameObjects.end(); ++it) {
-				if (ImGui::MenuItem(it->get_name().c_str())) {
+				if (ImGui::MenuItem((*it)->get_name().c_str())) {
 					m_selected_object = it;
 					m_show_inspector_window = true;
 				}
@@ -147,11 +163,11 @@ void GlobalContext::update_ui()
 
 	if (m_show_inspector_window) {
 		char buff[128];
-		std::snprintf(buff, 128, "Inspector -- %s###InspectorWin", (m_selected_object != m_gameObjects.end()) ? m_selected_object->get_name().c_str() : "");
+		std::snprintf(buff, 128, "Inspector -- %s###InspectorWin", (m_selected_object != m_gameObjects.end()) ? (*m_selected_object)->get_name().c_str() : "");
 		ImGui::SetNextWindowSize(ImVec2(350, 280), ImGuiCond_FirstUseEver);
 		if (ImGui::Begin(buff, &m_show_inspector_window)) {
 			if (m_selected_object != m_gameObjects.end()) {
-				m_selected_object->update_ui(*this);
+				(*m_selected_object)->update_ui(*this);
 			}
 		}
 		ImGui::End();
@@ -169,11 +185,10 @@ void GlobalContext::render()
 	const glm::mat4 view_proj_mat = m_camera.getProjView();
 
 	m_mesh_draw_program.use_program();
-	glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(glm::mat4(1.0f)));
-	glUniformMatrix4fv(1, 1, GL_FALSE, glm::value_ptr(view_proj_mat));
+	glUniformMatrix4fv(2, 1, GL_FALSE, glm::value_ptr(view_proj_mat));
 
-	for (const GameObject& obj : m_gameObjects) {
-		obj.draw();
+	for (const std::shared_ptr<GameObject>& obj : m_gameObjects) {
+		obj->draw();
 	}
 }
 
@@ -237,7 +252,7 @@ void GlobalContext::handle_file_picker()
 				ImGui::OpenPopup("PopupErrorFileDialog");
 			}
 			else {
-				m_gameObjects.push_back(std::move(obj));
+				m_gameObjects.push_back(std::make_shared<GameObject>(std::move(obj)));
 			}
 		}
 
