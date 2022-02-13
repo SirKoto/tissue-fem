@@ -31,6 +31,12 @@ public:
 
 	void clear();
 
+	const std::vector<Eigen::Vector3f>& nodes() const { return m_vertices; }
+	const std::vector<Eigen::Vector4i>& elements() const { return m_elements; }
+	const std::vector<Eigen::Vector3i>& surface_faces() const { return m_surface_faces; }
+
+	void update_node(size_t idx, const Eigen::Vector3f& pos) { m_vertices.at(idx) = pos; }
+
 private:
 
 	std::vector<Eigen::Vector3f> m_vertices;

@@ -9,7 +9,7 @@ add_executable(${PROJECT_NAME}
 
 	meshes/TetMesh.hpp	meshes/TetMesh.cpp
 
-	sim/IFEM.hpp
+	sim/IFEM.hpp		sim/IFEM.cpp
 	sim/SimpleFEM.hpp	sim/SimpleFEM.cpp
 
 	graphics/Shader.hpp	graphics/Shader.cpp
