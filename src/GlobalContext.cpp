@@ -11,7 +11,7 @@
 
 
 #include "meshes/TetMesh.hpp"
-
+#include "sim/SimpleFEM.hpp"
 
 const char* STRING_IGFD_LOAD_MODEL = "FilePickerModel";
 
@@ -96,6 +96,7 @@ void GlobalContext::update_ui()
 			ImGui::Checkbox("ImGui Demo Window", &m_show_imgui_demo_window);
 			ImGui::Checkbox("Camera Window", &m_show_camera_window);
 			ImGui::Checkbox("Inspector Window", &m_show_inspector_window);
+			ImGui::Checkbox("Simulation Window", &m_show_simulation_window);
 			ImGui::EndMenu();
 		}
 
@@ -168,6 +169,22 @@ void GlobalContext::update_ui()
 		if (ImGui::Begin(buff, &m_show_inspector_window)) {
 			if (m_selected_object != m_gameObjects.end()) {
 				(*m_selected_object)->update_ui(*this);
+			}
+		}
+		ImGui::End();
+	}
+
+	if (m_show_simulation_window) {
+		ImGui::SetNextWindowSize(ImVec2(150, 80), ImGuiCond_FirstUseEver);
+		if (ImGui::Begin("Simulation")) {
+			if (m_selected_object != m_gameObjects.end()) {
+				ImGui::Text("Selected: %s", (*m_selected_object)->get_name().c_str());
+				if (ImGui::Button("TEST")) {
+					sim::SimpleFem fem(*m_selected_object);
+					std::cout << "Loaded" << std::endl;
+					fem.step(1.0f / 60.0f);
+					std::cout << "Stepped" << std::endl;
+				}
 			}
 		}
 		ImGui::End();

@@ -40,12 +40,12 @@ void SimpleFem::step(Float dt)
 		const Mat9 dfdx = m_volumes[i] * hessian_BW08(F);
 
 		// Assign the force gradient to the system
-		for (uint32_t j = 0; j < 4; ++j) {
+		for (uint32_t j = 0; j < 3; ++j) {
 			const uint32_t node_j = 3 * element[j];
 			// diagonal
 			assign_sparse_block(dfdx.block<3, 3>(3 * j, 3 * j), node_j, node_j, &m_dfdx_system);
 			// off-diagonal
-			for (uint32_t k = j + 1; k < 4; ++j) {
+			for (uint32_t k = j + 1; k < 3; ++k) {
 				const uint32_t node_k = 3 * element[k];
 				assign_sparse_block(dfdx.block<3, 3>(3 * k, 3 * j), node_k, node_j, &m_dfdx_system);
 				assign_sparse_block(dfdx.block<3, 3>(3 * j, 3 * k), node_j, node_k, &m_dfdx_system);
