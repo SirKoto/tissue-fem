@@ -32,7 +32,7 @@ private:
 	Vec m_delta_v;
 	Vec m_v;
 	Vec m_rhs;
-	SMat m_dfdx;
+	SMat m_dfdx_system;
 
 	std::vector<Mat3> m_DmInvs;
 	std::vector<Float> m_volumes;

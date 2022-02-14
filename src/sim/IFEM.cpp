@@ -85,9 +85,9 @@ Vec9 compute_g3(const Mat3& F)
 {
 	Vec9 g3;
 
-	g3.segment(0, 3) = F.col(1).cross(F.col(2));
-	g3.segment(3, 3) = F.col(2).cross(F.col(0));
-	g3.segment(6, 3) = F.col(0).cross(F.col(1));
+	g3.segment<3>(0) = F.col(1).cross(F.col(2));
+	g3.segment<3>(3) = F.col(2).cross(F.col(0));
+	g3.segment<3>(6) = F.col(0).cross(F.col(1));
 
 	return g3;
 }
@@ -100,13 +100,12 @@ Mat9 compute_H3(const Mat3& F)
 	Mat3 f1 = cross_matrix(F.col(1));
 	Mat3 f2 = cross_matrix(F.col(2));
 
-	H3.block(0, 3, 3, 3) = -f2;
-	H3.block(0, 6, 3, 3) = f1;
-	H3.block(3, 0, 3, 3) = f2;
-	H3.block(3, 6, 3, 3) = -f0;
-	H3.block(6, 0, 3, 3) = -f1;
-	H3.block(6, 3, 3, 3) = f0;
-
+	H3.block<3, 3>(0, 3) = -f2;
+	H3.block<3, 3>(0, 6) = f1;
+	H3.block<3, 3>(3, 0) = f2;
+	H3.block<3, 3>(3, 6) = -f0;
+	H3.block<3, 3>(6, 0) = -f1;
+	H3.block<3, 3>(6, 3) = f0;
 
 	return H3;
 }
