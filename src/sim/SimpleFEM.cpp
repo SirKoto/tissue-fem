@@ -1,5 +1,7 @@
 #include "SimpleFEM.hpp"
 
+#include <iostream>
+
 namespace sim {
 SimpleFem::SimpleFem(std::shared_ptr<GameObject> obj) : 
 	m_obj(obj)
@@ -18,6 +20,18 @@ SimpleFem::SimpleFem(std::shared_ptr<GameObject> obj) :
 
 	m_dfdx_system = SMat(3 * m_nodes.size(), 3 * m_nodes.size());
 	m_dfdx_system.reserve(Eigen::VectorXi::Constant(3 * m_nodes.size(), 3 * 4 * 6));
+
+	m_v.resize(3 * m_nodes.size());
+	m_v.setZero();
+	m_rhs.resize(3 * m_nodes.size());
+}
+
+bool isNull(const SMat& mat, int row, int col)
+{
+	for (SMat::InnerIterator it(mat, col); it; ++it) {
+		if (it.row() == row) return false;
+	}
+	return true;
 }
 
 template<typename Derived>
@@ -25,7 +39,16 @@ void assign_sparse_block(const Eigen::Block<const Derived, 3, 3>& m, uint32_t i,
 
 	for (uint32_t s = 0; s < 3; ++s) {
 		for (uint32_t t = 0; t < 3; ++t) {
-			out->insert(i + t, j + s) = m(t, s);
+			if (std::abs(m(t, s)) < 1e-4) {
+				continue;
+			}
+
+			if (!isNull(*out, i + t, j + s)) {
+				//std::cout << "Stored " << out->coeff(i + t, j + s) << " value " << m(t, s) << std::endl;
+			}
+			else {
+				out->insert(i + t, j + s) = m(t, s);
+			}
 		}
 	}
 }
@@ -55,6 +78,15 @@ void SimpleFem::step(Float dt)
 	}
 
 	m_dfdx_system.makeCompressed();
+
+	m_rhs = dt * dt * m_dfdx_system * m_v;
+
+	m_dfdx_system *= -dt * dt;
+
+
+	Eigen::ConjugateGradient<SMat> solver(m_dfdx_system);
+	m_v += solver.solve(m_rhs);
+
 
 }
 
