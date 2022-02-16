@@ -27,6 +27,9 @@ public:
 
 	void scale_model(float k);
 	void rotate_model(const glm::vec3& axis, float rad);
+	void translate_model(const glm::vec3& v);
+
+	void apply_model_transform();
 
 private:
 

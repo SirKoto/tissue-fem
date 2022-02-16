@@ -13,12 +13,13 @@ namespace sim {
 class SimpleFem : public IFEM {
 public:
 
-	SimpleFem(std::shared_ptr<GameObject> obj);
+	SimpleFem(std::shared_ptr<GameObject> obj, Float young, Float nu);
 
 	void step(Float dt) override final;
 
 	void update_objects() override final;
 
+	void pancake();
 
 private:
 
@@ -42,6 +43,7 @@ private:
 	std::vector<Vec3> m_nodes;
 
 	Mat9 hessian_BW08(const Mat3& F) const;
+	Mat9 check_eigenvalues_BW08(const Mat3& F);
 
 };
 

@@ -81,9 +81,11 @@ void GlobalContext::update_ui()
 					GameObject obj;
 					bool loaded = obj.load_tetgen(file);
 					assert(loaded);
+					obj.translate_model(glm::vec3(0.0f, 2.0f, 0.0f));
 					obj.scale_model(0.01f);
 					obj.rotate_model(glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(180.0f));
 					obj.get_mesh().flip_face_orientation();
+					obj.apply_model_transform();
 					m_gameObjects.push_back(std::make_shared<GameObject>(std::move(obj)));
 				}
 				ImGui::EndMenu();
@@ -176,25 +178,33 @@ void GlobalContext::update_ui()
 	}
 
 	if (m_show_simulation_window) {
-		ImGui::SetNextWindowSize(ImVec2(150, 80), ImGuiCond_FirstUseEver);
+		ImGui::SetNextWindowSize(ImVec2(150, 180), ImGuiCond_FirstUseEver);
 		if (ImGui::Begin("Simulation")) {
 			if (m_selected_object != m_gameObjects.end()) {
 				ImGui::Text("Selected: %s", (*m_selected_object)->get_name().c_str());
 
 				if (ImGui::Button("Build simulator")) {
-					m_sim = std::make_unique<sim::SimpleFem>(*m_selected_object);
+					m_sim = std::make_unique<sim::SimpleFem>(*m_selected_object, 10.0, 0.2);
 					std::cout << "Loaded" << std::endl;
 				}
+				if (m_sim) {
+					static bool keep_running = false;
+					ImGui::Checkbox("Keep running", &keep_running);
+					if (ImGui::Button("Step simulator") || keep_running) {
+						auto ini = std::chrono::high_resolution_clock::now();
+						m_sim->step(1.0f / 60.0f);
+						auto end = std::chrono::high_resolution_clock::now();
 
-				if (m_sim && ImGui::Button("Step simulator")) {
-					auto ini = std::chrono::high_resolution_clock::now();
-					m_sim->step(1.0f / 30.0f);
-					auto end = std::chrono::high_resolution_clock::now();
-
-					std::cout << "Stepped: " << std::chrono::duration<double, std::milli>(end - ini).count() << std::endl;
-					m_sim->update_objects();
-					std::cout << "Updated" << std::endl;
+						std::cout << "Stepped: " << std::chrono::duration<double, std::milli>(end - ini).count() << std::endl;
+						m_sim->update_objects();
+						std::cout << "Updated" << std::endl;
+					}
+					if (ImGui::Button("Pancake")) {
+						reinterpret_cast<sim::SimpleFem*>(m_sim.get())->pancake();
+					}
 				}
+
+				
 			}
 		}
 		ImGui::End();

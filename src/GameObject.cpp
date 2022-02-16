@@ -44,8 +44,7 @@ void GameObject::update_ui(const GlobalContext& gc)
 		ImGuizmo::RecomposeMatrixFromComponents(glm::value_ptr(t), glm::value_ptr(r), glm::value_ptr(s), glm::value_ptr(m_transform));
 	}
 	if (ImGui::Button("Apply transform to model")) {
-		m_mesh.apply_transform(get_model_matrix());
-		m_transform = glm::mat4(1.0f);
+		apply_model_transform();
 	}
 	if (ImGui::Button("Flip face orientation")) {
 		m_mesh.flip_face_orientation();
@@ -68,4 +67,15 @@ void GameObject::scale_model(float k)
 void GameObject::rotate_model(const glm::vec3& axis, float rad)
 {
 	m_transform = glm::rotate(m_transform, rad, axis);
+}
+
+void GameObject::translate_model(const glm::vec3& v)
+{
+	m_transform = glm::translate(m_transform, v);
+}
+
+void GameObject::apply_model_transform()
+{
+	m_mesh.apply_transform(get_model_matrix());
+	m_transform = glm::mat4(1.0f);
 }
