@@ -6,7 +6,7 @@
 namespace sim
 {
 
-typedef float Float;
+typedef double Float;
 typedef Eigen::SparseMatrix<Float> SMat;
 typedef Eigen::Matrix<Float, Eigen::Dynamic, 1> Vec;
 typedef Eigen::Matrix<Float, 3, 1> Vec3;
@@ -14,6 +14,7 @@ typedef Eigen::Matrix<Float, 9, 1> Vec9;
 typedef Eigen::Vector4i Vec4i;
 typedef Eigen::Matrix<Float, 3, 3> Mat3;
 typedef Eigen::Matrix<Float, 9, 9> Mat9;
+typedef Eigen::Matrix<Float, 12, 12> Mat12;
 typedef Eigen::Matrix<Float, 9, 12> Mat9x12;
 
 

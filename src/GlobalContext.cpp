@@ -7,6 +7,7 @@
 #include <ImGuiFileDialog.h>
 #include <iostream>
 #include <filesystem>
+#include <chrono>
 #include <glm/gtc/type_ptr.hpp>
 
 
@@ -179,11 +180,20 @@ void GlobalContext::update_ui()
 		if (ImGui::Begin("Simulation")) {
 			if (m_selected_object != m_gameObjects.end()) {
 				ImGui::Text("Selected: %s", (*m_selected_object)->get_name().c_str());
-				if (ImGui::Button("TEST")) {
-					sim::SimpleFem fem(*m_selected_object);
+
+				if (ImGui::Button("Build simulator")) {
+					m_sim = std::make_unique<sim::SimpleFem>(*m_selected_object);
 					std::cout << "Loaded" << std::endl;
-					fem.step(1.0f / 60.0f);
-					std::cout << "Stepped" << std::endl;
+				}
+
+				if (m_sim && ImGui::Button("Step simulator")) {
+					auto ini = std::chrono::high_resolution_clock::now();
+					m_sim->step(1.0f / 30.0f);
+					auto end = std::chrono::high_resolution_clock::now();
+
+					std::cout << "Stepped: " << std::chrono::duration<double, std::milli>(end - ini).count() << std::endl;
+					m_sim->update_objects();
+					std::cout << "Updated" << std::endl;
 				}
 			}
 		}

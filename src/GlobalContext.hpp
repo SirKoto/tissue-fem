@@ -7,6 +7,7 @@
 #include "GameObject.hpp"
 #include "Camera.hpp"
 #include "graphics/ShaderProgram.hpp"
+#include "sim/IFEM.hpp"
 
 class GlobalContext
 {
@@ -69,6 +70,10 @@ private:
 	std::list<std::shared_ptr<GameObject>>::iterator m_selected_object;
 
 	std::string m_file_picker_error;
+
+	// Simulatior
+	std::unique_ptr<sim::IFEM> m_sim;
+
 	void handle_file_picker();
 
 };

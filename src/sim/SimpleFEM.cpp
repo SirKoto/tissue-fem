@@ -7,7 +7,10 @@ SimpleFem::SimpleFem(std::shared_ptr<GameObject> obj) :
 	m_obj(obj)
 {
 	m_elements = m_obj->get_mesh().elements();
-	m_nodes = m_obj->get_mesh().nodes();
+	m_nodes.resize(m_obj->get_mesh().nodes().size());
+	for (size_t i = 0; i < m_nodes.size(); ++i) {
+		m_nodes[i] = m_obj->get_mesh().nodes()[i].cast<Float>();
+	}
 
 	m_DmInvs.resize(m_elements.size());
 	m_volumes.resize(m_elements.size());
@@ -39,7 +42,7 @@ void assign_sparse_block(const Eigen::Block<const Derived, 3, 3>& m, uint32_t i,
 
 	for (uint32_t s = 0; s < 3; ++s) {
 		for (uint32_t t = 0; t < 3; ++t) {
-			if (std::abs(m(t, s)) < 1e-4) {
+			if ( i != j && std::abs(m(t, s)) < 1e-4) {
 				continue;
 			}
 
@@ -60,15 +63,16 @@ void SimpleFem::step(Float dt)
 	for (size_t i = 0; i < m_elements.size(); ++i) {
 		const Vec4i& element = m_elements[i];
 		const Mat3 F = compute_Ds(element, m_nodes) * m_DmInvs[i];
-		const Mat9 dfdx = m_volumes[i] * hessian_BW08(F);
+		const Mat9x12 dFdx = compute_dFdx(m_DmInvs[i]);
+		const Mat12 dfdx = m_volumes[i] * (dFdx.transpose() * hessian_BW08(F) * dFdx);
 
 		// Assign the force gradient to the system
-		for (uint32_t j = 0; j < 3; ++j) {
+		for (uint32_t j = 0; j < 4; ++j) {
 			const uint32_t node_j = 3 * element[j];
 			// diagonal
 			assign_sparse_block(dfdx.block<3, 3>(3 * j, 3 * j), node_j, node_j, &m_dfdx_system);
 			// off-diagonal
-			for (uint32_t k = j + 1; k < 3; ++k) {
+			for (uint32_t k = j + 1; k < 4; ++k) {
 				const uint32_t node_k = 3 * element[k];
 				assign_sparse_block(dfdx.block<3, 3>(3 * k, 3 * j), node_k, node_j, &m_dfdx_system);
 				assign_sparse_block(dfdx.block<3, 3>(3 * j, 3 * k), node_j, node_k, &m_dfdx_system);
@@ -81,17 +85,30 @@ void SimpleFem::step(Float dt)
 
 	m_rhs = dt * dt * m_dfdx_system * m_v;
 
-	m_dfdx_system *= -dt * dt;
+	// subtract gravity from the y entries
+	for (size_t i = 0; i < m_nodes.size(); ++i) {
+		m_rhs(3 * i + 1) -= dt * m_node_mass * m_gravity;
+	}
 
+	m_dfdx_system *= -dt * dt;
+	m_dfdx_system.diagonal().array() += m_node_mass;
 
 	Eigen::ConjugateGradient<SMat> solver(m_dfdx_system);
 	m_v += solver.solve(m_rhs);
 
-
+	for (size_t i = 0; i < m_nodes.size(); ++i) {
+		m_nodes[i].x() += dt * m_v[3 * i + 0];
+		m_nodes[i].y() += dt * m_v[3 * i + 1];
+		m_nodes[i].z() += dt * m_v[3 * i + 2];
+	}
 }
 
 void SimpleFem::update_objects()
 {
+	for (size_t i = 0; i < m_nodes.size(); ++i) {
+		m_obj->get_mesh().update_node(i, m_nodes[i].cast<float>());
+	}
+	m_obj->get_mesh().upload_to_gpu(true, false);
 }
 
 Mat9 SimpleFem::hessian_BW08(const Mat3& F) const

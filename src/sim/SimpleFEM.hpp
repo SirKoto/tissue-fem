@@ -35,6 +35,7 @@ private:
 	SMat m_dfdx_system;
 
 	std::vector<Mat3> m_DmInvs;
+
 	std::vector<Float> m_volumes;
 
 	std::vector<Eigen::Vector4i> m_elements;
