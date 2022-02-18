@@ -42,8 +42,18 @@ private:
 	std::vector<Eigen::Vector4i> m_elements;
 	std::vector<Vec3> m_nodes;
 
-	Mat3 pk1_BW08(const Mat3& F) const;
-	Mat9 hessian_BW08(const Mat3& F) const;
+	struct BW08_Data {
+		Mat3 F;
+		Float I3;
+		Float logI3;
+		Vec9 g3;
+		Mat9 H3;
+
+		BW08_Data(const Mat3& F);
+	};
+
+	Mat3 pk1_BW08(const BW08_Data& d) const;
+	Mat9 hessian_BW08(const BW08_Data& d) const;
 	Mat9 check_eigenvalues_BW08(const Mat3& F);
 
 };

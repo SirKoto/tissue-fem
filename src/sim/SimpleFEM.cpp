@@ -134,14 +134,14 @@ void SimpleFem::step(Float dt)
 
 	for (size_t i = 0; i < m_elements.size(); ++i) {
 		const Vec4i& element = m_elements[i];
-		const Mat3 F = compute_Ds(element, m_nodes) * m_DmInvs[i];
+		BW08_Data bw09(compute_Ds(element, m_nodes) * m_DmInvs[i]);
 
 		const Mat9x12 dFdx = compute_dFdx(m_DmInvs[i]);
-		const Mat9 H = hessian_BW08(F);
+		const Mat9 H = hessian_BW08(bw09);
 		//const Mat9 H = check_eigenvalues_BW08(F);
 		const Mat12 dfdx = -m_volumes[i] * (dFdx.transpose() * H * dFdx);
 
-		const Mat3 pk1 = pk1_BW08(F);
+		const Mat3 pk1 = pk1_BW08(bw09);
 		const Vec12 f = -m_volumes[i] * (dFdx.transpose() * pk1.reshaped());
 
 		// Assign the force gradient to the system
@@ -214,24 +214,27 @@ void SimpleFem::pancake()
 	update_objects();
 }
 
-Mat3 SimpleFem::pk1_BW08(const Mat3& F) const
+Mat3 SimpleFem::pk1_BW08(const BW08_Data& d) const
 {
-	const Float I3 = compute_I3(F);
-	const Float logI3 = std::log(I3);
-	return m_mu * F + (m_lambda * logI3 - m_mu) / I3 * compute_g3(F).reshaped(3, 3);
+	return m_mu * d.F + (m_lambda * d.logI3 - m_mu) / d.I3 * Eigen::Reshaped<const Vec9, 3, 3, Eigen::ColMajor>(d.g3);
 }
 
-Mat9 SimpleFem::hessian_BW08(const Mat3& F) const
+Mat9 SimpleFem::hessian_BW08(const BW08_Data& d) const
 {
-	Vec9 g3 = compute_g3(F);
-	Mat9 H3 = compute_H3(F);
-	Float I3 = compute_I3(F);
-	Float log_I3 = std::log(I3);
 
-	Float g_fact = (m_mu + m_lambda * (Float(1.0) - log_I3)) / (I3 * I3);
-	Float H_fact = (m_lambda * log_I3 - m_mu) / I3;
+	Float g_fact = (m_mu + m_lambda * (Float(1.0) - d.logI3)) / (d.I3 * d.I3);
+	Float H_fact = (m_lambda * d.logI3 - m_mu) / d.I3;
 
-	return m_mu * Mat9::Identity() + g_fact * g3 * g3.transpose() + H_fact * H3;
+	return m_mu * Mat9::Identity() + g_fact * d.g3 * d.g3.transpose() + H_fact * d.H3;
+}
+
+SimpleFem::BW08_Data::BW08_Data(const Mat3& F)
+{
+	this->F = F;
+	this->I3 = compute_I3(F);
+	this->logI3 = std::log(this->I3);
+	this->g3 = compute_g3(F);
+	this->H3 = compute_H3(F);
 }
 
 } // namespace sim
