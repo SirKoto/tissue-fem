@@ -98,6 +98,8 @@ uint32_t Shader::get_gl_shader_type() const
 		return GL_VERTEX_SHADER;
 	case Type::Fragment:
 		return GL_FRAGMENT_SHADER;
+	case Type::Geometry:
+		return GL_GEOMETRY_SHADER;
 	case Type::Compute:
 		return GL_COMPUTE_SHADER;
 	case Type::TessellationControl:

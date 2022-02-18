@@ -22,8 +22,13 @@ GlobalContext::GlobalContext() :
 	const std::filesystem::path proj_dir(PROJECT_DIR);
 	const std::filesystem::path shad_dir = proj_dir / "resources/shaders";
 
-	std::array<Shader, 2> mesh_shaders = {
+	/*std::array<Shader, 2> mesh_shaders = {
 		Shader((shad_dir / "mesh.vert"), Shader::Type::Vertex),
+		Shader((shad_dir / "mesh.frag"), Shader::Type::Fragment)
+	};*/
+	std::array<Shader, 3> mesh_shaders = {
+		Shader((shad_dir / "simple_mesh.vert"), Shader::Type::Vertex),
+		Shader((shad_dir / "generate_face_normal.geom"), Shader::Type::Geometry),
 		Shader((shad_dir / "mesh.frag"), Shader::Type::Fragment)
 	};
 	m_mesh_draw_program = ShaderProgram(mesh_shaders.data(), (uint32_t)mesh_shaders.size());
@@ -192,7 +197,7 @@ void GlobalContext::update_ui()
 					ImGui::Checkbox("Keep running", &keep_running);
 					if (ImGui::Button("Step simulator") || keep_running) {
 						auto ini = std::chrono::high_resolution_clock::now();
-						m_sim->step(1.0f / 60.0f);
+						m_sim->step(1.0f / 30.0f);
 						auto end = std::chrono::high_resolution_clock::now();
 
 						std::cout << "Stepped: " << std::chrono::duration<double, std::milli>(end - ini).count() << std::endl;

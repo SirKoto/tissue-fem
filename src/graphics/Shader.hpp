@@ -10,6 +10,7 @@ public:
 	enum class Type {
 		Vertex,
 		Fragment,
+		Geometry,
 		Compute,
 		TessellationControl,
 		TessellationEvaluation,
