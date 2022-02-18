@@ -139,9 +139,10 @@ void SimpleFem::step(Float dt)
 		const Mat9x12 dFdx = compute_dFdx(m_DmInvs[i]);
 		const Mat9 H = hessian_BW08(F);
 		//const Mat9 H = check_eigenvalues_BW08(F);
-		const Mat12 dfdx = m_volumes[i] * (dFdx.transpose() * H * dFdx);
+		const Mat12 dfdx = -m_volumes[i] * (dFdx.transpose() * H * dFdx);
+
 		const Mat3 pk1 = pk1_BW08(F);
-		const Vec12 f = m_volumes[i] * (dFdx.transpose() * pk1.reshaped());
+		const Vec12 f = -m_volumes[i] * (dFdx.transpose() * pk1.reshaped());
 
 		// Assign the force gradient to the system
 		for (uint32_t j = 0; j < 4; ++j) {
@@ -174,7 +175,7 @@ void SimpleFem::step(Float dt)
 	m_dfdx_system.diagonal().array() += m_node_mass;
 
 	Eigen::ConjugateGradient<SMat> solver(m_dfdx_system);
-	//solver.setTolerance(1e-4);
+	solver.setTolerance(1e-4);
 	//solver.setMaxIterations(20 * m_nodes.size());
 	if (solver.info() != Eigen::Success) {
 		std::cerr << "Can't build system" << std::endl;
