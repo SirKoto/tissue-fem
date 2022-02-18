@@ -130,19 +130,25 @@ Mat9 SimpleFem::check_eigenvalues_BW08(const Mat3& F) {
 void SimpleFem::step(Float dt)
 {
 	m_dfdx_system.setZero();
+	m_rhs.setZero();
 
 	for (size_t i = 0; i < m_elements.size(); ++i) {
 		const Vec4i& element = m_elements[i];
 		const Mat3 F = compute_Ds(element, m_nodes) * m_DmInvs[i];
 
 		const Mat9x12 dFdx = compute_dFdx(m_DmInvs[i]);
-		// const Mat9 H = hessian_BW08(F);
-		const Mat9 H = check_eigenvalues_BW08(F);
+		const Mat9 H = hessian_BW08(F);
+		//const Mat9 H = check_eigenvalues_BW08(F);
 		const Mat12 dfdx = m_volumes[i] * (dFdx.transpose() * H * dFdx);
-		
+		const Mat3 pk1 = pk1_BW08(F);
+		const Vec12 f = m_volumes[i] * (dFdx.transpose() * pk1.reshaped());
+
 		// Assign the force gradient to the system
 		for (uint32_t j = 0; j < 4; ++j) {
 			const uint32_t node_j = 3 * element[j];
+			// add forces to rhs
+			m_rhs.segment<3>(node_j) += dt * f.segment<3>(3 * j);
+
 			// diagonal
 			assign_sparse_block(dfdx.block<3, 3>(3 * j, 3 * j), node_j, node_j, &m_dfdx_system);
 			// off-diagonal
@@ -157,19 +163,19 @@ void SimpleFem::step(Float dt)
 
 	m_dfdx_system.makeCompressed();
 
-	m_rhs = dt * dt * (m_dfdx_system * m_v);
+	m_rhs += dt * dt * (m_dfdx_system * m_v);
 
 	// subtract gravity from the y entries
-	for (size_t i = 0; i < m_nodes.size(); ++i) {
+	/*for (size_t i = 0; i < m_nodes.size(); ++i) {
 		m_rhs(3 * i + 1) -= dt * m_node_mass * m_gravity;
-	}
+	}*/
 
-	m_dfdx_system *= -dt * dt;
+	m_dfdx_system *= - (dt * dt);
 	m_dfdx_system.diagonal().array() += m_node_mass;
 
 	Eigen::ConjugateGradient<SMat> solver(m_dfdx_system);
-	solver.setTolerance(1e-4);
-	solver.setMaxIterations(20 * m_nodes.size());
+	//solver.setTolerance(1e-4);
+	//solver.setMaxIterations(20 * m_nodes.size());
 	if (solver.info() != Eigen::Success) {
 		std::cerr << "Can't build system" << std::endl;
 	}
@@ -205,6 +211,13 @@ void SimpleFem::pancake()
 	}
 
 	update_objects();
+}
+
+Mat3 SimpleFem::pk1_BW08(const Mat3& F) const
+{
+	const Float I3 = compute_I3(F);
+	const Float logI3 = std::log(I3);
+	return m_mu * F + (m_lambda * logI3 - m_mu) / I3 * compute_g3(F).reshaped(3, 3);
 }
 
 Mat9 SimpleFem::hessian_BW08(const Mat3& F) const

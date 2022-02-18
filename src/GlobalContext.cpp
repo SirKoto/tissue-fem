@@ -184,7 +184,7 @@ void GlobalContext::update_ui()
 				ImGui::Text("Selected: %s", (*m_selected_object)->get_name().c_str());
 
 				if (ImGui::Button("Build simulator")) {
-					m_sim = std::make_unique<sim::SimpleFem>(*m_selected_object, 10.0, 0.2);
+					m_sim = std::make_unique<sim::SimpleFem>(*m_selected_object, 100.0, 0.2);
 					std::cout << "Loaded" << std::endl;
 				}
 				if (m_sim) {

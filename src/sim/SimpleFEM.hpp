@@ -42,6 +42,7 @@ private:
 	std::vector<Eigen::Vector4i> m_elements;
 	std::vector<Vec3> m_nodes;
 
+	Mat3 pk1_BW08(const Mat3& F) const;
 	Mat9 hessian_BW08(const Mat3& F) const;
 	Mat9 check_eigenvalues_BW08(const Mat3& F);
 
