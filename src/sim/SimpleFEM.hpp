@@ -29,6 +29,8 @@ private:
 	const Float m_gravity = 9.8f;
 	const Float m_mu = 0.0f;
 	const Float m_lambda = 0.0f;
+	const Float m_alpha_rayleigh = 0.01;
+	const Float m_beta_rayleigh = 0.001;
 
 	Vec m_delta_v;
 	Vec m_v;

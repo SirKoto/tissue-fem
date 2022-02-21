@@ -171,8 +171,8 @@ void SimpleFem::step(Float dt)
 		m_rhs(3 * i + 1) -= dt * m_node_mass * m_gravity;
 	}*/
 
-	m_dfdx_system *= - (dt * dt);
-	m_dfdx_system.diagonal().array() += m_node_mass;
+	m_dfdx_system *=  - (dt * dt) - m_beta_rayleigh * dt;
+	m_dfdx_system.diagonal().array() += m_node_mass * (Float(1.0) - m_alpha_rayleigh * dt);
 
 	Eigen::ConjugateGradient<SMat> solver(m_dfdx_system);
 	solver.setTolerance(1e-4);
