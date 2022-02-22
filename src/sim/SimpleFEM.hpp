@@ -44,6 +44,7 @@ private:
 	std::vector<Eigen::Vector4i> m_elements;
 	std::vector<Vec3> m_nodes;
 
+	// Energy model for BW08
 	struct BW08_Data {
 		Mat3 F;
 		Float I3;
@@ -54,9 +55,24 @@ private:
 		BW08_Data(const Mat3& F);
 	};
 
-	Mat3 pk1_BW08(const BW08_Data& d) const;
-	Mat9 hessian_BW08(const BW08_Data& d) const;
+	Mat3 compute_pk1(const BW08_Data& d) const;
+	Mat9 compute_hessian(const BW08_Data& d) const;
 	Mat9 check_eigenvalues_BW08(const Mat3& F);
+
+	// Energy model for Corrotational
+	struct CoRot_Data {
+		Mat3 F;
+		Mat3 U;
+		Vec3 s;
+		Mat3 V;
+		Mat3 R;
+		Mat3 S;
+
+		CoRot_Data(const Mat3& F);
+	};
+
+	Mat3 compute_pk1(const CoRot_Data& d) const;
+	Mat9 compute_hessian(const CoRot_Data& d) const;
 
 };
 

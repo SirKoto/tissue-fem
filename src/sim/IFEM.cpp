@@ -1,5 +1,8 @@
 #include "IFEM.hpp"
 
+#include <glm/gtc/constants.hpp>
+
+
 namespace sim {
 
 
@@ -90,6 +93,37 @@ Vec9 compute_g3(const Mat3& F)
 	g3.segment<3>(6) = F.col(0).cross(F.col(1));
 
 	return g3;
+}
+
+Mat9 compute_H1(const Mat3& U, const Vec3& s, const Mat3& V)
+{
+	constexpr Float invSqrt2 = glm::one_over_root_two<Float>();
+
+	Mat3 T0 = Mat3::Zero();
+	T0(0, 1) = Float(-1.0);
+	T0(1, 0) = Float(1.0);
+	T0 = invSqrt2 * U * T0 * V.transpose();
+
+	Mat3 T1 = Mat3::Zero();
+	T1(2, 1) = Float(-1.0);
+	T1(1, 2) = Float(1.0);
+	T1 = invSqrt2 * U * T1 * V.transpose();
+
+	Mat3 T2 = Mat3::Zero();
+	T2(2, 0) = Float(-1.0);
+	T2(0, 2) = Float(1.0);
+	T2 = invSqrt2 * U * T2 * V.transpose();
+
+	// flatten
+	Vec9 t0 = vec(T0);
+	Vec9 t1 = vec(T1);
+	Vec9 t2 = vec(T2);
+
+	Mat9 H = (Float(2) / (s.x() + s.y())) * (t0 * t0.transpose());
+	H += (Float(2) / (s.y() + s.z())) * (t1 * t1.transpose());
+	H += (Float(2) / (s.z() + s.x())) * (t2 * t2.transpose());
+
+	return H;
 }
 
 Mat9 compute_H3(const Mat3& F)
