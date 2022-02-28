@@ -134,7 +134,7 @@ void SimpleFem::step(Float dt)
 
 	for (size_t i = 0; i < m_elements.size(); ++i) {
 		const Vec4i& element = m_elements[i];
-		CoRot_Data bw09(compute_Ds(element, m_nodes) * m_DmInvs[i]);
+		HookeanSmith19_Data bw09(compute_Ds(element, m_nodes) * m_DmInvs[i], m_mu, m_lambda);
 
 		const Mat9x12 dFdx = compute_dFdx(m_DmInvs[i]);
 		const Mat9 H = compute_hessian(bw09);
@@ -208,7 +208,7 @@ void SimpleFem::update_objects()
 void SimpleFem::pancake()
 {
 	for (size_t i = 0; i < m_nodes.size(); ++i) {
-		m_nodes[i].y() *= Float(0.4f);
+		m_nodes[i].y() *= Float(0.9f);
 	}
 
 	update_objects();
@@ -228,7 +228,7 @@ Mat9 SimpleFem::compute_hessian(const BW08_Data& d) const
 	return m_mu * Mat9::Identity() + g_fact * d.g3 * d.g3.transpose() + H_fact * d.H3;
 }
 
-SimpleFem::BW08_Data::BW08_Data(const Mat3& F)
+SimpleFem::BW08_Data::BW08_Data(const Mat3& F, Float mu, Float lambda)
 {
 	this->F = F;
 	this->I3 = compute_I3(F);
@@ -237,7 +237,7 @@ SimpleFem::BW08_Data::BW08_Data(const Mat3& F)
 	this->H3 = compute_H3(F);
 }
 
-SimpleFem::CoRot_Data::CoRot_Data(const Mat3& F) : F(F)
+SimpleFem::CoRot_Data::CoRot_Data(const Mat3& F, Float mu, Float lambda) : F(F)
 {
 	Eigen::JacobiSVD<Mat3> svd(F, Eigen::ComputeFullU | Eigen::ComputeFullV);
 	
@@ -282,6 +282,27 @@ Mat3 SimpleFem::compute_pk1(const CoRot_Data& d) const
 	const auto g2 = Eigen::Reshaped<const Vec9, 3, 3, Eigen::ColMajor>(g2_);
 
 	return (m_lambda * (I1 - Float(3)) - m_mu) * g1 + (m_mu / Float(2)) * g2;
+}
+
+SimpleFem::HookeanSmith19_Data::HookeanSmith19_Data(const Mat3& F, Float mu, Float lambda) {
+	const Float I3 = compute_I3(F);
+	const Vec9 g2 = compute_g2(F);
+	const Vec9 g3 = compute_g3(F);
+	const Mat9 H2 = compute_H2();
+	const Mat9 H3 = compute_H3(F);
+
+	
+	const Float dPdI2 = mu / Float(2);
+	const Float dPdI3 = -mu + lambda * (I3 - Float(1));
+	const Float ddPddI3 = lambda;
+
+	typedef Eigen::Reshaped<const Vec9, 3, 3, Eigen::ColMajor> Reshaped3;
+
+	const auto g2_ = Reshaped3(g2);
+	const auto g3_ = Reshaped3(g3);
+
+	this->pk1 = dPdI2 * g2_ + dPdI3 * g3_;
+	this->hessian = dPdI2 * H2 + ddPddI3 * g3 * g3.transpose() + dPdI3 * H3;
 }
 
 } // namespace sim

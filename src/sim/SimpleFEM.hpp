@@ -52,7 +52,7 @@ private:
 		Vec9 g3;
 		Mat9 H3;
 
-		BW08_Data(const Mat3& F);
+		BW08_Data(const Mat3& F, Float mu, Float lambda);
 	};
 
 	Mat3 compute_pk1(const BW08_Data& d) const;
@@ -68,11 +68,21 @@ private:
 		Mat3 R;
 		Mat3 S;
 
-		CoRot_Data(const Mat3& F);
+		CoRot_Data(const Mat3& F, Float mu, Float lambda);
 	};
 
 	Mat3 compute_pk1(const CoRot_Data& d) const;
 	Mat9 compute_hessian(const CoRot_Data& d) const;
+
+	struct HookeanSmith19_Data {
+		Mat3 pk1;
+		Mat9 hessian;
+
+		HookeanSmith19_Data(const Mat3& F, Float mu, Float lambda);
+	};
+
+	const Mat3& compute_pk1(const HookeanSmith19_Data& d) const { return d.pk1; }
+	const Mat9& compute_hessian(const HookeanSmith19_Data& d) const { return d.hessian; }
 
 };
 
