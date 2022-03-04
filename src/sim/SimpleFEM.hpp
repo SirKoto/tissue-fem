@@ -5,6 +5,8 @@
 #include <Eigen/Sparse>
 #include <Eigen/Dense>
 
+#include <array>
+
 #include "GameObject.hpp"
 
 
@@ -43,6 +45,24 @@ private:
 
 	std::vector<Eigen::Vector4i> m_elements;
 	std::vector<Vec3> m_nodes;
+
+	struct hash_pair {
+		template <class T1, class T2>
+		size_t operator()(const std::pair<T1, T2>& p) const
+		{
+			auto hash1 = std::hash<T1>{}(p.first);
+			auto hash2 = std::hash<T2>{}(p.second);
+			return hash1 ^ hash2;
+		}
+	};
+
+	typedef std::array<Float*, 3> SMatPtrs;
+	std::unordered_map<std::pair<uint32_t, uint32_t>, SMatPtrs, hash_pair> m_sparse_cache;
+
+
+	void build_sparse_system();
+	void assign_sparse_block(const Eigen::Block<const Mat12, 3, 3>& m, uint32_t i, uint32_t j);
+	void set_system_to_zero();
 
 	// Energy model for BW08
 	struct BW08_Data {
@@ -83,6 +103,7 @@ private:
 
 	const Mat3& compute_pk1(const HookeanSmith19_Data& d) const { return d.pk1; }
 	const Mat9& compute_hessian(const HookeanSmith19_Data& d) const { return d.hessian; }
+
 
 };
 

@@ -32,38 +32,27 @@ SimpleFem::SimpleFem(std::shared_ptr<GameObject> obj, Float young, Float nu) :
 	m_v.resize(3 * m_nodes.size());
 	m_v.setZero();
 	m_rhs.resize(3 * m_nodes.size());
+
+	this->build_sparse_system();
 }
 
-bool isNull(const SMat& mat, int row, int col)
-{
-	for (SMat::InnerIterator it(mat, col); it; ++it) {
-		if (it.row() == row) return false;
-	}
-	return true;
-}
+void SimpleFem::assign_sparse_block(const Eigen::Block<const Mat12, 3, 3>& m, uint32_t node_i, uint32_t node_j) {
 
-template<typename Derived>
-void assign_sparse_block(const Eigen::Block<const Derived, 3, 3>& m, uint32_t i, uint32_t j, SMat* out) {
+	const SMatPtrs& cols = m_sparse_cache.at(std::make_pair(node_i, node_j));
 
 	for (uint32_t s = 0; s < 3; ++s) {
+		Float* col = cols[s];
 		for (uint32_t t = 0; t < 3; ++t) {
-			/*if ( i != j && std::abs(m(t, s)) < 1e-4) {
-				continue;
-			}*/
-
-			/*if (!isNull(*out, i + t, j + s)) {
-				/*if (std::abs(out->coeff(i + t, j + s) - m(t, s)) > 1e-4) {
-					std::cerr << "In: " << out->coeff(i + t, j + s) << " but trying " << m(t, s) << std::endl;
-					assert(false);
-				}* /
-				// std::cout << "Stored " << out->coeff(i + t, j + s) << " value " << m(t, s) << std::endl;
-				out->coeffRef(i + t, j + s) += m(t, s);
-			}
-			else {
-				out->insert(i + t, j + s) = m(t, s);
-			}*/
-			out->coeffRef(i + t, j + s) += m(t, s);
+			*(col + t) += m(t, s);
+			// m_dfdx_system.coeffRef(3 * node_i + t, 3 * node_j + s) += m(t, s); // Set one by one DEBUG
 		}
+	}
+}
+
+void SimpleFem::set_system_to_zero()
+{
+	for (Eigen::Index i = 0; i < m_dfdx_system.nonZeros(); ++i) {
+		m_dfdx_system.valuePtr()[i] = Float(0);
 	}
 }
 
@@ -133,7 +122,7 @@ void SimpleFem::step(Float dt)
 {
 	Timer timer;
 
-	m_dfdx_system.setZero();
+	this->set_system_to_zero();
 	m_rhs.setZero();
 
 	timer.printSeconds("Set Zero");
@@ -153,28 +142,23 @@ void SimpleFem::step(Float dt)
 
 		// Assign the force gradient to the system
 		for (uint32_t j = 0; j < 4; ++j) {
-			const uint32_t node_j = 3 * element[j];
+			const uint32_t node_j = element[j];
 			// add forces to rhs
-			m_rhs.segment<3>(node_j) += dt * f.segment<3>(3 * j);
+			m_rhs.segment<3>(3 * node_j) += dt * f.segment<3>(3 * j);
 
 			// diagonal
-			assign_sparse_block(dfdx.block<3, 3>(3 * j, 3 * j), node_j, node_j, &m_dfdx_system);
+			assign_sparse_block(dfdx.block<3, 3>(3 * j, 3 * j), node_j, node_j);
 			// off-diagonal
 			for (uint32_t k = j + 1; k < 4; ++k) {
-				const uint32_t node_k = 3 * element[k];
-				assign_sparse_block(dfdx.block<3, 3>(3 * k, 3 * j), node_k, node_j, &m_dfdx_system);
-				assign_sparse_block(dfdx.block<3, 3>(3 * j, 3 * k), node_j, node_k, &m_dfdx_system);
+				const uint32_t node_k = element[k];
+				assign_sparse_block(dfdx.block<3, 3>(3 * k, 3 * j), node_k, node_j);
+				assign_sparse_block(dfdx.block<3, 3>(3 * j, 3 * k), node_j, node_k);
 			}
 		}
 
 	}
 
 	timer.printSeconds("Loop");
-	timer.reset();
-
-	m_dfdx_system.makeCompressed();
-
-	timer.printSeconds("Make compressed");
 	timer.reset();
 
 	m_rhs += dt * dt * (m_dfdx_system * m_v);
@@ -228,6 +212,55 @@ void SimpleFem::pancake()
 	}
 
 	update_objects();
+}
+
+void SimpleFem::build_sparse_system()
+{
+	m_sparse_cache.clear();
+	m_dfdx_system.setZero();
+
+	// Add all nodes with connectivity
+	for (size_t e = 0; e < m_elements.size(); ++e) {
+		const Vec4i& element = m_elements[e];
+
+		// Assign the force gradient to the system
+		for (uint32_t i = 0; i < 4; ++i) {
+			const uint32_t node_i = element[i];
+			// diagonal
+			m_sparse_cache.emplace(std::make_pair(node_i, node_i), SMatPtrs());
+			// off-diagonal
+			for (uint32_t j = i + 1; j < 4; ++j) {
+				const uint32_t node_j = element[j];
+				m_sparse_cache.emplace(std::make_pair(node_i, node_j), SMatPtrs());
+				m_sparse_cache.emplace(std::make_pair(node_j, node_i), SMatPtrs());
+			}
+		}
+	}
+
+	typedef Eigen::Triplet<Float> Triplet;
+	std::vector<Triplet> triplets;
+	triplets.reserve(m_sparse_cache.size() * 9);
+	
+	for (const auto& it : m_sparse_cache) {
+		const uint32_t base_i = it.first.first * 3;
+		const uint32_t base_j = it.first.second * 3;
+		for (uint32_t i = 0; i < 3; ++i) {
+			for (uint32_t j = 0; j < 3; ++j) {
+				triplets.emplace_back(Triplet(base_i + i, base_j + j, Float(0)));
+			}
+		}
+	}
+
+	m_dfdx_system.setFromTriplets(triplets.begin(), triplets.end());
+
+	for (auto& it : m_sparse_cache) {
+		const uint32_t base_i = it.first.first * 3;
+		const uint32_t base_j = it.first.second * 3;
+		for (uint32_t j = 0; j < 3; ++j) {
+			it.second[j] = &m_dfdx_system.coeffRef(base_i, base_j + j);
+		}
+	}
+
 }
 
 Mat3 SimpleFem::compute_pk1(const BW08_Data& d) const
