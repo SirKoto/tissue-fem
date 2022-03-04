@@ -14,6 +14,8 @@ add_executable(${PROJECT_NAME}
 
 	graphics/Shader.hpp	graphics/Shader.cpp
 	graphics/ShaderProgram.hpp	graphics/ShaderProgram.cpp
+
+	utils/Timer.hpp	utils/Timer.cpp
  )
 
 target_include_directories(${PROJECT_NAME} PRIVATE "./")

@@ -3,6 +3,8 @@
 #include <iostream>
 #include <glm/gtc/constants.hpp>
 
+#include "utils/Timer.hpp"
+
 namespace sim {
 SimpleFem::SimpleFem(std::shared_ptr<GameObject> obj, Float young, Float nu) :
 	m_obj(obj),
@@ -129,8 +131,13 @@ Mat9 SimpleFem::check_eigenvalues_BW08(const Mat3& F) {
 
 void SimpleFem::step(Float dt)
 {
+	Timer timer;
+
 	m_dfdx_system.setZero();
 	m_rhs.setZero();
+
+	timer.printSeconds("Set Zero");
+	timer.reset();
 
 	for (size_t i = 0; i < m_elements.size(); ++i) {
 		const Vec4i& element = m_elements[i];
@@ -162,7 +169,13 @@ void SimpleFem::step(Float dt)
 
 	}
 
+	timer.printSeconds("Loop");
+	timer.reset();
+
 	m_dfdx_system.makeCompressed();
+
+	timer.printSeconds("Make compressed");
+	timer.reset();
 
 	m_rhs += dt * dt * (m_dfdx_system * m_v);
 
@@ -174,6 +187,8 @@ void SimpleFem::step(Float dt)
 	m_dfdx_system *=  - (dt * dt) - m_beta_rayleigh * dt;
 	m_dfdx_system.diagonal().array() += m_node_mass * (Float(1.0) - m_alpha_rayleigh * dt);
 
+	timer.printSeconds("Build system"); timer.reset();
+
 	Eigen::ConjugateGradient<SMat> solver(m_dfdx_system);
 	solver.setTolerance(1e-4);
 	//solver.setMaxIterations(20 * m_nodes.size());
@@ -184,6 +199,7 @@ void SimpleFem::step(Float dt)
 	if (solver.info() != Eigen::Success) {
 		std::cerr << "System did not converge" << std::endl;
 	}
+	timer.printSeconds("Solve"); timer.reset();
 
 	for (size_t i = 0; i < m_nodes.size(); ++i) {
 		m_nodes[i].x() += dt * m_v[3 * i + 0];
