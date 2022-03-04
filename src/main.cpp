@@ -30,17 +30,10 @@ gl_message_callback(GLenum source,
 
 
 void main_loop(GLFWwindow* window) {
-    bool show_demo_window = true;
     GlobalContext gc;
-    double prev_frame_time = glfwGetTime();
 
     while (!glfwWindowShouldClose(window)) {
-        double actual_frame_time = glfwGetTime();
-        /*while (actual_frame_time - prev_frame_time < 1.0 / gc.get_max_fps()) {
-            std::this_thread::sleep_for(std::chrono::nanoseconds(50));
-            actual_frame_time = glfwGetTime();
-        }*/
-        prev_frame_time = actual_frame_time;
+       
 
         // Poll and handle events (inputs, window resize, etc.)
         glfwPollEvents();
@@ -96,7 +89,7 @@ int main(){
             return 1;
         glfwMakeContextCurrent(window);
 
-        glfwSwapInterval(0); // Disable vsync
+        // glfwSwapInterval(0); // Disable vsync
     }
 
     bool err = gladLoadGL() == 0;

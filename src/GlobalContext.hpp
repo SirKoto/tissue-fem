@@ -47,7 +47,7 @@ private:
 
 
 	// Windows
-	bool m_show_imgui_demo_window = true;
+	bool m_show_imgui_demo_window = false;
 	bool m_show_camera_window = false;
 	bool m_show_inspector_window = false;
 	bool m_show_simulation_window = false;
