@@ -56,6 +56,9 @@ private:
 		}
 	};
 
+	// sparse_cache has pointers to the 3x3 region of the sparse matrix where node i
+	// determines node j. In particular, it stores the 3 pointers to the first elements
+	// of the 3 columns of the 3x3 region.
 	typedef std::array<Float*, 3> SMatPtrs;
 	std::unordered_map<std::pair<uint32_t, uint32_t>, SMatPtrs, hash_pair> m_sparse_cache;
 

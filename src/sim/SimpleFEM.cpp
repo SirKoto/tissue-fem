@@ -1,4 +1,4 @@
-#include "SimpleFEM.hpp"
+﻿#include "SimpleFEM.hpp"
 
 #include <iostream>
 #include <glm/gtc/constants.hpp>
@@ -11,12 +11,14 @@ SimpleFem::SimpleFem(std::shared_ptr<GameObject> obj, Float young, Float nu) :
 	m_mu(young / (2 + 2 * nu)),
 	m_lambda(young * nu / ((1 + nu) * (1 - 2 * nu)))
 {
+	// Load elements
 	m_elements = m_obj->get_mesh().elements();
 	m_nodes.resize(m_obj->get_mesh().nodes().size());
 	for (size_t i = 0; i < m_nodes.size(); ++i) {
 		m_nodes[i] = m_obj->get_mesh().nodes()[i].cast<Float>();
 	}
 
+	// Precompute volumes and matrix to build the deformation gradient
 	m_DmInvs.resize(m_elements.size());
 	m_volumes.resize(m_elements.size());
 	for (size_t i = 0; i < m_elements.size(); ++i) {
@@ -25,7 +27,7 @@ SimpleFem::SimpleFem(std::shared_ptr<GameObject> obj, Float young, Float nu) :
 		m_DmInvs[i] = Ds.inverse();
 	}
 
-
+	// Reserve enough memory to solve the linear system
 	m_dfdx_system = SMat(3 * m_nodes.size(), 3 * m_nodes.size());
 	m_dfdx_system.reserve(Eigen::VectorXi::Constant(3 * m_nodes.size(), 3 * 4 * 6));
 
@@ -33,6 +35,7 @@ SimpleFem::SimpleFem(std::shared_ptr<GameObject> obj, Float young, Float nu) :
 	m_v.setZero();
 	m_rhs.resize(3 * m_nodes.size());
 
+	// Build the sparse matrix
 	this->build_sparse_system();
 }
 
@@ -56,87 +59,34 @@ void SimpleFem::set_system_to_zero()
 	}
 }
 
-Mat9 SimpleFem::check_eigenvalues_BW08(const Mat3& F) {
-	Eigen::JacobiSVD<Mat3> svd(F, Eigen::ComputeFullU | Eigen::ComputeFullV);
-
-	Float sigma0 = svd.singularValues()(0);
-	Float sigma1 = svd.singularValues()(1);
-	Float sigma2 = svd.singularValues()(2);
-
-	Mat3 U = svd.matrixU();
-	Mat3 V = svd.matrixV();
-	Mat3 L = Mat3::Identity();
-	L(2, 2) = (U * V.transpose()).determinant();
-	sigma2 *= L(2, 2);
-	Float detU = U.determinant();
-	Float detV = V.determinant();
-	if (detU < Float(0.0) && detV > Float(0.0)) {
-		U = U * L;
-	}
-	else if (detU > Float(0.0) && detV < Float(0.0)) {
-		V = V * L;
-	}
-
-	const Float lambda = m_lambda;
-	const Float mu = m_mu;
-	const Float I3 = compute_I3(F);
-	const Float logI3 = std::log(I3);
-
-
-	Vec9 eigenvalues;
-	eigenvalues(0) = (lambda + mu - lambda * logI3) / (sigma0 * sigma0);
-	eigenvalues(1) = (lambda + mu - lambda * logI3) / (sigma1 * sigma1);
-	eigenvalues(2) = (lambda + mu - lambda * logI3) / (sigma2 * sigma2);
-	eigenvalues(3) = (I3 * mu - 2 * mu + 2 * lambda * logI3) / (2 * sigma1 * sigma2);
-	eigenvalues(4) = (I3 * mu - 2 * mu + 2 * lambda * logI3) / (2 * sigma0 * sigma1);
-	eigenvalues(5) = (I3 * mu - 2 * mu + 2 * lambda * logI3) / (2 * sigma0 * sigma2);
-	eigenvalues(6) = -(I3 * mu - 2 * mu + 2 * lambda * logI3) / (2 * sigma0 * sigma1);
-	eigenvalues(7) = -(I3 * mu - 2 * mu + 2 * lambda * logI3) / (2 * sigma1 * sigma2);
-	eigenvalues(8) = -(I3 * mu - 2 * mu + 2 * lambda * logI3) / (2 * sigma0 * sigma2);
-
-	constexpr Float invSqrt2 = glm::one_over_root_two<Float>();
-	Mat9 eigenvectors;
-	eigenvectors << 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-		0.0, 0.0, 0.0, invSqrt2 / 2.0, 0.0, 0.0, invSqrt2 / 2.0, 0.0, 0.0,
-		0.0, 0.0, 0.0, 0.0, 0.0, -invSqrt2 / 2.0, 0.0, 0.0, invSqrt2 / 2.0,
-		0.0, 0.0, 0.0, -invSqrt2 / 2.0, 0.0, 0.0, invSqrt2 / 2.0, 0.0, 0.0,
-		0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-		0.0, 0.0, 0.0, 0.0, -invSqrt2 / 2.0, 0.0, 0.0, invSqrt2 / 2.0, 0.0,
-		0.0, 0.0, 0.0, 0.0, 0.0, invSqrt2 / 2.0, 0.0, 0.0, invSqrt2 / 2.0,
-		0.0, 0.0, 0.0, 0.0, invSqrt2 / 2.0, 0.0, 0.0, invSqrt2 / 2.0, 0.0,
-		0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0;
-
-	Mat9 H;
-	H.setZero();
-	for (uint32_t i = 0; i < 9; ++i) {
-		const Mat3 twist = eigenvectors.col(i).reshaped(3, 3);
-		const Mat3 rot = U * twist * V;
-
-		H += std::max(eigenvalues(i), Float(9.0)) * (rot.reshaped() * rot.reshaped().transpose());
-	}
-	
-	return H;
-}
 
 void SimpleFem::step(Float dt)
 {
 	Timer timer;
 
+	// Reset system
 	this->set_system_to_zero();
 	m_rhs.setZero();
 
 	timer.printSeconds("Set Zero");
 	timer.reset();
 
+	// We are building the system
+	// 	   [M - Δt * df/dv - Δt^2 * df/dx] * Δv = Δt * f + Δt^2 * df/dx * v
+	
+	// Add contribution of each element
 	for (size_t i = 0; i < m_elements.size(); ++i) {
 		const Vec4i& element = m_elements[i];
+		// Compute the energy function
 		HookeanSmith19_Data bw09(compute_Ds(element, m_nodes) * m_DmInvs[i], m_mu, m_lambda);
 
+		// Compute force derivative df/dx = -vol * ddPhi/ddx = -vol * ( dF/dx * ddPhi/ddF * dF/dx )
 		const Mat9x12 dFdx = compute_dFdx(m_DmInvs[i]);
 		const Mat9 H = compute_hessian(bw09);
 		//const Mat9 H = check_eigenvalues_BW08(F);
 		const Mat12 dfdx = -m_volumes[i] * (dFdx.transpose() * H * dFdx);
 
+		// Compute force f = -vol * dPhi/dx
 		const Mat3 pk1 = compute_pk1(bw09);
 		const Vec12 f = -m_volumes[i] * (dFdx.transpose() * pk1.reshaped());
 
@@ -160,7 +110,7 @@ void SimpleFem::step(Float dt)
 
 	timer.printSeconds("Loop");
 	timer.reset();
-
+	// add (df/dx * v) to the rhs
 	m_rhs += dt * dt * (m_dfdx_system * m_v);
 
 	// subtract gravity from the y entries
@@ -168,6 +118,7 @@ void SimpleFem::step(Float dt)
 		m_rhs(3 * i + 1) -= dt * m_node_mass * m_gravity;
 	}*/
 
+	// Apply rayleigh damping df/dv = -alpha * M - beta * df/dx
 	m_dfdx_system *=  - (dt * dt) - m_beta_rayleigh * dt;
 	m_dfdx_system.diagonal().array() += m_node_mass * (Float(1.0) - m_alpha_rayleigh * dt);
 
@@ -185,6 +136,7 @@ void SimpleFem::step(Float dt)
 	}
 	timer.printSeconds("Solve"); timer.reset();
 
+	// Assign new positions to the nodes
 	for (size_t i = 0; i < m_nodes.size(); ++i) {
 		m_nodes[i].x() += dt * m_v[3 * i + 0];
 		m_nodes[i].y() += dt * m_v[3 * i + 1];
@@ -253,6 +205,7 @@ void SimpleFem::build_sparse_system()
 
 	m_dfdx_system.setFromTriplets(triplets.begin(), triplets.end());
 
+	// Store start of each of the xyz components of the columns into m_sparse_cache
 	for (auto& it : m_sparse_cache) {
 		const uint32_t base_i = it.first.first * 3;
 		const uint32_t base_j = it.first.second * 3;
@@ -352,6 +305,70 @@ SimpleFem::HookeanSmith19_Data::HookeanSmith19_Data(const Mat3& F, Float mu, Flo
 
 	this->pk1 = dPdI2 * g2_ + dPdI3 * g3_;
 	this->hessian = dPdI2 * H2 + ddPddI3 * g3 * g3.transpose() + dPdI3 * H3;
+}
+
+
+// TODO: NOT WORKING
+Mat9 SimpleFem::check_eigenvalues_BW08(const Mat3& F) {
+	Eigen::JacobiSVD<Mat3> svd(F, Eigen::ComputeFullU | Eigen::ComputeFullV);
+
+	Float sigma0 = svd.singularValues()(0);
+	Float sigma1 = svd.singularValues()(1);
+	Float sigma2 = svd.singularValues()(2);
+
+	Mat3 U = svd.matrixU();
+	Mat3 V = svd.matrixV();
+	Mat3 L = Mat3::Identity();
+	L(2, 2) = (U * V.transpose()).determinant();
+	sigma2 *= L(2, 2);
+	Float detU = U.determinant();
+	Float detV = V.determinant();
+	if (detU < Float(0.0) && detV > Float(0.0)) {
+		U = U * L;
+	}
+	else if (detU > Float(0.0) && detV < Float(0.0)) {
+		V = V * L;
+	}
+
+	const Float lambda = m_lambda;
+	const Float mu = m_mu;
+	const Float I3 = compute_I3(F);
+	const Float logI3 = std::log(I3);
+
+
+	Vec9 eigenvalues;
+	eigenvalues(0) = (lambda + mu - lambda * logI3) / (sigma0 * sigma0);
+	eigenvalues(1) = (lambda + mu - lambda * logI3) / (sigma1 * sigma1);
+	eigenvalues(2) = (lambda + mu - lambda * logI3) / (sigma2 * sigma2);
+	eigenvalues(3) = (I3 * mu - 2 * mu + 2 * lambda * logI3) / (2 * sigma1 * sigma2);
+	eigenvalues(4) = (I3 * mu - 2 * mu + 2 * lambda * logI3) / (2 * sigma0 * sigma1);
+	eigenvalues(5) = (I3 * mu - 2 * mu + 2 * lambda * logI3) / (2 * sigma0 * sigma2);
+	eigenvalues(6) = -(I3 * mu - 2 * mu + 2 * lambda * logI3) / (2 * sigma0 * sigma1);
+	eigenvalues(7) = -(I3 * mu - 2 * mu + 2 * lambda * logI3) / (2 * sigma1 * sigma2);
+	eigenvalues(8) = -(I3 * mu - 2 * mu + 2 * lambda * logI3) / (2 * sigma0 * sigma2);
+
+	constexpr Float invSqrt2 = glm::one_over_root_two<Float>();
+	Mat9 eigenvectors;
+	eigenvectors << 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, invSqrt2 / 2.0, 0.0, 0.0, invSqrt2 / 2.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, 0.0, 0.0, -invSqrt2 / 2.0, 0.0, 0.0, invSqrt2 / 2.0,
+		0.0, 0.0, 0.0, -invSqrt2 / 2.0, 0.0, 0.0, invSqrt2 / 2.0, 0.0, 0.0,
+		0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+		0.0, 0.0, 0.0, 0.0, -invSqrt2 / 2.0, 0.0, 0.0, invSqrt2 / 2.0, 0.0,
+		0.0, 0.0, 0.0, 0.0, 0.0, invSqrt2 / 2.0, 0.0, 0.0, invSqrt2 / 2.0,
+		0.0, 0.0, 0.0, 0.0, invSqrt2 / 2.0, 0.0, 0.0, invSqrt2 / 2.0, 0.0,
+		0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0;
+
+	Mat9 H;
+	H.setZero();
+	for (uint32_t i = 0; i < 9; ++i) {
+		const Mat3 twist = eigenvectors.col(i).reshaped(3, 3);
+		const Mat3 rot = U * twist * V;
+
+		H += std::max(eigenvalues(i), Float(9.0)) * (rot.reshaped() * rot.reshaped().transpose());
+	}
+
+	return H;
 }
 
 } // namespace sim
