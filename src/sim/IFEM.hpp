@@ -51,6 +51,18 @@ public:
 	virtual void step(Float dt) = 0;
 
 	virtual void update_objects() = 0;
+
+	struct MetricTimes {
+		float step = 0.0f;
+		float set_zero = 0.0f;
+		float blocks_assign = 0.0f;
+		float system_finish = 0.0f;
+		float solve = 0.0f;
+	};
+	MetricTimes get_metric_times() { return m_metric_time; }
+
+protected:
+	MetricTimes m_metric_time;
 };
 
 } // namespace sim

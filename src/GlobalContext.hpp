@@ -8,6 +8,7 @@
 #include "Camera.hpp"
 #include "graphics/ShaderProgram.hpp"
 #include "sim/IFEM.hpp"
+#include "utils/CircularBuffer.hpp"
 
 class GlobalContext
 {
@@ -48,13 +49,17 @@ private:
 
 	// Windows
 	bool m_show_imgui_demo_window = false;
+	bool m_show_implot_demo_window = false;
 	bool m_show_camera_window = false;
 	bool m_show_inspector_window = false;
-	bool m_show_simulation_window = false;
+	bool m_show_simulation_window = true;
+	bool m_show_simulation_metrics = true;
 
 	bool m_file_picker_open = false;
 	bool m_show_world_grid = false;
 	bool m_show_guizmos = true;
+
+	bool m_run_simulation = false;
 
 	// guizmos interaction
 	enum class GuizmosInteraction {
@@ -64,6 +69,10 @@ private:
 	};
 	GuizmosInteraction m_guizmos_mode = GuizmosInteraction::eTranslate;
 	bool m_use_local_space_interaction = true;
+
+	// Metrics
+	CircularBuffer<std::pair<float, sim::IFEM::MetricTimes>> m_metric_times_buffer;
+	float m_metrics_past_seconds = 20.0f;
 
 	// Models
 	std::list<std::shared_ptr<GameObject>> m_gameObjects;

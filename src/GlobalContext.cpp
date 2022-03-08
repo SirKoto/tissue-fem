@@ -5,6 +5,7 @@
 #include <imgui.h>
 #include <ImGuizmo.h>
 #include <ImGuiFileDialog.h>
+#include <implot.h>
 #include <iostream>
 #include <filesystem>
 #include <chrono>
@@ -102,9 +103,11 @@ void GlobalContext::update_ui()
 		if (ImGui::BeginMenu("View"))
 		{			
 			ImGui::Checkbox("ImGui Demo Window", &m_show_imgui_demo_window);
+			ImGui::Checkbox("ImPlot Demo Window", &m_show_implot_demo_window);
 			ImGui::Checkbox("Camera Window", &m_show_camera_window);
 			ImGui::Checkbox("Inspector Window", &m_show_inspector_window);
 			ImGui::Checkbox("Simulation Window", &m_show_simulation_window);
+			ImGui::Checkbox("Simulation Metrics", &m_show_simulation_metrics);
 			ImGui::EndMenu();
 		}
 
@@ -163,6 +166,10 @@ void GlobalContext::update_ui()
 		ImGui::ShowDemoWindow(&m_show_imgui_demo_window);
 	}
 
+	if (m_show_implot_demo_window) {
+		ImPlot::ShowDemoWindow(&m_show_implot_demo_window);
+	}
+
 	if (m_show_camera_window) {
 		if (ImGui::Begin("Camera", &m_show_camera_window)) {
 			m_camera.render_ui();
@@ -184,7 +191,7 @@ void GlobalContext::update_ui()
 
 	if (m_show_simulation_window) {
 		ImGui::SetNextWindowSize(ImVec2(150, 180), ImGuiCond_FirstUseEver);
-		if (ImGui::Begin("Simulation")) {
+		if (ImGui::Begin("Simulation", &m_show_simulation_window)) {
 			if (m_selected_object != m_gameObjects.end()) {
 				ImGui::Text("Selected: %s", (*m_selected_object)->get_name().c_str());
 
@@ -193,9 +200,8 @@ void GlobalContext::update_ui()
 					std::cout << "Loaded" << std::endl;
 				}
 				if (m_sim) {
-					static bool keep_running = false;
-					ImGui::Checkbox("Keep running", &keep_running);
-					if (ImGui::Button("Step simulator") || keep_running) {
+					ImGui::Checkbox("Keep running", &m_run_simulation);
+					if (ImGui::Button("Step simulator") || m_run_simulation) {
 						auto ini = std::chrono::high_resolution_clock::now();
 						m_sim->step(1.0f / 30.0f);
 						auto end = std::chrono::high_resolution_clock::now();
@@ -210,6 +216,58 @@ void GlobalContext::update_ui()
 				}
 
 				
+			}
+		}
+		ImGui::End();
+	}
+
+	if (m_show_simulation_metrics) {
+		ImGui::SetNextWindowSize(ImVec2(450, 280), ImGuiCond_FirstUseEver);
+		const ImGuiViewport* main_viewport = ImGui::GetMainViewport();
+		ImGui::SetNextWindowPos(ImVec2(main_viewport->WorkPos.x + 650, main_viewport->WorkPos.y + 20), ImGuiCond_FirstUseEver);
+		if (ImGui::Begin("Simulation Metrics", &m_show_simulation_metrics)) {
+			if (m_sim && m_run_simulation) {
+				m_metric_times_buffer.push({ this->get_time(), m_sim->get_metric_times() });
+			}
+
+			ImGui::SliderFloat("Past seconds", &m_metrics_past_seconds, 0.1f, 30.0f, "%.1f");
+
+			if (ImPlot::BeginPlot("##SolverMetrics", ImVec2(-1, -1))) {
+				ImPlot::SetupAxes("time (s)", "dt (s)");
+				float x = m_metric_times_buffer.size() > 0 ? m_metric_times_buffer.back().first : 0.0f;
+				ImPlot::SetupAxisLimits(ImAxis_X1, x - m_metrics_past_seconds, x, ImGuiCond_Always);
+				ImPlot::SetupAxisLimits(ImAxis_Y1, 0, 0.0055);
+				ImPlot::PlotLine("Step time",
+					&m_metric_times_buffer.data()->first,
+					&m_metric_times_buffer.data()->second.step,
+					(int)m_metric_times_buffer.size(),
+					(int)m_metric_times_buffer.offset(),
+					sizeof(*m_metric_times_buffer.data()));
+				ImPlot::PlotLine("Set Zero System",
+					&m_metric_times_buffer.data()->first,
+					&m_metric_times_buffer.data()->second.set_zero,
+					(int)m_metric_times_buffer.size(),
+					(int)m_metric_times_buffer.offset(),
+					sizeof(*m_metric_times_buffer.data()));
+				ImPlot::PlotLine("Blocks Assign",
+					&m_metric_times_buffer.data()->first,
+					&m_metric_times_buffer.data()->second.blocks_assign,
+					(int)m_metric_times_buffer.size(),
+					(int)m_metric_times_buffer.offset(),
+					sizeof(*m_metric_times_buffer.data()));
+				ImPlot::PlotLine("System finish",
+					&m_metric_times_buffer.data()->first,
+					&m_metric_times_buffer.data()->second.system_finish,
+					(int)m_metric_times_buffer.size(),
+					(int)m_metric_times_buffer.offset(),
+					sizeof(*m_metric_times_buffer.data()));
+				ImPlot::PlotLine("Solve",
+					&m_metric_times_buffer.data()->first,
+					&m_metric_times_buffer.data()->second.solve,
+					(int)m_metric_times_buffer.size(),
+					(int)m_metric_times_buffer.offset(),
+					sizeof(*m_metric_times_buffer.data()));
+				ImPlot::EndPlot();
 			}
 		}
 		ImGui::End();

@@ -4,6 +4,7 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 #include <ImGuizmo.h>
+#include <implot.h>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
@@ -116,6 +117,7 @@ int main(){
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
+    ImPlot::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
 
     // disable .ini file
@@ -136,6 +138,8 @@ int main(){
 
     // Cleanup
     {
+        ImPlot::DestroyContext();
+
         ImGui_ImplOpenGL3_Shutdown();
         ImGui_ImplGlfw_Shutdown();
         ImGui::DestroyContext();

@@ -66,13 +66,14 @@ void SimpleFem::set_system_to_zero()
 
 void SimpleFem::step(Float dt)
 {
+	Timer step_timer;
 	Timer timer;
 
 	// Reset system
 	this->set_system_to_zero();
 	m_rhs.setZero();
 
-	timer.printSeconds("Set Zero");
+	m_metric_time.set_zero = (float)timer.getDuration<Timer::Seconds>().count();
 	timer.reset();
 
 	// We are building the system
@@ -112,7 +113,7 @@ void SimpleFem::step(Float dt)
 
 	}
 
-	timer.printSeconds("Loop");
+	m_metric_time.blocks_assign = (float)timer.getDuration<Timer::Seconds>().count();
 	timer.reset();
 	// add (df/dx * v) to the rhs
 	m_rhs += dt * dt * (m_dfdx_system * m_v);
@@ -126,7 +127,8 @@ void SimpleFem::step(Float dt)
 	m_dfdx_system *=  - (dt * dt) - m_beta_rayleigh * dt;
 	m_dfdx_system.diagonal().array() += m_node_mass * (Float(1.0) - m_alpha_rayleigh * dt);
 
-	timer.printSeconds("Build system"); timer.reset();
+	m_metric_time.system_finish = (float)timer.getDuration<Timer::Seconds>().count();
+	timer.reset();
 
 	/*Eigen::ConjugateGradient<SMat> solver(m_dfdx_system);
 	solver.setTolerance(1e-4);
@@ -140,7 +142,8 @@ void SimpleFem::step(Float dt)
 	}*/
 	solver.solve(m_dfdx_system, m_rhs, &m_delta_v);
 	m_v += m_delta_v;
-	timer.printSeconds("Solve"); timer.reset();
+	m_metric_time.solve = (float)timer.getDuration<Timer::Seconds>().count();
+	timer.reset();
 
 	// Assign new positions to the nodes
 	for (size_t i = 0; i < m_nodes.size(); ++i) {
@@ -153,6 +156,8 @@ void SimpleFem::step(Float dt)
 			m_v[3 * i + 1] = Float(0.0);
 		}*/
 	}
+
+	m_metric_time.step = (float)step_timer.getDuration<Timer::Seconds>().count();
 }
 
 void SimpleFem::update_objects()
