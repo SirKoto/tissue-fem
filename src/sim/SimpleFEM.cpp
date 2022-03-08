@@ -33,10 +33,14 @@ SimpleFem::SimpleFem(std::shared_ptr<GameObject> obj, Float young, Float nu) :
 
 	m_v.resize(3 * m_nodes.size());
 	m_v.setZero();
+	m_delta_v.resize(3 * m_nodes.size());
+	m_delta_v.setZero();
 	m_rhs.resize(3 * m_nodes.size());
 
 	// Build the sparse matrix
 	this->build_sparse_system();
+
+	solver.resize(3 * m_nodes.size());
 }
 
 void SimpleFem::assign_sparse_block(const Eigen::Block<const Mat12, 3, 3>& m, uint32_t node_i, uint32_t node_j) {
@@ -124,7 +128,7 @@ void SimpleFem::step(Float dt)
 
 	timer.printSeconds("Build system"); timer.reset();
 
-	Eigen::ConjugateGradient<SMat> solver(m_dfdx_system);
+	/*Eigen::ConjugateGradient<SMat> solver(m_dfdx_system);
 	solver.setTolerance(1e-4);
 	//solver.setMaxIterations(20 * m_nodes.size());
 	if (solver.info() != Eigen::Success) {
@@ -133,7 +137,9 @@ void SimpleFem::step(Float dt)
 	m_v += solver.solve(m_rhs);
 	if (solver.info() != Eigen::Success) {
 		std::cerr << "System did not converge" << std::endl;
-	}
+	}*/
+	solver.solve(m_dfdx_system, m_rhs, &m_delta_v);
+	m_v += m_delta_v;
 	timer.printSeconds("Solve"); timer.reset();
 
 	// Assign new positions to the nodes

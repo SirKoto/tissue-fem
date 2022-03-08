@@ -8,6 +8,8 @@
 #include <array>
 
 #include "GameObject.hpp"
+#include "solvers/ConjugateGradient.hpp"
+
 
 
 namespace sim {
@@ -45,6 +47,8 @@ private:
 
 	std::vector<Eigen::Vector4i> m_elements;
 	std::vector<Vec3> m_nodes;
+
+	ConjugateGradient solver;
 
 	struct hash_pair {
 		template <class T1, class T2>

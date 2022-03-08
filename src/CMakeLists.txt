@@ -12,6 +12,8 @@ add_executable(${PROJECT_NAME}
 	sim/IFEM.hpp		sim/IFEM.cpp
 	sim/SimpleFEM.hpp	sim/SimpleFEM.cpp
 
+	sim/solvers/ConjugateGradient.hpp	sim/solvers/ConjugateGradient.cpp
+
 	graphics/Shader.hpp	graphics/Shader.cpp
 	graphics/ShaderProgram.hpp	graphics/ShaderProgram.cpp
 
