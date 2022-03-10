@@ -36,6 +36,9 @@ SimpleFem::SimpleFem(std::shared_ptr<GameObject> obj, Float young, Float nu) :
 	m_delta_v.resize(3 * m_nodes.size());
 	m_delta_v.setZero();
 	m_rhs.resize(3 * m_nodes.size());
+	m_constraints.resize(3 * m_nodes.size());
+	m_constraints.setOnes();
+	m_constraints.segment(0, 3).setZero();
 
 	// Build the sparse matrix
 	this->build_sparse_system();
@@ -119,13 +122,29 @@ void SimpleFem::step(Float dt)
 	m_rhs += dt * dt * (m_dfdx_system * m_v);
 
 	// subtract gravity from the y entries
-	/*for (size_t i = 0; i < m_nodes.size(); ++i) {
+	for (size_t i = 0; i < m_nodes.size(); ++i) {
 		m_rhs(3 * i + 1) -= dt * m_node_mass * m_gravity;
-	}*/
+	}
 
 	// Apply rayleigh damping df/dv = -alpha * M - beta * df/dx
 	m_dfdx_system *=  - (dt * dt) - m_beta_rayleigh * dt;
 	m_dfdx_system.diagonal().array() += m_node_mass * (Float(1.0) - m_alpha_rayleigh * dt);
+
+	// Pre-filtered Preconditioned Conjugate Gradient
+	// (SAS^T + I - S)y = Sc
+	//                y = x - z
+	//                c = b - Az
+	
+	// Start by applying SAS^T
+	for (Eigen::Index i = 0; i < m_dfdx_system.outerSize(); ++i) {
+		for (SMat::InnerIterator it(m_dfdx_system, i); it; ++it) {
+			it.valueRef() *= m_constraints[it.row()] * m_constraints[it.col()];
+		}
+	}
+	m_dfdx_system.diagonal().array() += Float(1.0);
+	m_dfdx_system.diagonal() -= m_constraints;
+	// Todo c = m_rhs - Az, and y=x-z
+	m_Sc = m_constraints.asDiagonal() * m_rhs;
 
 	m_metric_time.system_finish = (float)timer.getDuration<Timer::Seconds>().count();
 	timer.reset();
@@ -140,7 +159,7 @@ void SimpleFem::step(Float dt)
 	if (solver.info() != Eigen::Success) {
 		std::cerr << "System did not converge" << std::endl;
 	}*/
-	solver.solve(m_dfdx_system, m_rhs, &m_delta_v);
+	solver.solve(m_dfdx_system, m_Sc, &m_delta_v);
 	m_v += m_delta_v;
 	m_metric_time.solve = (float)timer.getDuration<Timer::Seconds>().count();
 	timer.reset();

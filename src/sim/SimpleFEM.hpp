@@ -40,6 +40,8 @@ private:
 	Vec m_v;
 	Vec m_rhs;
 	SMat m_dfdx_system;
+	Vec m_constraints;
+	Vec m_Sc;
 
 	std::vector<Mat3> m_DmInvs;
 
