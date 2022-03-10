@@ -23,6 +23,10 @@ public:
 
 	void update_objects() override final;
 
+	void add_constraint(uint32_t node, const glm::vec3& dv) override final;
+
+	void clear_constraints() override final { m_z.setZero();  m_constraints.setZero(); }
+
 	void pancake();
 
 private:
@@ -42,6 +46,7 @@ private:
 	SMat m_dfdx_system;
 	Vec m_constraints;
 	Vec m_Sc;
+	SVec m_z;
 
 	std::vector<Mat3> m_DmInvs;
 

@@ -202,8 +202,11 @@ void GlobalContext::update_ui()
 				if (m_sim) {
 					ImGui::Checkbox("Keep running", &m_run_simulation);
 					if (ImGui::Button("Step simulator") || m_run_simulation) {
+						float dt = this->delta_time();
 						auto ini = std::chrono::high_resolution_clock::now();
-						m_sim->step(1.0f / 30.0f);
+						glm::vec3 dir(std::cos(this->get_time()), 0.0f, 0.0f);
+						m_sim->add_constraint(0, 0.5f * dir * dt);
+						m_sim->step( (sim::Float)dt);
 						auto end = std::chrono::high_resolution_clock::now();
 
 						std::cout << "Stepped: " << std::chrono::duration<double, std::milli>(end - ini).count() << std::endl;

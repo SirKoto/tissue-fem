@@ -2,12 +2,14 @@
 
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
+#include <glm/glm.hpp>
 
 namespace sim
 {
 
 typedef double Float;
 typedef Eigen::SparseMatrix<Float> SMat;
+typedef Eigen::SparseVector<Float> SVec;
 typedef Eigen::Matrix<Float, Eigen::Dynamic, 1> Vec;
 typedef Eigen::Matrix<Float, 3, 1> Vec3;
 typedef Eigen::Matrix<Float, 9, 1> Vec9;
@@ -51,6 +53,10 @@ public:
 	virtual void step(Float dt) = 0;
 
 	virtual void update_objects() = 0;
+
+	virtual void add_constraint(uint32_t node, const glm::vec3& dv) = 0;
+
+	virtual void clear_constraints() = 0;
 
 	struct MetricTimes {
 		float step = 0.0f;

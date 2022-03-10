@@ -36,9 +36,9 @@ SimpleFem::SimpleFem(std::shared_ptr<GameObject> obj, Float young, Float nu) :
 	m_delta_v.resize(3 * m_nodes.size());
 	m_delta_v.setZero();
 	m_rhs.resize(3 * m_nodes.size());
+	m_z.resize(3 * m_nodes.size());
 	m_constraints.resize(3 * m_nodes.size());
 	m_constraints.setOnes();
-	m_constraints.segment(0, 3).setZero();
 
 	// Build the sparse matrix
 	this->build_sparse_system();
@@ -135,7 +135,10 @@ void SimpleFem::step(Float dt)
 	//                y = x - z
 	//                c = b - Az
 	
-	// Start by applying SAS^T
+	// Compute rhs
+	m_Sc = m_constraints.asDiagonal() * (m_rhs - m_dfdx_system * m_z);
+
+	// Apply SAS^T
 	for (Eigen::Index i = 0; i < m_dfdx_system.outerSize(); ++i) {
 		for (SMat::InnerIterator it(m_dfdx_system, i); it; ++it) {
 			it.valueRef() *= m_constraints[it.row()] * m_constraints[it.col()];
@@ -143,8 +146,6 @@ void SimpleFem::step(Float dt)
 	}
 	m_dfdx_system.diagonal().array() += Float(1.0);
 	m_dfdx_system.diagonal() -= m_constraints;
-	// Todo c = m_rhs - Az, and y=x-z
-	m_Sc = m_constraints.asDiagonal() * m_rhs;
 
 	m_metric_time.system_finish = (float)timer.getDuration<Timer::Seconds>().count();
 	timer.reset();
@@ -160,7 +161,7 @@ void SimpleFem::step(Float dt)
 		std::cerr << "System did not converge" << std::endl;
 	}*/
 	solver.solve(m_dfdx_system, m_Sc, &m_delta_v);
-	m_v += m_delta_v;
+	m_v += m_delta_v + m_z;
 	m_metric_time.solve = (float)timer.getDuration<Timer::Seconds>().count();
 	timer.reset();
 
@@ -185,6 +186,16 @@ void SimpleFem::update_objects()
 		m_obj->get_mesh().update_node(i, m_nodes[i].cast<float>());
 	}
 	m_obj->get_mesh().upload_to_gpu(true, false);
+}
+
+void SimpleFem::add_constraint(uint32_t node, const glm::vec3& dv)
+{
+	m_z.coeffRef(3 * node + 0) = dv.x;
+	m_z.coeffRef(3 * node + 1) = dv.y;
+	m_z.coeffRef(3 * node + 2) = dv.z;
+
+	m_constraints.segment(3 * node, 3).setZero();
+
 }
 
 void SimpleFem::pancake()
