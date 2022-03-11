@@ -196,22 +196,19 @@ void GlobalContext::update_ui()
 				ImGui::Text("Selected: %s", (*m_selected_object)->get_name().c_str());
 
 				if (ImGui::Button("Build simulator")) {
-					m_sim = std::make_unique<sim::SimpleFem>(*m_selected_object, 10000.0, 0.2);
+					m_sim = std::make_unique<sim::SimpleFem>(*m_selected_object, 100000.0, 0.2);
 					std::cout << "Loaded" << std::endl;
 				}
 				if (m_sim) {
 					ImGui::Checkbox("Keep running", &m_run_simulation);
 					if (ImGui::Button("Step simulator") || m_run_simulation) {
 						float dt = this->delta_time();
-						auto ini = std::chrono::high_resolution_clock::now();
 						glm::vec3 dir(std::cos(this->get_time()), 0.0f, 0.0f);
-						m_sim->add_constraint(0, 0.5f * dir * dt);
+						for(uint32_t i = 0; i < 3; ++i)
+							m_sim->add_constraint(i, dir);
 						m_sim->step( (sim::Float)dt);
-						auto end = std::chrono::high_resolution_clock::now();
 
-						std::cout << "Stepped: " << std::chrono::duration<double, std::milli>(end - ini).count() << std::endl;
 						m_sim->update_objects();
-						std::cout << "Updated" << std::endl;
 					}
 					if (ImGui::Button("Pancake")) {
 						reinterpret_cast<sim::SimpleFem*>(m_sim.get())->pancake();

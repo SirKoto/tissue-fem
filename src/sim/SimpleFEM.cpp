@@ -188,11 +188,11 @@ void SimpleFem::update_objects()
 	m_obj->get_mesh().upload_to_gpu(true, false);
 }
 
-void SimpleFem::add_constraint(uint32_t node, const glm::vec3& dv)
+void SimpleFem::add_constraint(uint32_t node, const glm::vec3& v)
 {
-	m_z.coeffRef(3 * node + 0) = dv.x;
-	m_z.coeffRef(3 * node + 1) = dv.y;
-	m_z.coeffRef(3 * node + 2) = dv.z;
+	m_z.coeffRef(3 * node + 0) = v.x - m_v[3 * node + 0];
+	m_z.coeffRef(3 * node + 1) = v.y - m_v[3 * node + 1];
+	m_z.coeffRef(3 * node + 2) = v.z - m_v[3 * node + 2];
 
 	m_constraints.segment(3 * node, 3).setZero();
 

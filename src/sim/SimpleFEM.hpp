@@ -23,9 +23,9 @@ public:
 
 	void update_objects() override final;
 
-	void add_constraint(uint32_t node, const glm::vec3& dv) override final;
+	void add_constraint(uint32_t node, const glm::vec3& v) override final;
 
-	void clear_constraints() override final { m_z.setZero();  m_constraints.setZero(); }
+	void clear_constraints() override final { m_z.setZero();  m_constraints.setOnes(); }
 
 	void pancake();
 
