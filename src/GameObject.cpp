@@ -7,7 +7,7 @@
 #include <imgui.h>
 #include <ImGuizmo.h>
 
-#include "GlobalContext.hpp"
+#include "Context.hpp"
 
 GameObject::GameObject()
 {
@@ -30,7 +30,7 @@ void GameObject::draw() const
 	m_mesh.draw_triangles();
 }
 
-void GameObject::update_ui(const GlobalContext& gc)
+void GameObject::update_ui(const Context& gc)
 {
 	ImGui::PushID(this);
 

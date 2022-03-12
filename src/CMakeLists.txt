@@ -3,9 +3,10 @@ cmake_minimum_required(VERSION 3.10)
 
 add_executable(${PROJECT_NAME}
 	main.cpp
-	GlobalContext.hpp	GlobalContext.cpp
+	Context.hpp	Context.cpp
 	Camera.hpp			Camera.cpp
 	GameObject.hpp		GameObject.cpp
+	Scene.hpp			Scene.cpp
 
 	meshes/TetMesh.hpp	meshes/TetMesh.cpp
 

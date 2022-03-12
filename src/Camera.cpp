@@ -76,7 +76,7 @@ void Camera::computeProjView()
 	mProjView = mProj * mView;
 }
 
-void Camera::render_ui()
+void Camera::render_ui_const() const
 {
 	ImGui::Text("Position (%.3f, %.3f, %.3f)", mPosition.x, mPosition.y, mPosition.z);
 	ImGui::Text("Front (%.3f, %.3f, %.3f)", mFront.x, mFront.y, mFront.z);

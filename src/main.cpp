@@ -8,7 +8,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#include "GlobalContext.hpp"
+#include "Context.hpp"
 
 static void glfw_error_callback(int error, const char* description)
 {
@@ -31,7 +31,7 @@ gl_message_callback(GLenum source,
 
 
 void main_loop(GLFWwindow* window) {
-    GlobalContext gc;
+    Context gc;
 
     while (!glfwWindowShouldClose(window)) {
        
@@ -57,7 +57,7 @@ void main_loop(GLFWwindow* window) {
         int display_w, display_h;
         glfwGetFramebufferSize(window, &display_w, &display_h);
         glViewport(0, 0, display_w, display_h);
-        glClearColor(gc.get_clear_color().x(), gc.get_clear_color().y(), gc.get_clear_color().z(), 1);
+        glClearColor(gc.get_clear_color().x, gc.get_clear_color().y, gc.get_clear_color().z, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // Render the generated model

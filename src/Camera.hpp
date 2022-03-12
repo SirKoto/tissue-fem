@@ -16,7 +16,7 @@ public:
 	const glm::mat4& getView() const { return mView; }
 
 	// Render some information into the UI
-	void render_ui();
+	void render_ui_const() const;
 
 	const glm::vec3& get_eye() const { return mPosition; }
 

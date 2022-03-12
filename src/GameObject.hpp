@@ -4,7 +4,7 @@
 
 #include "meshes/TetMesh.hpp"
 
-class GlobalContext;
+class Context;
 class GameObject
 {
 public:
@@ -16,7 +16,7 @@ public:
 
 	void draw() const;
 
-	void update_ui(const GlobalContext& gc);
+	void update_ui(const Context& gc);
 
 	const glm::mat4& get_model_matrix() const { return m_transform; }
 
