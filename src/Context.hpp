@@ -11,13 +11,14 @@
 #include "sim/IFEM.hpp"
 #include "utils/CircularBuffer.hpp"
 #include "Scene.hpp"
+#include "Engine.hpp"
 
 
 class Context
 {
 public:
 
-	Context();
+	Context(const Engine* engine);
 
 	Context(const Context&) = delete;
 	Context& operator=(const Context&) = delete;
@@ -29,10 +30,10 @@ public:
 	void render();
 
 	const glm::vec3& get_clear_color() const {
-		return m_scene->get_clear_color();
+		return m_engine->m_scene->get_clear_color();
 	}
 
-	const Camera& camera() const { return m_scene->camera(); }
+	const Camera& camera() const { return m_engine->m_scene->camera(); }
 
 	float get_time() const { return m_time; }
 
@@ -45,10 +46,11 @@ public:
 
 private:
 
+	const Engine* m_engine;
+
 	float m_time = 0.0f;
 	float m_delta_time = 0.0f;
 
-	std::unique_ptr<Scene> m_scene;
 
 	// Windows
 	bool m_show_imgui_demo_window = false;

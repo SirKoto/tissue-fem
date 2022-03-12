@@ -11,16 +11,15 @@
 #include <chrono>
 #include <glm/gtc/type_ptr.hpp>
 
-
 #include "meshes/TetMesh.hpp"
 #include "sim/SimpleFEM.hpp"
 
 const char* STRING_IGFD_LOAD_MODEL = "FilePickerModel";
 
-Context::Context() :
-	m_scene(std::make_unique<Scene>())
+Context::Context(const Engine* engine) :
+	m_engine(engine)
 {
-	
+	assert(m_engine != nullptr);
 }
 
 void Context::update()
@@ -31,7 +30,7 @@ void Context::update()
 
 	m_delta_time = io.DeltaTime;
 
-	m_scene->update(*this);
+	m_engine->m_scene->update(*this);
 
 	if (!io.WantCaptureKeyboard) {
 		if (io.KeysDown[GLFW_KEY_E]) {
@@ -77,7 +76,7 @@ void Context::update_ui()
 					obj.rotate_model(glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(180.0f));
 					obj.get_mesh().flip_face_orientation();
 					obj.apply_model_transform();
-					m_scene->add_gameObject(std::make_shared<GameObject>(std::move(obj)));
+					m_engine->m_scene->add_gameObject(std::make_shared<GameObject>(std::move(obj)));
 				}
 				ImGui::EndMenu();
 			}
@@ -130,7 +129,7 @@ void Context::update_ui()
 		}
 		
 
-		m_scene->update_ui(*this);
+		m_engine->m_scene->update_ui(*this);
 
 
 		ImGui::Text("Framerate %.1f", ImGui::GetIO().Framerate);
@@ -147,7 +146,7 @@ void Context::update_ui()
 
 	if (m_show_camera_window) {
 		if (ImGui::Begin("Camera", &m_show_camera_window)) {
-			m_scene->camera().render_ui_const();
+			m_engine->m_scene->camera().render_ui_const();
 		}
 		ImGui::End();
 	}
@@ -162,7 +161,7 @@ void Context::update_ui()
 
 void Context::render()
 {
-	m_scene->render(*this);
+	m_engine->m_scene->render(*this);
 }
 
 void Context::add_manipulation_guizmo(glm::mat4* transform) const
