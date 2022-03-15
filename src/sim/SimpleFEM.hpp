@@ -78,47 +78,6 @@ private:
 	void assign_sparse_block(const Eigen::Block<const Mat12, 3, 3>& m, uint32_t i, uint32_t j);
 	void set_system_to_zero();
 
-	// Energy model for BW08
-	struct BW08_Data {
-		Mat3 F;
-		Float I3;
-		Float logI3;
-		Vec9 g3;
-		Mat9 H3;
-
-		BW08_Data(const Mat3& F, Float mu, Float lambda);
-	};
-
-	Mat3 compute_pk1(const BW08_Data& d) const;
-	Mat9 compute_hessian(const BW08_Data& d) const;
-	Mat9 check_eigenvalues_BW08(const Mat3& F);
-
-	// Energy model for Corrotational
-	struct CoRot_Data {
-		Mat3 F;
-		Mat3 U;
-		Vec3 s;
-		Mat3 V;
-		Mat3 R;
-		Mat3 S;
-
-		CoRot_Data(const Mat3& F, Float mu, Float lambda);
-	};
-
-	Mat3 compute_pk1(const CoRot_Data& d) const;
-	Mat9 compute_hessian(const CoRot_Data& d) const;
-
-	struct HookeanSmith19_Data {
-		Mat3 pk1;
-		Mat9 hessian;
-
-		HookeanSmith19_Data(const Mat3& F, Float mu, Float lambda);
-	};
-
-	const Mat3& compute_pk1(const HookeanSmith19_Data& d) const { return d.pk1; }
-	const Mat9& compute_hessian(const HookeanSmith19_Data& d) const { return d.hessian; }
-
-
 };
 
 } // namespace sim

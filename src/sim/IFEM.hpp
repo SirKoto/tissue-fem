@@ -73,4 +73,19 @@ protected:
 	MetricTimes m_metric_time;
 };
 
+class EnergyDensity {
+public:
+	void HookeanSmith19(const Mat3& F, Float mu, Float lambda);
+	void Corrotational(const Mat3& F, Float mu, Float lambda);
+	void HookeanBW08(const Mat3& F, Float mu, Float lambda);
+
+	const Mat3& pk1() const { return this->m_pk1; }
+	const Mat9& hessian() const { return this->m_hessian; }
+
+private:
+	Mat3 m_pk1;
+	Mat9 m_hessian;
+
+};
+
 } // namespace sim

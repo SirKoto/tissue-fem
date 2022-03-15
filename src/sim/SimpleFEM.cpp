@@ -82,20 +82,21 @@ void SimpleFem::step(Float dt)
 	// We are building the system
 	// 	   [M - Δt * df/dv - Δt^2 * df/dx] * Δv = Δt * f + Δt^2 * df/dx * v
 	
+	EnergyDensity energy;
 	// Add contribution of each element
 	for (size_t i = 0; i < m_elements.size(); ++i) {
 		const Vec4i& element = m_elements[i];
 		// Compute the energy function
-		HookeanSmith19_Data bw09(compute_Ds(element, m_nodes) * m_DmInvs[i], m_mu, m_lambda);
+		energy.HookeanSmith19(compute_Ds(element, m_nodes) * m_DmInvs[i], m_mu, m_lambda);
 
 		// Compute force derivative df/dx = -vol * ddPhi/ddx = -vol * ( dF/dx * ddPhi/ddF * dF/dx )
 		const Mat9x12 dFdx = compute_dFdx(m_DmInvs[i]);
-		const Mat9 H = compute_hessian(bw09);
+		const Mat9& H = energy.hessian();
 		//const Mat9 H = check_eigenvalues_BW08(F);
 		const Mat12 dfdx = -m_volumes[i] * (dFdx.transpose() * H * dFdx);
 
 		// Compute force f = -vol * dPhi/dx
-		const Mat3 pk1 = compute_pk1(bw09);
+		const Mat3& pk1 = energy.pk1();
 		const Vec12 f = -m_volumes[i] * (dFdx.transpose() * pk1.reshaped());
 
 		// Assign the force gradient to the system
@@ -257,99 +258,9 @@ void SimpleFem::build_sparse_system()
 
 }
 
-Mat3 SimpleFem::compute_pk1(const BW08_Data& d) const
-{
-	return m_mu * d.F + (m_lambda * d.logI3 - m_mu) / d.I3 * Eigen::Reshaped<const Vec9, 3, 3, Eigen::ColMajor>(d.g3);
-}
-
-Mat9 SimpleFem::compute_hessian(const BW08_Data& d) const
-{
-
-	Float g_fact = (m_mu + m_lambda * (Float(1.0) - d.logI3)) / (d.I3 * d.I3);
-	Float H_fact = (m_lambda * d.logI3 - m_mu) / d.I3;
-
-	return m_mu * Mat9::Identity() + g_fact * d.g3 * d.g3.transpose() + H_fact * d.H3;
-}
-
-SimpleFem::BW08_Data::BW08_Data(const Mat3& F, Float mu, Float lambda)
-{
-	this->F = F;
-	this->I3 = compute_I3(F);
-	this->logI3 = std::log(this->I3);
-	this->g3 = compute_g3(F);
-	this->H3 = compute_H3(F);
-}
-
-SimpleFem::CoRot_Data::CoRot_Data(const Mat3& F, Float mu, Float lambda) : F(F)
-{
-	Eigen::JacobiSVD<Mat3> svd(F, Eigen::ComputeFullU | Eigen::ComputeFullV);
-	
-	this->U = svd.matrixU();
-	this->s = svd.singularValues();
-	this->V = svd.matrixV();
-
-	Mat3 L = Mat3::Identity();
-	L(2, 2) = (U * V.transpose()).determinant();
-	this->s(2) *= L(2, 2);
-	Float detU = U.determinant();
-	Float detV = V.determinant();
-	if (detU < Float(0.0) && detV > Float(0.0)) {
-		U = U * L;
-	}
-	else if (detU > Float(0.0) && detV < Float(0.0)) {
-		V = V * L;
-	}
-
-	this->R = this->U * this->V.transpose();
-	this->S = this->V * this->s.asDiagonal() * this->V.transpose();
-}
-
-Mat9 SimpleFem::compute_hessian(const CoRot_Data& d) const
-{
-	Float I1 = compute_I1(d.S);
-	Vec9 g1 = compute_g1(d.R);
-	Mat9 H1 = compute_H1(d.U, d.s, d.V);
-	Mat9 H2 = compute_H2();
-
-	return m_lambda * (g1 * g1.transpose()) + (m_lambda * (I1 - Float(3)) - m_mu) * H1 + (m_mu / Float(2)) * H2;
-}
-
-Mat3 SimpleFem::compute_pk1(const CoRot_Data& d) const
-{
-	Float I1 = compute_I1(d.S);
-	// Assign gradients to their own variables because otherwise the compiler goes crazy
-	const Vec9 g1_ = compute_g1(d.R);
-	const Vec9 g2_ = compute_g2(d.F);
-
-	const auto g1 = Eigen::Reshaped<const Vec9, 3, 3, Eigen::ColMajor>(g1_);
-	const auto g2 = Eigen::Reshaped<const Vec9, 3, 3, Eigen::ColMajor>(g2_);
-
-	return (m_lambda * (I1 - Float(3)) - m_mu) * g1 + (m_mu / Float(2)) * g2;
-}
-
-SimpleFem::HookeanSmith19_Data::HookeanSmith19_Data(const Mat3& F, Float mu, Float lambda) {
-	const Float I3 = compute_I3(F);
-	const Vec9 g2 = compute_g2(F);
-	const Vec9 g3 = compute_g3(F);
-	const Mat9 H2 = compute_H2();
-	const Mat9 H3 = compute_H3(F);
-
-	
-	const Float dPdI2 = mu / Float(2);
-	const Float dPdI3 = -mu + lambda * (I3 - Float(1));
-	const Float ddPddI3 = lambda;
-
-	typedef Eigen::Reshaped<const Vec9, 3, 3, Eigen::ColMajor> Reshaped3;
-
-	const auto g2_ = Reshaped3(g2);
-	const auto g3_ = Reshaped3(g3);
-
-	this->pk1 = dPdI2 * g2_ + dPdI3 * g3_;
-	this->hessian = dPdI2 * H2 + ddPddI3 * g3 * g3.transpose() + dPdI3 * H3;
-}
-
 
 // TODO: NOT WORKING
+/*
 Mat9 SimpleFem::check_eigenvalues_BW08(const Mat3& F) {
 	Eigen::JacobiSVD<Mat3> svd(F, Eigen::ComputeFullU | Eigen::ComputeFullV);
 
@@ -411,5 +322,5 @@ Mat9 SimpleFem::check_eigenvalues_BW08(const Mat3& F) {
 
 	return H;
 }
-
+*/
 } // namespace sim

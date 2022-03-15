@@ -144,4 +144,79 @@ Mat9 compute_H3(const Mat3& F)
 	return H3;
 }
 
+void EnergyDensity::Corrotational(const Mat3& F, Float mu, Float lambda)
+{
+	Eigen::JacobiSVD<Mat3> svd(F, Eigen::ComputeFullU | Eigen::ComputeFullV);
+
+	Mat3 U = svd.matrixU();
+	Vec3 s = svd.singularValues();
+	Mat3 V = svd.matrixV();
+
+	Mat3 L = Mat3::Identity();
+	L(2, 2) = (U * V.transpose()).determinant();
+	s(2) *= L(2, 2);
+	Float detU = U.determinant();
+	Float detV = V.determinant();
+	if (detU < Float(0.0) && detV > Float(0.0)) {
+		U = U * L;
+	}
+	else if (detU > Float(0.0) && detV < Float(0.0)) {
+		V = V * L;
+	}
+
+	Mat3 R = U * V.transpose();
+	Mat3 S = V * s.asDiagonal() * V.transpose();
+
+	Float I1 = compute_I1(S);
+	Vec9 g1 = compute_g1(R);
+	Vec9 g2 = compute_g2(F);
+	Mat9 H1 = compute_H1(U, s, V);
+	Mat9 H2 = compute_H2();
+
+	m_hessian = lambda * (g1 * g1.transpose()) + (lambda * (I1 - Float(3)) - mu) * H1 + (mu / Float(2)) * H2;
+	
+	typedef Eigen::Reshaped<const Vec9, 3, 3, Eigen::ColMajor> Reshaped3;
+	const Reshaped3 g1_3x3 = Reshaped3(g1);
+	const Reshaped3 g2_3x3 = Reshaped3(g2);
+	m_pk1 = (lambda * (I1 - Float(3)) - mu) * g1_3x3 + (mu / Float(2)) * g2_3x3;
+}
+
+void EnergyDensity::HookeanSmith19(const Mat3& F, Float mu, Float lambda)
+{
+	const Float I3 = compute_I3(F);
+	const Vec9 g2 = compute_g2(F);
+	const Vec9 g3 = compute_g3(F);
+	const Mat9 H2 = compute_H2();
+	const Mat9 H3 = compute_H3(F);
+
+
+	const Float dPdI2 = mu / Float(2);
+	const Float dPdI3 = -mu + lambda * (I3 - Float(1));
+	const Float ddPddI3 = lambda;
+
+	typedef Eigen::Reshaped<const Vec9, 3, 3, Eigen::ColMajor> Reshaped3;
+
+	const auto g2_ = Reshaped3(g2);
+	const auto g3_ = Reshaped3(g3);
+
+	this->m_pk1 = dPdI2 * g2_ + dPdI3 * g3_;
+	this->m_hessian = dPdI2 * H2 + ddPddI3 * g3 * g3.transpose() + dPdI3 * H3;
+}
+
+void EnergyDensity::HookeanBW08(const Mat3& F, Float mu, Float lambda)
+{
+	const Float I3 = compute_I3(F);
+	const Float logI3 = std::log(I3);
+	const Vec9 g3 = compute_g3(F);
+	const Mat9 H3 = compute_H3(F);
+
+	typedef Eigen::Reshaped<const Vec9, 3, 3, Eigen::ColMajor> Reshaped3;
+
+	m_pk1 = mu * F + (lambda * logI3 - mu) / I3 * Reshaped3(g3);
+
+	const Float g_fact = (mu + lambda * (Float(1.0) - logI3)) / (I3 * I3);
+	const Float H_fact = (lambda * logI3 - mu) / I3;
+	m_hessian = mu * Mat9::Identity() + g_fact * g3 * g3.transpose() + H_fact * H3;
+}
+
 } // namespace sim
