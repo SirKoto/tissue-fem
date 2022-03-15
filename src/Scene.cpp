@@ -36,24 +36,26 @@ void Scene::update(const Context& ctx)
 
 void Scene::update_ui(const Context& ctx)
 {
-
-	if (ImGui::BeginMenu("GameObjects"))
-	{
-		for (auto it = m_gameObjects.begin(); it != m_gameObjects.end(); ++it) {
-			if (ImGui::MenuItem((*it)->get_name().c_str())) {
-				m_selected_object = it;
-				m_show_inspector_window = true;
+	if (ImGui::BeginMainMenuBar()) {
+		if (ImGui::BeginMenu("GameObjects"))
+		{
+			for (auto it = m_gameObjects.begin(); it != m_gameObjects.end(); ++it) {
+				if (ImGui::MenuItem((*it)->get_name().c_str())) {
+					m_selected_object = it;
+					m_show_inspector_window = true;
+				}
 			}
+			ImGui::EndMenu();
 		}
-		ImGui::EndMenu();
-	}
 
-	if (ImGui::BeginMenu("View"))
-	{
-		ImGui::Checkbox("Inspector Window", &m_show_inspector_window);
-		ImGui::Checkbox("Simulation Window", &m_show_simulation_window);
-		ImGui::Checkbox("Simulation Metrics", &m_show_simulation_metrics);
-		ImGui::EndMenu();
+		if (ImGui::BeginMenu("View"))
+		{
+			ImGui::Checkbox("Inspector Window", &m_show_inspector_window);
+			ImGui::Checkbox("Simulation Window", &m_show_simulation_window);
+			ImGui::Checkbox("Simulation Metrics", &m_show_simulation_metrics);
+			ImGui::EndMenu();
+		}
+		ImGui::EndMainMenuBar();
 	}
 
 	if (m_show_inspector_window) {

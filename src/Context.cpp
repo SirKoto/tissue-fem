@@ -30,8 +30,6 @@ void Context::update()
 
 	m_delta_time = io.DeltaTime;
 
-	m_engine->m_scene->update(*this);
-
 	if (!io.WantCaptureKeyboard) {
 		if (io.KeysDown[GLFW_KEY_E]) {
 			m_guizmos_mode = GuizmosInteraction::eScale;
@@ -128,9 +126,9 @@ void Context::update_ui()
 			ImGui::EndMenu();
 		}
 		
-
-		m_engine->m_scene->update_ui(*this);
-
+		if (ImGui::BeginMenu("GameObjects")) {
+			ImGui::EndMenu();
+		}
 
 		ImGui::Text("Framerate %.1f", ImGui::GetIO().Framerate);
 		ImGui::EndMainMenuBar();
@@ -159,10 +157,6 @@ void Context::update_ui()
 	this->handle_file_picker();
 }
 
-void Context::render()
-{
-	m_engine->m_scene->render(*this);
-}
 
 void Context::add_manipulation_guizmo(glm::mat4* transform) const
 {

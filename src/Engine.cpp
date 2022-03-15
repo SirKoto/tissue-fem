@@ -119,10 +119,14 @@ void Engine::run()
         ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
         ImGuizmo::BeginFrame();
 
-        gc.update_ui();
-
         // Update global context
         gc.update();
+
+        gc.update_ui();
+
+        m_scene->update_ui(gc);
+        m_scene->update(gc);
+        
 
         // Rendering
         ImGui::Render();
@@ -132,9 +136,9 @@ void Engine::run()
         glClearColor(gc.get_clear_color().x, gc.get_clear_color().y, gc.get_clear_color().z, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // Render the generated model
+        // Render the scene
         glEnable(GL_DEPTH_TEST);
-        gc.render();
+        m_scene->render(gc);
 
         // Render UI
         glDisable(GL_DEPTH_TEST);
