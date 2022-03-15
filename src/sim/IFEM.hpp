@@ -59,6 +59,7 @@ public:
 	virtual void add_constraint(uint32_t node, const glm::vec3& v) = 0;
 
 	virtual void clear_constraints() = 0;
+	virtual void draw_ui() = 0;
 
 	struct MetricTimes {
 		float step = 0.0f;

@@ -1,6 +1,7 @@
 ﻿#include "SimpleFEM.hpp"
 
 #include <iostream>
+#include <imgui.h>
 #include <glm/gtc/constants.hpp>
 
 #include "utils/Timer.hpp"
@@ -83,11 +84,21 @@ void SimpleFem::step(Float dt)
 	// 	   [M - Δt * df/dv - Δt^2 * df/dx] * Δv = Δt * f + Δt^2 * df/dx * v
 	
 	EnergyDensity energy;
+	const EnergyFunction functionType = m_enum_energy;
 	// Add contribution of each element
 	for (size_t i = 0; i < m_elements.size(); ++i) {
 		const Vec4i& element = m_elements[i];
+		const Mat3 F = compute_Ds(element, m_nodes) * m_DmInvs[i];
 		// Compute the energy function
-		energy.HookeanSmith19(compute_Ds(element, m_nodes) * m_DmInvs[i], m_mu, m_lambda);
+		if (functionType == EnergyFunction::HookeanSmith19) {
+			energy.HookeanSmith19(F, m_mu, m_lambda);
+		}
+		else if (functionType == EnergyFunction::Corrotational) {
+			energy.Corrotational(F, m_mu, m_lambda);
+		}
+		else {
+			energy.HookeanBW08(F, m_mu, m_lambda);
+		}
 
 		// Compute force derivative df/dx = -vol * ddPhi/ddx = -vol * ( dF/dx * ddPhi/ddF * dF/dx )
 		const Mat9x12 dFdx = compute_dFdx(m_DmInvs[i]);
@@ -206,6 +217,18 @@ void SimpleFem::pancake()
 	}
 
 	update_objects();
+}
+
+void SimpleFem::draw_ui()
+{
+	ImGui::PushID("SimpleFem");
+	ImGui::Text("Simple Fem Configuration");
+
+	ImGui::Combo("Energy function",
+		reinterpret_cast<int*>(&m_enum_energy),
+		"HookeanSmith19\0Corrotational\0HookeanBW08\0");
+
+	ImGui::PopID();
 }
 
 void SimpleFem::build_sparse_system()

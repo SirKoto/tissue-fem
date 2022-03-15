@@ -93,6 +93,9 @@ void Scene::update_ui(const Context& ctx)
 					if (ImGui::Button("Pancake")) {
 						reinterpret_cast<sim::SimpleFem*>(m_sim.get())->pancake();
 					}
+
+					ImGui::Separator();
+					m_sim->draw_ui();
 				}
 
 

@@ -29,6 +29,8 @@ public:
 
 	void pancake();
 
+	void draw_ui() override final;
+
 private:
 
 	const std::shared_ptr<GameObject> m_obj;
@@ -73,6 +75,13 @@ private:
 	typedef std::array<Float*, 3> SMatPtrs;
 	std::unordered_map<std::pair<uint32_t, uint32_t>, SMatPtrs, hash_pair> m_sparse_cache;
 
+
+	enum class EnergyFunction {
+		HookeanSmith19 = 0,
+		Corrotational = 1,
+		HookeanBW08 = 2,
+	};
+	EnergyFunction m_enum_energy = EnergyFunction::HookeanSmith19;
 
 	void build_sparse_system();
 	void assign_sparse_block(const Eigen::Block<const Mat12, 3, 3>& m, uint32_t i, uint32_t j);
