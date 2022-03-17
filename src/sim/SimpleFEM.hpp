@@ -35,12 +35,15 @@ private:
 
 	const std::shared_ptr<GameObject> m_obj;
 
-	const Float m_node_mass = 1.0f;
-	const Float m_gravity = 9.8f;
-	const Float m_mu = 0.0f;
-	const Float m_lambda = 0.0f;
-	const Float m_alpha_rayleigh = 0.01;
-	const Float m_beta_rayleigh = 0.001;
+	Float m_young;
+	Float m_nu;
+
+	Float m_node_mass = 1.0f;
+	Float m_gravity = 9.8f;
+	Float m_mu = 0.0f;
+	Float m_lambda = 0.0f;
+	Float m_alpha_rayleigh = 0.01;
+	Float m_beta_rayleigh = 0.001;
 
 	Vec m_delta_v;
 	Vec m_v;
@@ -86,6 +89,8 @@ private:
 	void build_sparse_system();
 	void assign_sparse_block(const Eigen::Block<const Mat12, 3, 3>& m, uint32_t i, uint32_t j);
 	void set_system_to_zero();
+
+	void update_lame();
 
 };
 

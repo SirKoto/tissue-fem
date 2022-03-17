@@ -9,9 +9,10 @@
 namespace sim {
 SimpleFem::SimpleFem(std::shared_ptr<GameObject> obj, Float young, Float nu) :
 	m_obj(obj),
-	m_mu(young / (2 + 2 * nu)),
-	m_lambda(young * nu / ((1 + nu) * (1 - 2 * nu)))
+	m_young(young), m_nu(nu)
 {
+	update_lame();
+
 	// Load elements
 	m_elements = m_obj->get_mesh().elements();
 	m_nodes.resize(m_obj->get_mesh().nodes().size());
@@ -65,6 +66,12 @@ void SimpleFem::set_system_to_zero()
 	for (Eigen::Index i = 0; i < m_dfdx_system.nonZeros(); ++i) {
 		m_dfdx_system.valuePtr()[i] = Float(0);
 	}
+}
+
+void SimpleFem::update_lame()
+{
+	m_mu = m_young / (Float(2) + Float(2) * m_nu);
+	m_lambda = (m_young * m_nu / ((Float(1) + m_nu) * (Float(1) - Float(2) * m_nu)));
 }
 
 
@@ -223,6 +230,21 @@ void SimpleFem::draw_ui()
 {
 	ImGui::PushID("SimpleFem");
 	ImGui::Text("Simple Fem Configuration");
+
+	ImGuiDataType dtype = sizeof(Float) == 4 ? ImGuiDataType_Float : ImGuiDataType_Double;
+
+	const Float stepYoung = 100;
+	bool updateLame = ImGui::InputScalar("Young", dtype, &m_young, &stepYoung, nullptr, "%f", ImGuiInputTextFlags_CharsScientific);
+	const Float stepNu = 0.01;
+	updateLame |= ImGui::InputScalar("Nu", dtype, &m_nu, &stepNu, nullptr, "%.3f", ImGuiInputTextFlags_CharsScientific);
+	ImGui::InputScalar("Node mass", dtype, &m_node_mass, nullptr, nullptr, "%f", ImGuiInputTextFlags_CharsScientific);
+	ImGui::Text("Model mass: %f", (float)m_node_mass * (float)m_nodes.size());
+	ImGui::InputScalar("Alpha Rayleigh", dtype, &m_alpha_rayleigh, &stepNu, nullptr, "%f", ImGuiInputTextFlags_CharsScientific);
+	ImGui::InputScalar("Beta Rayleigh", dtype, &m_beta_rayleigh, &stepNu, nullptr, "%f", ImGuiInputTextFlags_CharsScientific);
+
+	if (updateLame) {
+		this->update_lame();
+	}
 
 	ImGui::Combo("Energy function",
 		reinterpret_cast<int*>(&m_enum_energy),
