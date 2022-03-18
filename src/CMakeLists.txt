@@ -21,6 +21,8 @@ add_executable(${PROJECT_NAME}
 
 	utils/Timer.hpp	utils/Timer.cpp
 	utils/CircularBuffer.hpp
+
+	gameObject/Transform.hpp gameObject/Transform.cpp
  )
 
 target_include_directories(${PROJECT_NAME} PRIVATE "./")

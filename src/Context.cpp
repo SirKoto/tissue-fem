@@ -69,9 +69,9 @@ void Context::update_ui()
 					GameObject obj;
 					bool loaded = obj.load_tetgen(file);
 					assert(loaded);
-					obj.translate_model(glm::vec3(0.0f, 2.0f, 0.0f));
-					obj.scale_model(0.01f);
-					obj.rotate_model(glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(180.0f));
+					obj.get_transform().translate(glm::vec3(0.0f, 2.0f, 0.0f));
+					obj.get_transform().scale(0.01f);
+					obj.get_transform().rotate(glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(180.0f));
 					obj.get_mesh().flip_face_orientation();
 					obj.apply_model_transform();
 					m_engine->m_scene->add_gameObject(std::make_shared<GameObject>(std::move(obj)));

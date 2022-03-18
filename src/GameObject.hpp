@@ -4,6 +4,8 @@
 
 #include "meshes/TetMesh.hpp"
 
+#include "gameObject/Transform.hpp"
+
 class Context;
 class GameObject
 {
@@ -11,6 +13,10 @@ public:
 
 	GameObject();
 
+	GameObject(const GameObject&) = delete;
+	GameObject(GameObject&&) = default;
+	GameObject& operator=(const GameObject&) = delete;
+	GameObject& operator=(GameObject&&) = default;
 
 	bool load_tetgen(const std::filesystem::path& path, std::string* out_err = nullptr);
 
@@ -18,16 +24,14 @@ public:
 
 	void update_ui(const Context& gc);
 
-	const glm::mat4& get_model_matrix() const { return m_transform; }
+	const glm::mat4& get_model_matrix() const { return m_transform.mat4(); }
+	const gobj::Transform& get_transform() const { return m_transform; }
+	gobj::Transform& get_transform() { return m_transform; }
 
 	const std::string& get_name() const { return m_name; }
 
 	const TetMesh& get_mesh() const { return m_mesh; }
 	TetMesh& get_mesh() { return m_mesh; }
-
-	void scale_model(float k);
-	void rotate_model(const glm::vec3& axis, float rad);
-	void translate_model(const glm::vec3& v);
 
 	void apply_model_transform();
 
@@ -37,7 +41,7 @@ private:
 
 	TetMesh m_mesh;
 
-	glm::mat4 m_transform = glm::mat4(1.0f);
+	gobj::Transform m_transform;
 
 };
 

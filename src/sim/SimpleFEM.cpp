@@ -231,7 +231,7 @@ void SimpleFem::draw_ui()
 	ImGui::PushID("SimpleFem");
 	ImGui::Text("Simple Fem Configuration");
 
-	ImGuiDataType dtype = sizeof(Float) == 4 ? ImGuiDataType_Float : ImGuiDataType_Double;
+	constexpr ImGuiDataType dtype = sizeof(Float) == 4 ? ImGuiDataType_Float : ImGuiDataType_Double;
 
 	const Float stepYoung = 100;
 	bool updateLame = ImGui::InputScalar("Young", dtype, &m_young, &stepYoung, nullptr, "%f", ImGuiInputTextFlags_CharsScientific);
