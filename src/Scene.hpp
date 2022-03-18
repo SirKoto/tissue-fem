@@ -28,6 +28,7 @@ public:
 	}
 
 	const Camera& camera() const { return m_camera; }
+	Camera& camera() { return m_camera; }
 
 	void add_gameObject(std::shared_ptr<GameObject>& obj);
 

@@ -25,7 +25,7 @@ public:
 
 	void update();
 
-	void update_ui();
+	void draw_ui();
 
 	const glm::vec3& get_clear_color() const {
 		return m_engine->m_scene->get_clear_color();

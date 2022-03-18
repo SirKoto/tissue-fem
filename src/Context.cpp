@@ -43,7 +43,7 @@ void Context::update()
 	}
 }
 
-void Context::update_ui()
+void Context::draw_ui()
 {
 	// Add more information to menu bar
 	if (ImGui::BeginMainMenuBar())
@@ -144,7 +144,7 @@ void Context::update_ui()
 
 	if (m_show_camera_window) {
 		if (ImGui::Begin("Camera", &m_show_camera_window)) {
-			m_engine->m_scene->camera().render_ui_const();
+			m_engine->m_scene->camera().draw_ui();
 		}
 		ImGui::End();
 	}

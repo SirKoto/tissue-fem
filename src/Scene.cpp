@@ -64,7 +64,7 @@ void Scene::update_ui(const Context& ctx)
 		ImGui::SetNextWindowSize(ImVec2(350, 280), ImGuiCond_FirstUseEver);
 		if (ImGui::Begin(buff, &m_show_inspector_window)) {
 			if (m_selected_object != m_gameObjects.end()) {
-				(*m_selected_object)->update_ui(ctx);
+				(*m_selected_object)->render_ui(ctx);
 			}
 		}
 		ImGui::End();

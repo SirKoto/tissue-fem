@@ -122,7 +122,7 @@ void Engine::run()
         // Update global context
         gc.update();
 
-        gc.update_ui();
+        gc.draw_ui();
 
         m_scene->update_ui(gc);
         m_scene->update(gc);

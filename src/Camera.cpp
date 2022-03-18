@@ -4,6 +4,7 @@
 #include <ImGuizmo.h>
 #include <GLFW/glfw3.h>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 
 Camera::Camera() : mPosition(5,5,15), mFront(0,0,-1), 
@@ -56,7 +57,7 @@ void Camera::update()
 
 	// zoom
 	mZoom -= io.MouseWheel;
-	mZoom = glm::clamp(mZoom, 1.0f, 45.0f);
+	mZoom = glm::clamp(mZoom, 30.0f, 90.0f);
 
 	// Update matrices
 	this->computeProjView();
@@ -76,16 +77,27 @@ void Camera::computeProjView()
 	mProjView = mProj * mView;
 }
 
-void Camera::render_ui_const() const
+void Camera::draw_ui()
 {
-	ImGui::Text("Position (%.3f, %.3f, %.3f)", mPosition.x, mPosition.y, mPosition.z);
+	ImGui::PushID("Camera");
+
+	bool update = false;
+	update |= ImGui::DragFloat3("Position", glm::value_ptr(mPosition));
+	update |= ImGui::DragFloat("Yaw", &mYaw, 1.0f);
+	update |= ImGui::DragFloat("Pitch", &mPitch, 1.0f);
+	update |= ImGui::DragFloat("Zoom", &mZoom, 1.0f, 30.0f, 90.0f);
+
 	ImGui::Text("Front (%.3f, %.3f, %.3f)", mFront.x, mFront.y, mFront.z);
 	ImGui::Text("Up (%.3f, %.3f, %.3f)", mUp.x, mUp.y, mUp.z);
 	ImGui::Text("Right (%.3f, %.3f, %.3f)", mRight.x, mRight.y, mRight.z);
-	ImGui::Text("Yaw %.f", mYaw);
-	ImGui::Text("Pitch %.f", mPitch);
-	ImGui::Text("Zoom %.f", mZoom);
+	
 
+	ImGui::PopID();
+
+	if (update) {
+		this->updateCameraVectors();
+		this->computeProjView();
+	}
 }
 
 void Camera::updateCameraVectors()

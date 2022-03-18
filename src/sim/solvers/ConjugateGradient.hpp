@@ -24,7 +24,7 @@ private:
 	Vec m_Adir;
 	Vec m_A_res_precond;
 
-	static void apply_jacobi_precond(const SMat& A, const Vec&b, Vec* x);
+	void apply_jacobi_precond(const SMat& A, const Vec&b, Vec* x) const;
 
 }; // class ConjugateGradient
 

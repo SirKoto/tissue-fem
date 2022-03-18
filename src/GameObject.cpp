@@ -30,7 +30,7 @@ void GameObject::draw() const
 	m_mesh.draw_triangles();
 }
 
-void GameObject::update_ui(const Context& gc)
+void GameObject::render_ui(const Context& gc)
 {
 	ImGui::PushID(this);
 

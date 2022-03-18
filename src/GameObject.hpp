@@ -22,7 +22,7 @@ public:
 
 	void draw() const;
 
-	void update_ui(const Context& gc);
+	void render_ui(const Context& gc);
 
 	const glm::mat4& get_model_matrix() const { return m_transform.mat4(); }
 	const gobj::Transform& get_transform() const { return m_transform; }

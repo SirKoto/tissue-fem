@@ -63,11 +63,11 @@ void ConjugateGradient::solve(const SMat& A, const Vec& b, Vec* x_)
 	}
 }
 
-void ConjugateGradient::apply_jacobi_precond(const SMat& A, const Vec& b, Vec* x_)
+void ConjugateGradient::apply_jacobi_precond(const SMat& A, const Vec& b, Vec* x_) const
 {
 	assert(x_ != nullptr);
 	Vec& x = *x_;
-	assert(A.rows() == m_residual.rows());
+	assert(A.rows() == this->m_residual.rows());
 	assert(A.cols() == m_residual.rows());
 	assert(b.rows() == m_residual.rows());
 	assert(x.rows() == m_residual.rows());
