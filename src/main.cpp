@@ -1,6 +1,6 @@
 #include "Engine.hpp"
 
-int main(){
+int main() {
     
     Engine engine;
 

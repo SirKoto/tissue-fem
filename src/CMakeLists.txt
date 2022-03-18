@@ -7,6 +7,7 @@ add_executable(${PROJECT_NAME}
 	Camera.hpp			Camera.cpp
 	GameObject.hpp		GameObject.cpp
 	Scene.hpp			Scene.cpp
+	Engine.hpp			Engine.cpp
 
 	meshes/TetMesh.hpp	meshes/TetMesh.cpp
 
