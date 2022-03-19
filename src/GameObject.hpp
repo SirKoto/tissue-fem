@@ -5,6 +5,7 @@
 #include "meshes/TetMesh.hpp"
 
 #include "gameObject/Transform.hpp"
+#include "gameObject/Addon.hpp"
 
 class Context;
 class GameObject
@@ -42,6 +43,8 @@ private:
 	TetMesh m_mesh;
 
 	gobj::Transform m_transform;
+
+	std::list<std::unique_ptr<gobj::Addon>> m_addons;
 
 };
 

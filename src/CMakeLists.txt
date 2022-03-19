@@ -23,6 +23,8 @@ add_executable(${PROJECT_NAME}
 	utils/CircularBuffer.hpp
 
 	gameObject/Transform.hpp gameObject/Transform.cpp
+	gameObject/ElasticSim.hpp gameObject/ElasticSim.cpp
+	gameObject/Addon.hpp
  )
 
 target_include_directories(${PROJECT_NAME} PRIVATE "./")
