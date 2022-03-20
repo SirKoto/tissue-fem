@@ -24,7 +24,6 @@ void Transform::draw_ui(const Context& gc)
 
 	gc.add_manipulation_guizmo(&m_transform);
 
-	ImGui::Separator();
 	ImGui::PopID();
 }
 

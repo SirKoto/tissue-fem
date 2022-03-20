@@ -7,6 +7,7 @@
 #include <imgui.h>
 #include <ImGuizmo.h>
 
+#include "gameObject/ElasticSim.hpp"
 #include "Context.hpp"
 
 GameObject::GameObject()
@@ -33,27 +34,67 @@ void GameObject::draw() const
 void GameObject::render_ui(const Context& gc)
 {
 	ImGui::PushID(this);
-
-	m_transform.draw_ui(gc);
-
-	ImGui::Separator();
-
-	if (ImGui::Button("Apply transform to model")) {
-		apply_model_transform();
-	}
-	if (ImGui::Button("Flip face orientation")) {
-		m_mesh.flip_face_orientation();
-	}
-	if (ImGui::Button("Recompute normals")) {
-		m_mesh.generate_normals();
-		m_mesh.upload_to_gpu();
+	ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+	if (ImGui::TreeNode("Transform##transform")) {
+		m_transform.draw_ui(gc);
+		ImGui::TreePop();
 	}
 
 	ImGui::Separator();
 
-	for (const auto& addon : m_addons) {
-		addon->render_ui(gc, this);
-		ImGui::Separator();
+	if (ImGui::TreeNode("Mesh ops##mesh ops")) {
+		if (ImGui::Button("Apply transform to model")) {
+			apply_model_transform();
+		}
+		if (ImGui::Button("Flip face orientation")) {
+			m_mesh.flip_face_orientation();
+		}
+		if (ImGui::Button("Recompute normals")) {
+			m_mesh.generate_normals();
+			m_mesh.upload_to_gpu();
+		}
+		ImGui::TreePop();
+	}
+
+	ImGui::Separator();
+
+	decltype(m_addons)::iterator it_addon = m_addons.begin();
+	while(it_addon != m_addons.end()){
+		std::unique_ptr<gobj::Addon>& addon = *it_addon;
+		ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+		bool is_open = ImGui::TreeNode((void*)addon.get(), addon->get_name());
+		// Item context menu
+		if (ImGui::BeginPopupContextItem()) {
+			if (ImGui::Selectable("Remove")) {
+				it_addon = m_addons.erase(it_addon);
+					ImGui::EndPopup();
+					if (is_open) {
+						ImGui::TreePop();
+					}
+					continue;
+			}
+			ImGui::EndPopup();
+		}
+
+		// Body of the tree node
+		if(is_open){
+			addon->render_ui(gc, this);
+			ImGui::Separator();
+			ImGui::TreePop();
+		}
+		
+
+		++it_addon;
+	}
+
+	// Add addon
+	ImGui::Button("Add addon");
+	if (ImGui::BeginPopupContextItem(0, ImGuiPopupFlags_None)) {
+		if (ImGui::Selectable("Elastic Simulator")) {
+			this->add_addon<gobj::ElasticSim>();
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::EndPopup();
 	}
 
 	ImGui::PopID();

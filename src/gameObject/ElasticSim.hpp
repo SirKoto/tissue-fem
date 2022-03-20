@@ -15,6 +15,7 @@ public:
 
 	void render_ui(const Context& ctx, GameObject* parent) override final;
 	void update(const Context& ctx, GameObject* parent) override final;
+	const char* get_name() const { return "Elastic Simulator"; };
 
 private:
 	std::unique_ptr<sim::IFEM> m_sim;
