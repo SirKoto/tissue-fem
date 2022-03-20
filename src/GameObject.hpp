@@ -1,9 +1,9 @@
 #pragma once
 
 #include <glm/glm.hpp>
+#include <memory>
 
 #include "meshes/TetMesh.hpp"
-
 #include "gameObject/Transform.hpp"
 #include "gameObject/Addon.hpp"
 
@@ -25,6 +25,8 @@ public:
 
 	void render_ui(const Context& gc);
 
+	void update(const Context& gc);
+
 	const glm::mat4& get_model_matrix() const { return m_transform.mat4(); }
 	const gobj::Transform& get_transform() const { return m_transform; }
 	gobj::Transform& get_transform() { return m_transform; }
@@ -35,6 +37,9 @@ public:
 	TetMesh& get_mesh() { return m_mesh; }
 
 	void apply_model_transform();
+
+	template<typename T>
+	T* add_addon();
 
 private:
 
@@ -48,3 +53,11 @@ private:
 
 };
 
+template<typename T>
+inline T* GameObject::add_addon()
+{
+	T* ptr = new T();
+	std::unique_ptr<gobj::Addon> addon(ptr);
+	m_addons.push_back(std::move(addon));
+	return ptr;
+}

@@ -4,10 +4,11 @@
 
 #include "Addon.hpp"
 #include "sim/IFEM.hpp"
+#include "utils/CircularBuffer.hpp"
 
 namespace gobj {
 
-class ElasticSim : Addon {
+class ElasticSim : public Addon {
 public:
 
 	ElasticSim();
@@ -17,6 +18,13 @@ public:
 
 private:
 	std::unique_ptr<sim::IFEM> m_sim;
+
+	bool m_run_simulation = false;
+	bool m_show_simulation_metrics = false;
+
+	// Metrics
+	CircularBuffer<std::pair<float, sim::IFEM::MetricTimes>> m_metric_times_buffer;
+	float m_metrics_past_seconds = 20.0f;
 };
 
 } // namespace gobj

@@ -42,16 +42,11 @@ private:
 	std::list<std::shared_ptr<GameObject>> m_gameObjects;
 	std::list<std::shared_ptr<GameObject>>::iterator m_selected_object;
 
-	// Simulatior
-	std::unique_ptr<sim::IFEM> m_sim;
-	bool m_run_simulation = false;
 	// UI
 	bool m_show_inspector_window = false;
 	bool m_show_simulation_window = true;
 	bool m_show_simulation_metrics = true;
 
-	// Metrics
-	CircularBuffer<std::pair<float, sim::IFEM::MetricTimes>> m_metric_times_buffer;
-	float m_metrics_past_seconds = 20.0f;
+	
 };
 

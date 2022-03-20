@@ -17,7 +17,7 @@ namespace sim {
 class SimpleFem : public IFEM {
 public:
 
-	SimpleFem(std::shared_ptr<GameObject> obj, Float young, Float nu);
+	SimpleFem(GameObject* obj, Float young, Float nu);
 
 	void step(Float dt) override final;
 
@@ -33,7 +33,7 @@ public:
 
 private:
 
-	const std::shared_ptr<GameObject> m_obj;
+	GameObject* m_obj;
 
 	Float m_young;
 	Float m_nu;

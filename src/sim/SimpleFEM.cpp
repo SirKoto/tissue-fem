@@ -7,7 +7,7 @@
 #include "utils/Timer.hpp"
 
 namespace sim {
-SimpleFem::SimpleFem(std::shared_ptr<GameObject> obj, Float young, Float nu) :
+SimpleFem::SimpleFem(GameObject* obj, Float young, Float nu) :
 	m_obj(obj),
 	m_young(young), m_nu(nu)
 {

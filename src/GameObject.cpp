@@ -36,6 +36,8 @@ void GameObject::render_ui(const Context& gc)
 
 	m_transform.draw_ui(gc);
 
+	ImGui::Separator();
+
 	if (ImGui::Button("Apply transform to model")) {
 		apply_model_transform();
 	}
@@ -47,7 +49,21 @@ void GameObject::render_ui(const Context& gc)
 		m_mesh.upload_to_gpu();
 	}
 
+	ImGui::Separator();
+
+	for (const auto& addon : m_addons) {
+		addon->render_ui(gc, this);
+		ImGui::Separator();
+	}
+
 	ImGui::PopID();
+}
+
+void GameObject::update(const Context& gc)
+{
+	for (const auto& addon : m_addons) {
+		addon->update(gc, this);
+	}
 }
 
 void GameObject::apply_model_transform()

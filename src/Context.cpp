@@ -11,6 +11,7 @@
 #include <chrono>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "gameObject/ElasticSim.hpp"
 #include "meshes/TetMesh.hpp"
 #include "sim/SimpleFEM.hpp"
 
@@ -74,6 +75,7 @@ void Context::draw_ui()
 					obj.get_transform().rotate(glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(180.0f));
 					obj.get_mesh().flip_face_orientation();
 					obj.apply_model_transform();
+					obj.add_addon<gobj::ElasticSim>();
 					m_engine->m_scene->add_gameObject(std::make_shared<GameObject>(std::move(obj)));
 				}
 				ImGui::EndMenu();
