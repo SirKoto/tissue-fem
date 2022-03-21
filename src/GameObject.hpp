@@ -15,13 +15,13 @@ public:
 	GameObject();
 
 	GameObject(const GameObject&) = delete;
-	GameObject(GameObject&&) = default;
+	GameObject(GameObject&&) noexcept = default;
 	GameObject& operator=(const GameObject&) = delete;
 	GameObject& operator=(GameObject&&) = default;
 
 	bool load_tetgen(const std::filesystem::path& path, std::string* out_err = nullptr);
 
-	void draw() const;
+	void render() const;
 
 	void render_ui(const Context& gc);
 
@@ -33,8 +33,8 @@ public:
 
 	const std::string& get_name() const { return m_name; }
 
-	const TetMesh& get_mesh() const { return m_mesh; }
-	TetMesh& get_mesh() { return m_mesh; }
+	const std::shared_ptr<TetMesh>& get_mesh() const { return m_mesh; }
+	std::shared_ptr<TetMesh>& get_mesh() { return m_mesh; }
 
 	void apply_model_transform();
 
@@ -45,7 +45,7 @@ private:
 
 	std::string m_name;
 
-	TetMesh m_mesh;
+	std::shared_ptr<TetMesh> m_mesh;
 
 	gobj::Transform m_transform;
 

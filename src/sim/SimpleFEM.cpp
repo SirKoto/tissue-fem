@@ -7,17 +7,18 @@
 #include "utils/Timer.hpp"
 
 namespace sim {
-SimpleFem::SimpleFem(GameObject* obj, Float young, Float nu) :
-	m_obj(obj),
+SimpleFem::SimpleFem(const std::shared_ptr<TetMesh>& mesh, Float young, Float nu) :
+	m_mesh(mesh),
 	m_young(young), m_nu(nu)
 {
+	assert(mesh);
 	update_lame();
 
 	// Load elements
-	m_elements = m_obj->get_mesh().elements();
-	m_nodes.resize(m_obj->get_mesh().nodes().size());
+	m_elements = mesh->elements();
+	m_nodes.resize(mesh->nodes().size());
 	for (size_t i = 0; i < m_nodes.size(); ++i) {
-		m_nodes[i] = m_obj->get_mesh().nodes()[i].cast<Float>();
+		m_nodes[i] = mesh->nodes()[i].cast<Float>();
 	}
 
 	// Precompute volumes and matrix to build the deformation gradient
@@ -201,10 +202,15 @@ void SimpleFem::step(Float dt)
 
 void SimpleFem::update_objects()
 {
-	for (size_t i = 0; i < m_nodes.size(); ++i) {
-		m_obj->get_mesh().update_node(i, m_nodes[i].cast<float>());
+	if (m_mesh.expired()) {
+		return;
 	}
-	m_obj->get_mesh().upload_to_gpu(true, false);
+	std::shared_ptr<TetMesh> mesh = m_mesh.lock();
+
+	for (size_t i = 0; i < m_nodes.size(); ++i) {
+		mesh->update_node(i, m_nodes[i].cast<float>());
+	}
+	mesh->upload_to_gpu(true, false);
 }
 
 void SimpleFem::add_constraint(uint32_t node, const glm::vec3& v)

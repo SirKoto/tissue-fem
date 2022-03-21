@@ -94,7 +94,7 @@ void ElasticSim::render_ui(const Context& ctx, GameObject* parent)
 void ElasticSim::update(const Context& ctx, GameObject* parent)
 {
 	if (!m_sim) {
-		m_sim = std::make_unique<sim::SimpleFem>(parent, 100000.0, 0.2);
+		m_sim = std::make_unique<sim::SimpleFem>(parent->get_mesh(), 100000.0, 0.2);
 	}
 }
 

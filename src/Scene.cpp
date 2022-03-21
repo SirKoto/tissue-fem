@@ -98,7 +98,7 @@ void Scene::render(const Context& ctx)
 	glUniformMatrix4fv(2, 1, GL_FALSE, glm::value_ptr(view_proj_mat));
 
 	for (const std::shared_ptr<GameObject>& obj : m_gameObjects) {
-		obj->draw();
+		obj->render();
 	}
 }
 

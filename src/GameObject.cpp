@@ -17,18 +17,18 @@ GameObject::GameObject()
 bool GameObject::load_tetgen(const std::filesystem::path& path, std::string* out_err)
 {
 	m_name = path.stem().string();
-
-	return m_mesh.load_tetgen(path, out_err);;
+	m_mesh = std::make_shared<TetMesh>();
+	return m_mesh->load_tetgen(path, out_err);;
 }
 
-void GameObject::draw() const
+void GameObject::render() const
 {
 	glm::mat4 model = get_model_matrix();
 	glm::mat3 inv_t = glm::transpose(glm::inverse(glm::mat3(model)));
 	glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(model));
 	glUniformMatrix3fv(1, 1, GL_FALSE, glm::value_ptr(glm::mat3(inv_t)));
 
-	m_mesh.draw_triangles();
+	m_mesh->draw_triangles();
 }
 
 void GameObject::render_ui(const Context& gc)
@@ -47,11 +47,11 @@ void GameObject::render_ui(const Context& gc)
 			apply_model_transform();
 		}
 		if (ImGui::Button("Flip face orientation")) {
-			m_mesh.flip_face_orientation();
+			m_mesh->flip_face_orientation();
 		}
 		if (ImGui::Button("Recompute normals")) {
-			m_mesh.generate_normals();
-			m_mesh.upload_to_gpu();
+			m_mesh->generate_normals();
+			m_mesh->upload_to_gpu();
 		}
 		ImGui::TreePop();
 	}
@@ -109,6 +109,6 @@ void GameObject::update(const Context& gc)
 
 void GameObject::apply_model_transform()
 {
-	m_mesh.apply_transform(get_model_matrix());
+	m_mesh->apply_transform(get_model_matrix());
 	m_transform.set_identity();
 }

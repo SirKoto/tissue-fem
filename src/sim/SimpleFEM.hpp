@@ -6,8 +6,10 @@
 #include <Eigen/Dense>
 
 #include <array>
+#include <memory>
 
 #include "GameObject.hpp"
+#include "meshes/TetMesh.hpp"
 #include "solvers/ConjugateGradient.hpp"
 
 
@@ -17,7 +19,7 @@ namespace sim {
 class SimpleFem : public IFEM {
 public:
 
-	SimpleFem(GameObject* obj, Float young, Float nu);
+	SimpleFem(const std::shared_ptr<TetMesh>& mesh, Float young, Float nu);
 
 	void step(Float dt) override final;
 
@@ -33,7 +35,7 @@ public:
 
 private:
 
-	GameObject* m_obj;
+	std::weak_ptr<TetMesh> m_mesh;
 
 	Float m_young;
 	Float m_nu;
