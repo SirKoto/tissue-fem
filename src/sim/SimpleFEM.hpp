@@ -44,8 +44,8 @@ private:
 	Float m_gravity = 9.8f;
 	Float m_mu = 0.0f;
 	Float m_lambda = 0.0f;
-	Float m_alpha_rayleigh = 0.01;
-	Float m_beta_rayleigh = 0.001;
+	Float m_alpha_rayleigh = 0.01f;
+	Float m_beta_rayleigh = 0.001f;
 
 	Vec m_delta_v;
 	Vec m_v;

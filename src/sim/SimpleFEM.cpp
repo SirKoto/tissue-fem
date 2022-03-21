@@ -239,9 +239,9 @@ void SimpleFem::draw_ui()
 
 	constexpr ImGuiDataType dtype = sizeof(Float) == 4 ? ImGuiDataType_Float : ImGuiDataType_Double;
 
-	const Float stepYoung = 100;
+	const Float stepYoung = 100.f;
 	bool updateLame = ImGui::InputScalar("Young", dtype, &m_young, &stepYoung, nullptr, "%f", ImGuiInputTextFlags_CharsScientific);
-	const Float stepNu = 0.01;
+	const Float stepNu = 0.01f;
 	updateLame |= ImGui::InputScalar("Nu", dtype, &m_nu, &stepNu, nullptr, "%.3f", ImGuiInputTextFlags_CharsScientific);
 	ImGui::InputScalar("Node mass", dtype, &m_node_mass, nullptr, nullptr, "%f", ImGuiInputTextFlags_CharsScientific);
 	ImGui::Text("Model mass: %f", (float)m_node_mass * (float)m_nodes.size());

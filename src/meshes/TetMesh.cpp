@@ -15,8 +15,10 @@ TetMesh::TetMesh()
 TetMesh::TetMesh(TetMesh&& o)
 {
 	m_vertices = std::move(o.m_vertices);
+	m_surface_vertices = std::move(o.m_surface_vertices);
 	m_surface_faces = std::move(o.m_surface_faces);
 	m_surface_vertices_normals = std::move(o.m_surface_vertices_normals);
+	m_global_to_local_surface_vertex = std::move(o.m_global_to_local_surface_vertex);
 	m_elements = std::move(o.m_elements);
 
 	m_vao = o.m_vao;
@@ -156,6 +158,7 @@ bool TetMesh::load_tetgen(std::filesystem::path path, std::string* out_err)
 	}
 	stream.close();
 
+	this->create_surface_faces();
 	this->generate_normals();
 
 	this->upload_to_gpu();
@@ -167,8 +170,8 @@ void TetMesh::upload_to_gpu(bool dynamic_verts, bool dynamic_indices) const
 {
 	glBindBuffer(GL_ARRAY_BUFFER, m_vbo_vertices);
 	glBufferData(GL_ARRAY_BUFFER,
-		m_vertices.size() * sizeof(Eigen::Vector3f),
-		m_vertices.data(),
+		m_surface_vertices.size() * sizeof(Eigen::Vector3f),
+		m_surface_vertices.data(),
 		dynamic_verts ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ARRAY_BUFFER, m_vbo_normals);
@@ -196,6 +199,10 @@ void TetMesh::apply_transform(const glm::mat4& m)
 
 	for (glm::vec3& v : vertices) {
 		v = glm::vec3(m * glm::vec4(v, 1.0f));
+	}
+
+	for (const auto& it : m_global_to_local_surface_vertex) {
+		m_surface_vertices[it.second] = m_vertices[it.first];
 	}
 
 	this->upload_to_gpu();
@@ -238,6 +245,32 @@ void TetMesh::gl_bind_to_vao() const
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_vbo_indices);
 }
 
+void TetMesh::create_surface_faces()
+{
+	m_global_to_local_surface_vertex.clear();
+	// Convert surface faces global indices to local
+	for (Eigen::Vector3i& face : m_surface_faces) {
+		for (uint32_t i = 0; i < 3; ++i) {
+			const int32_t vertex = face[i];
+			auto it = m_global_to_local_surface_vertex.find(vertex);
+			int32_t new_id = (int32_t)m_global_to_local_surface_vertex.size();
+			if (it == m_global_to_local_surface_vertex.end()) {
+				m_global_to_local_surface_vertex.emplace(
+					vertex, new_id);
+			}
+			else {
+				new_id = it->second;
+			}
+			face[i] = new_id;
+		}
+	}
+
+	m_surface_vertices.resize(m_global_to_local_surface_vertex.size());
+	for (const auto& it : m_global_to_local_surface_vertex) {
+		m_surface_vertices[it.second] = m_vertices[it.first];
+	}
+}
+
 void TetMesh::clear()
 {
 	m_vertices.clear();
@@ -249,28 +282,28 @@ void TetMesh::clear()
 void TetMesh::generate_normals()
 {
 	m_surface_vertices_normals.clear();
-	m_surface_vertices_normals.resize(m_vertices.size());
+	m_surface_vertices_normals.resize(m_surface_vertices.size());
 
 	// Compute the planes of all triangles
 	std::vector<Eigen::Vector3f> triangleNormals(m_surface_faces.size());
 	for (uint32_t t = 0; t < (uint32_t)m_surface_faces.size(); ++t) {
-		const Eigen::Vector3f& v0 = m_vertices[m_surface_faces[t][0]];
-		const Eigen::Vector3f& v1 = m_vertices[m_surface_faces[t][1]];
-		const Eigen::Vector3f& v2 = m_vertices[m_surface_faces[t][2]];
+		const Eigen::Vector3f& v0 = m_surface_vertices[m_surface_faces[t][0]];
+		const Eigen::Vector3f& v1 = m_surface_vertices[m_surface_faces[t][1]];
+		const Eigen::Vector3f& v2 = m_surface_vertices[m_surface_faces[t][2]];
 
 		Eigen::Vector3f n = (v1 - v0).cross(v2 - v0);
 		triangleNormals[t] = n.normalized();
 	}
 
 	// Compute V:{F}
-	std::vector<std::vector<uint32_t>> vert2faces(m_vertices.size());
-	std::vector<uint32_t> vertexArity(m_vertices.size(), 0);
+	std::vector<std::vector<uint32_t>> vert2faces(m_surface_vertices.size());
+	std::vector<uint32_t> vertexArity(m_surface_vertices.size(), 0);
 	for (uint32_t t = 0; t < (uint32_t)m_surface_faces.size(); ++t) {
 		vertexArity[m_surface_faces[t][0]] += 1;
 		vertexArity[m_surface_faces[t][1]] += 1;
 		vertexArity[m_surface_faces[t][2]] += 1;
 	}
-	for (uint32_t v = 0; v < (uint32_t)m_vertices.size(); ++v) {
+	for (uint32_t v = 0; v < (uint32_t)m_surface_vertices.size(); ++v) {
 		vert2faces[v].reserve(vertexArity[v]);
 	}
 	for (uint32_t t = 0; t < (uint32_t)m_surface_faces.size(); ++t) {

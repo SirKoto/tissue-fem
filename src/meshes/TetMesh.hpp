@@ -4,6 +4,7 @@
 #include <Eigen/Dense>
 #include <glm/glm.hpp>
 #include <filesystem>
+#include <map>
 
 class TetMesh
 {
@@ -40,9 +41,12 @@ public:
 private:
 
 	std::vector<Eigen::Vector3f> m_vertices;
+	std::vector<Eigen::Vector3f> m_surface_vertices;
 	std::vector<Eigen::Vector3i> m_surface_faces;
 	std::vector<Eigen::Vector3f> m_surface_vertices_normals;
 	std::vector<Eigen::Vector4i> m_elements;
+
+	std::map<int32_t, int32_t> m_global_to_local_surface_vertex;
 
 	uint32_t m_vao;
 	union
@@ -56,4 +60,6 @@ private:
 	};
 
 	void gl_bind_to_vao() const;
+
+	void create_surface_faces();
 };
