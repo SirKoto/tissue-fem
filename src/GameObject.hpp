@@ -32,6 +32,7 @@ public:
 	gobj::Transform& get_transform() { return m_transform; }
 
 	const std::string& get_name() const { return m_name; }
+	std::string& get_name() { return m_name; }
 
 	const std::shared_ptr<TetMesh>& get_mesh() const { return m_mesh; }
 	std::shared_ptr<TetMesh>& get_mesh() { return m_mesh; }

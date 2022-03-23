@@ -67,11 +67,11 @@ void GameObject::render_ui(const Context& gc)
 		if (ImGui::BeginPopupContextItem()) {
 			if (ImGui::Selectable("Remove")) {
 				it_addon = m_addons.erase(it_addon);
-					ImGui::EndPopup();
-					if (is_open) {
-						ImGui::TreePop();
-					}
-					continue;
+				ImGui::EndPopup();
+				if (is_open) {
+					ImGui::TreePop();
+				}
+				continue;
 			}
 			ImGui::EndPopup();
 		}

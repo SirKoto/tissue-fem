@@ -6,7 +6,9 @@
 #include <glad/glad.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <imgui.h>
+#include <imgui_stdlib.h>
 #include <implot.h>
+#include <sstream>
 
 Scene::Scene() :
 	m_clear_color(0.45f, 0.55f, 0.60f)
@@ -54,6 +56,7 @@ void Scene::update_ui(const Context& ctx)
 
 		if (ImGui::BeginMenu("View"))
 		{
+			ImGui::Checkbox("GameObjects Window", &m_show_objects_window);
 			ImGui::Checkbox("Inspector Window", &m_show_inspector_window);
 			ImGui::Checkbox("Simulation Window", &m_show_simulation_window);
 			ImGui::Checkbox("Simulation Metrics", &m_show_simulation_metrics);
@@ -62,10 +65,48 @@ void Scene::update_ui(const Context& ctx)
 		ImGui::EndMainMenuBar();
 	}
 
+	if (m_show_objects_window) {
+		ImGui::SetNextWindowSize(ImVec2(250, 280), ImGuiCond_FirstUseEver);
+		if (ImGui::Begin("GameObjects", &m_show_objects_window)) {
+			std::list<std::shared_ptr<GameObject>>::iterator it = m_gameObjects.begin();
+			std::stringstream ss;
+			while (it != m_gameObjects.end()) {
+				ss.clear(); ss.str(std::string());
+				ss << (*it)->get_name() << "####obj";
+				ss << static_cast<const void*>(it->get());
+				if (ImGui::Selectable(ss.str().c_str(), it == m_selected_object)) {
+					m_selected_object = it;
+					m_show_inspector_window = true;
+				}
+				if (ImGui::BeginPopupContextItem()) {
+					
+					ImGui::Text("Rename GameObject:");
+					ImGui::InputText("####textRename", &(*it)->get_name());
+
+					ImGui::Separator();
+					if (ImGui::Button("Remove")) {
+						if (m_selected_object == it) {
+							m_selected_object = m_gameObjects.end();
+						}
+						it = m_gameObjects.erase(it);
+						continue;
+					}
+					ImGui::EndPopup();
+				}
+				++it;
+			}
+		}
+		ImGui::End();
+	}
+
 	if (m_show_inspector_window) {
 		char buff[128];
 		std::snprintf(buff, 128, "Inspector -- %s###InspectorWin", (m_selected_object != m_gameObjects.end()) ? (*m_selected_object)->get_name().c_str() : "");
-		ImGui::SetNextWindowSize(ImVec2(350, 280), ImGuiCond_FirstUseEver);
+		ImGui::SetNextWindowSize(ImVec2(350, 0), ImGuiCond_FirstUseEver);
+		const ImGuiViewport* main_viewport = ImGui::GetMainViewport();
+		ImGui::SetNextWindowPos(ImVec2(
+			main_viewport->WorkPos.x + main_viewport->WorkSize.x - 400,
+			main_viewport->WorkPos.y + 40), ImGuiCond_FirstUseEver);
 		if (ImGui::Begin(buff, &m_show_inspector_window)) {
 			if (m_selected_object != m_gameObjects.end()) {
 				(*m_selected_object)->render_ui(ctx);

@@ -43,6 +43,7 @@ private:
 	std::list<std::shared_ptr<GameObject>>::iterator m_selected_object;
 
 	// UI
+	bool m_show_objects_window = true;
 	bool m_show_inspector_window = false;
 	bool m_show_simulation_window = true;
 	bool m_show_simulation_metrics = true;
