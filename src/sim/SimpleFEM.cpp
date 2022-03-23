@@ -207,7 +207,7 @@ void SimpleFem::update_objects()
 	}
 	std::shared_ptr<TetMesh> mesh = m_mesh.lock();
 
-	for (size_t i = 0; i < m_nodes.size(); ++i) {
+	for (int32_t i = 0; i < (int32_t)m_nodes.size(); ++i) {
 		mesh->update_node(i, m_nodes[i].cast<float>());
 	}
 	mesh->upload_to_gpu(true, false);

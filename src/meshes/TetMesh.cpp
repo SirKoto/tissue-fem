@@ -279,6 +279,17 @@ void TetMesh::clear()
 	m_elements.clear();
 }
 
+void TetMesh::update_node(int32_t idx, const Eigen::Vector3f& pos)
+{
+	m_vertices.at(idx) = pos;
+	const std::map<int32_t, int32_t>::const_iterator it = 
+		m_global_to_local_surface_vertex.find((int32_t)idx);
+
+	if (it != m_global_to_local_surface_vertex.end()) {
+		m_surface_vertices[it->second] = pos;
+	}
+}
+
 void TetMesh::generate_normals()
 {
 	m_surface_vertices_normals.clear();

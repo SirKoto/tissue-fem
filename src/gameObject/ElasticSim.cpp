@@ -21,14 +21,8 @@ void ElasticSim::render_ui(const Context& ctx, GameObject* parent)
 	m_sim->draw_ui();
 
 	ImGui::Checkbox("Keep running", &m_run_simulation);
-	if (ImGui::Button("Step simulator") || m_run_simulation) {
-		float dt = ctx.delta_time();
-		glm::vec3 dir(std::cos(ctx.get_time()), 0.0f, 0.0f);
-		for (uint32_t i = 0; i < 3; ++i)
-			m_sim->add_constraint(i, dir);
-		m_sim->step((sim::Float)dt);
-
-		m_sim->update_objects();
+	if (ImGui::Button("Step simulator")) {
+		m_step_once = true;
 	}
 	if (ImGui::Button("Pancake")) {
 		reinterpret_cast<sim::SimpleFem*>(m_sim.get())->pancake();
@@ -95,6 +89,18 @@ void ElasticSim::update(const Context& ctx, GameObject* parent)
 {
 	if (!m_sim) {
 		m_sim = std::make_unique<sim::SimpleFem>(parent->get_mesh(), 100000.0f, 0.2f);
+	}
+
+	if(m_step_once || m_run_simulation) {
+		float dt = ctx.delta_time();
+		glm::vec3 dir(std::cos(ctx.get_time()), 0.0f, 0.0f);
+		for (uint32_t i = 0; i < 3; ++i)
+			m_sim->add_constraint(i, dir);
+		m_sim->step((sim::Float)dt);
+
+		m_sim->update_objects();
+
+		m_step_once = false;
 	}
 }
 

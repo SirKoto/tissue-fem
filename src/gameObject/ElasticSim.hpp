@@ -20,6 +20,7 @@ public:
 private:
 	std::unique_ptr<sim::IFEM> m_sim;
 
+	bool m_step_once = false;
 	bool m_run_simulation = false;
 	bool m_show_simulation_metrics = false;
 
