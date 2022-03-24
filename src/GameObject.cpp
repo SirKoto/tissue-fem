@@ -8,6 +8,7 @@
 #include <ImGuizmo.h>
 
 #include "gameObject/ElasticSim.hpp"
+#include "gameObject/PrimitiveSelector.hpp"
 #include "Context.hpp"
 
 GameObject::GameObject()
@@ -92,6 +93,10 @@ void GameObject::render_ui(const Context& gc)
 	if (ImGui::BeginPopupContextItem(0, ImGuiPopupFlags_None)) {
 		if (ImGui::Selectable("Elastic Simulator")) {
 			this->add_addon<gobj::ElasticSim>();
+			ImGui::CloseCurrentPopup();
+		}
+		if (ImGui::Selectable("Primitive Selector")) {
+			this->add_addon<gobj::PrimitiveSelector>();
 			ImGui::CloseCurrentPopup();
 		}
 		ImGui::EndPopup();

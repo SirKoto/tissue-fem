@@ -22,7 +22,7 @@ void Transform::draw_ui(const Context& gc)
 		ImGuizmo::RecomposeMatrixFromComponents(glm::value_ptr(t), glm::value_ptr(r), glm::value_ptr(s), glm::value_ptr(m_transform));
 	}
 
-	gc.add_manipulation_guizmo(&m_transform);
+	gc.add_manipulation_guizmo(&m_transform, (int32_t)((uint64_t) this >> 2));
 
 	ImGui::PopID();
 }

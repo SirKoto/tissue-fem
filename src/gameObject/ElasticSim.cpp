@@ -104,4 +104,9 @@ void ElasticSim::update(const Context& ctx, GameObject* parent)
 	}
 }
 
+const char* ElasticSim::get_name() const
+{
+	return "Elastic Simulator"; 
+}
+
 } // namespace gobj

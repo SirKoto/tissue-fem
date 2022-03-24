@@ -8,14 +8,14 @@
 
 namespace gobj {
 
-class ElasticSim : public Addon {
+class ElasticSim final : public Addon {
 public:
 
 	ElasticSim();
 
 	void render_ui(const Context& ctx, GameObject* parent) override final;
 	void update(const Context& ctx, GameObject* parent) override final;
-	const char* get_name() const { return "Elastic Simulator"; };
+	const char* get_name() const override final;
 
 private:
 	std::unique_ptr<sim::IFEM> m_sim;

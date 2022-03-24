@@ -157,7 +157,19 @@ void Context::draw_ui()
 }
 
 
-void Context::add_manipulation_guizmo(glm::mat4* transform) const
+void Context::add_manipulation_guizmo(glm::mat4* transform, int32_t id) const
+{
+	assert(transform != nullptr);
+	this->add_manipulation_guizmo(transform, m_guizmos_mode, nullptr, id);
+}
+
+void Context::add_manipulation_guizmo(glm::mat4* transform, glm::mat4* delta_transform, int32_t id) const
+{
+	assert(transform != nullptr);
+	this->add_manipulation_guizmo(transform, m_guizmos_mode, delta_transform, id);
+}
+
+void Context::add_manipulation_guizmo(glm::mat4* transform, Context::GuizmosInteraction op_ctx, glm::mat4* delta_transform, int32_t id) const
 {
 	assert(transform != nullptr);
 
@@ -166,7 +178,7 @@ void Context::add_manipulation_guizmo(glm::mat4* transform) const
 	}
 
 	ImGuizmo::OPERATION op;
-	switch (m_guizmos_mode)
+	switch (op_ctx)
 	{
 	case Context::GuizmosInteraction::eTranslate:
 		op = ImGuizmo::OPERATION::TRANSLATE;
@@ -182,12 +194,14 @@ void Context::add_manipulation_guizmo(glm::mat4* transform) const
 		return;
 	}
 
+	ImGuizmo::SetID(id);
 	ImGuizmo::Manipulate(
 		glm::value_ptr(camera().getView()),
 		glm::value_ptr(camera().getProj()),
 		op,
 		m_use_local_space_interaction ? ImGuizmo::MODE::LOCAL : ImGuizmo::MODE::WORLD,
-		glm::value_ptr(*transform));
+		glm::value_ptr(*transform),
+		(float*)delta_transform);
 }
 
 void Context::open_file_picker(const FilePickerCallback& callback)

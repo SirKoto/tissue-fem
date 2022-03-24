@@ -37,10 +37,20 @@ public:
 
 	float delta_time() const { return m_delta_time; }
 
-	void add_manipulation_guizmo(glm::mat4* transform) const;
 
 	typedef std::function<bool(const Context&, const std::filesystem::path&, std::string* err)> FilePickerCallback;
 	void open_file_picker(const FilePickerCallback& callback);
+
+	// guizmos interaction
+	enum class GuizmosInteraction {
+		eTranslate = 0,
+		eRotate = 1,
+		eScale = 2
+	};
+	void add_manipulation_guizmo(glm::mat4* transform, int32_t id) const;
+	void add_manipulation_guizmo(glm::mat4* transform, glm::mat4* delta_transform, int32_t id) const;
+
+	void add_manipulation_guizmo(glm::mat4* transform, Context::GuizmosInteraction op, glm::mat4* delta_transform, int32_t id) const;
 
 private:
 
@@ -61,12 +71,7 @@ private:
 
 	bool m_run_simulation = false;
 
-	// guizmos interaction
-	enum class GuizmosInteraction {
-		eTranslate = 0,
-		eRotate = 1,
-		eScale = 2
-	};
+	
 	GuizmosInteraction m_guizmos_mode = GuizmosInteraction::eTranslate;
 	bool m_use_local_space_interaction = true;
 
