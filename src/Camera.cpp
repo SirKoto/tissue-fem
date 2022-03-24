@@ -9,7 +9,7 @@
 
 Camera::Camera() : mPosition(5,5,15), mFront(0,0,-1), 
 	mUp(0,1,0), mYaw(-90.f),mPitch(0), 
-	mMouseSensitivity(0.1f), mSpeed(2.5f), mZoom(45.f)
+	mMouseSensitivity(0.1f), mSpeed(4.5f), mZoom(45.f)
 {
 	updateCameraVectors();
 }
@@ -27,6 +27,10 @@ void Camera::update()
 		// Keyboard
 		if (!io.WantCaptureKeyboard) {
 			float speed = mSpeed * io.DeltaTime;
+			if (io.KeysDown[GLFW_KEY_LEFT_SHIFT]) {
+				speed *= 5.0f;
+			}
+
 			if (io.KeysDown[GLFW_KEY_W]) {
 				mPosition += mFront * speed;
 			}
@@ -91,6 +95,7 @@ void Camera::draw_ui()
 	ImGui::Text("Up (%.3f, %.3f, %.3f)", mUp.x, mUp.y, mUp.z);
 	ImGui::Text("Right (%.3f, %.3f, %.3f)", mRight.x, mRight.y, mRight.z);
 	
+	ImGui::InputFloat("Camera speed", &mSpeed, 1.0f);
 
 	ImGui::PopID();
 

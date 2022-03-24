@@ -128,9 +128,6 @@ void Context::draw_ui()
 			ImGui::EndMenu();
 		}
 		
-		if (ImGui::BeginMenu("GameObjects")) {
-			ImGui::EndMenu();
-		}
 
 		ImGui::Text("Framerate %.1f", ImGui::GetIO().Framerate);
 		ImGui::EndMainMenuBar();
