@@ -7,8 +7,7 @@
 #include <imgui.h>
 #include <ImGuizmo.h>
 
-#include "gameObject/ElasticSim.hpp"
-#include "gameObject/PrimitiveSelector.hpp"
+
 #include "Context.hpp"
 
 GameObject::GameObject()
@@ -34,6 +33,10 @@ void GameObject::render() const
 
 void GameObject::render_ui(const Context& gc)
 {
+	if (!m_mesh) {
+		return;
+	}
+
 	ImGui::PushID(this);
 	ImGui::SetNextItemOpen(true, ImGuiCond_Once);
 	if (ImGui::TreeNode("Transform##transform")) {
@@ -59,7 +62,7 @@ void GameObject::render_ui(const Context& gc)
 
 	ImGui::Separator();
 
-	decltype(m_addons)::iterator it_addon = m_addons.begin();
+	/*decltype(m_addons)::iterator it_addon = m_addons.begin();
 	while(it_addon != m_addons.end()){
 		std::unique_ptr<gobj::Addon>& addon = *it_addon;
 		ImGui::SetNextItemOpen(true, ImGuiCond_Once);
@@ -101,15 +104,30 @@ void GameObject::render_ui(const Context& gc)
 		}
 		ImGui::EndPopup();
 	}
+	*/
+
+	if (ImGui::TreeNode("Elastic Simulator")) {
+		m_sim.render_ui(gc, this);
+		ImGui::Separator();
+		ImGui::TreePop();
+	}
+	if (ImGui::TreeNode("Primitive Selector")) {
+		m_selector.render_ui(gc, this);
+		ImGui::Separator();
+		ImGui::TreePop();
+	}
 
 	ImGui::PopID();
 }
 
 void GameObject::update(const Context& gc)
 {
-	for (const auto& addon : m_addons) {
-		addon->update(gc, this);
+	if (!m_mesh) {
+		return;
 	}
+
+	m_sim.update(gc, this);
+	m_selector.update(gc, this);
 }
 
 void GameObject::apply_model_transform()

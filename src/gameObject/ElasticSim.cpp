@@ -91,11 +91,16 @@ void ElasticSim::update(const Context& ctx, GameObject* parent)
 		m_sim = std::make_unique<sim::SimpleFem>(parent->get_mesh(), 100000.0f, 0.2f);
 	}
 
+	m_sim->clear_constraints();
+
 	if(m_step_once || m_run_simulation) {
 		float dt = ctx.delta_time();
-		glm::vec3 dir(std::cos(ctx.get_time()), 0.0f, 0.0f);
-		for (uint32_t i = 0; i < 3; ++i)
-			m_sim->add_constraint(i, dir);
+		const gobj::PrimitiveSelector& sel = parent->get_selector();
+		const std::map<uint32_t, Delta>& movements = sel.get_movements();
+		for (const auto& m : movements) {
+			m_sim->add_constraint(m.first, m.second.delta / dt);
+		}
+		
 		m_sim->step((sim::Float)dt);
 
 		m_sim->update_objects();

@@ -75,7 +75,6 @@ void Context::draw_ui()
 					obj.get_transform().rotate(glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(180.0f));
 					obj.get_mesh()->flip_face_orientation();
 					obj.apply_model_transform();
-					obj.add_addon<gobj::ElasticSim>();
 					m_engine->m_scene->add_gameObject(std::make_shared<GameObject>(std::move(obj)));
 				}
 				ImGui::EndMenu();
@@ -157,24 +156,24 @@ void Context::draw_ui()
 }
 
 
-void Context::add_manipulation_guizmo(glm::mat4* transform, int32_t id) const
+bool Context::add_manipulation_guizmo(glm::mat4* transform, int32_t id) const
 {
 	assert(transform != nullptr);
-	this->add_manipulation_guizmo(transform, m_guizmos_mode, nullptr, id);
+	return this->add_manipulation_guizmo(transform, m_guizmos_mode, nullptr, id);
 }
 
-void Context::add_manipulation_guizmo(glm::mat4* transform, glm::mat4* delta_transform, int32_t id) const
+bool Context::add_manipulation_guizmo(glm::mat4* transform, glm::mat4* delta_transform, int32_t id) const
 {
 	assert(transform != nullptr);
-	this->add_manipulation_guizmo(transform, m_guizmos_mode, delta_transform, id);
+	return this->add_manipulation_guizmo(transform, m_guizmos_mode, delta_transform, id);
 }
 
-void Context::add_manipulation_guizmo(glm::mat4* transform, Context::GuizmosInteraction op_ctx, glm::mat4* delta_transform, int32_t id) const
+bool Context::add_manipulation_guizmo(glm::mat4* transform, Context::GuizmosInteraction op_ctx, glm::mat4* delta_transform, int32_t id) const
 {
 	assert(transform != nullptr);
 
 	if (!m_show_guizmos) {
-		return;
+		return false;
 	}
 
 	ImGuizmo::OPERATION op;
@@ -191,11 +190,11 @@ void Context::add_manipulation_guizmo(glm::mat4* transform, Context::GuizmosInte
 		break;
 	default:
 		assert(false);
-		return;
+		return false;
 	}
 
 	ImGuizmo::SetID(id);
-	ImGuizmo::Manipulate(
+	return ImGuizmo::Manipulate(
 		glm::value_ptr(camera().getView()),
 		glm::value_ptr(camera().getProj()),
 		op,

@@ -15,14 +15,21 @@ void Transform::draw_ui(const Context& gc)
 	ImGui::TextDisabled("Transform");
 	{
 		glm::vec3 t, s, r;
+		bool updated = false;
 		ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(m_transform), glm::value_ptr(t), glm::value_ptr(r), glm::value_ptr(s));
-		ImGui::DragFloat3("Position", glm::value_ptr(t));
-		ImGui::DragFloat3("Scale", glm::value_ptr(s), 1.0f, 0.0f, FLT_MAX, "%.3f", ImGuiSliderFlags_AlwaysClamp);
-		ImGui::DragFloat3("Rotation", glm::value_ptr(r));
-		ImGuizmo::RecomposeMatrixFromComponents(glm::value_ptr(t), glm::value_ptr(r), glm::value_ptr(s), glm::value_ptr(m_transform));
+		updated |= ImGui::DragFloat3("Position", glm::value_ptr(t));
+		updated |= ImGui::DragFloat3("Scale", glm::value_ptr(s), 1.0f, 0.0f, FLT_MAX, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+		updated |= ImGui::DragFloat3("Rotation", glm::value_ptr(r));
+		if (updated) {
+			ImGuizmo::RecomposeMatrixFromComponents(glm::value_ptr(t), glm::value_ptr(r), glm::value_ptr(s), glm::value_ptr(m_transform));
+			m_inverse = glm::inverse(m_transform);
+		}
 	}
 
-	gc.add_manipulation_guizmo(&m_transform, (int32_t)((uint64_t) this >> 2));
+	bool updated = gc.add_manipulation_guizmo(&m_transform, (int32_t)((uint64_t) this >> 2));
+	if (updated) {
+		m_inverse = glm::inverse(m_transform);
+	}
 
 	ImGui::PopID();
 }
@@ -30,16 +37,19 @@ void Transform::draw_ui(const Context& gc)
 void Transform::scale(float k)
 {
 	m_transform = glm::scale(m_transform, glm::vec3(k));
+	m_inverse = glm::inverse(m_transform);
 }
 
 void Transform::rotate(const glm::vec3& axis, float rad)
 {
 	m_transform = glm::rotate(m_transform, rad, axis);
+	m_inverse = glm::inverse(m_transform);
 }
 
 void Transform::translate(const glm::vec3& v)
 {
 	m_transform = glm::translate(m_transform, v);
+	m_inverse = glm::inverse(m_transform);
 }
 
 } // namespace gobj

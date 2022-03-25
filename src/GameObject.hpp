@@ -5,7 +5,8 @@
 
 #include "meshes/TetMesh.hpp"
 #include "gameObject/Transform.hpp"
-#include "gameObject/Addon.hpp"
+#include "gameObject/ElasticSim.hpp"
+#include "gameObject/PrimitiveSelector.hpp"
 
 class Context;
 class GameObject
@@ -28,6 +29,7 @@ public:
 	void update(const Context& gc);
 
 	const glm::mat4& get_model_matrix() const { return m_transform.mat4(); }
+	const glm::mat4& get_inv_model_matrix() const { return m_transform.inverse(); }
 	const gobj::Transform& get_transform() const { return m_transform; }
 	gobj::Transform& get_transform() { return m_transform; }
 
@@ -36,11 +38,12 @@ public:
 
 	const std::shared_ptr<TetMesh>& get_mesh() const { return m_mesh; }
 	std::shared_ptr<TetMesh>& get_mesh() { return m_mesh; }
-
+	const gobj::ElasticSim& get_sim() const { return m_sim; }
+	gobj::ElasticSim& get_sim() { return m_sim; }
+	const gobj::PrimitiveSelector& get_selector() const { return m_selector; }
+	gobj::PrimitiveSelector& get_selector() { return m_selector; }
 	void apply_model_transform();
 
-	template<typename T>
-	T* add_addon();
 
 private:
 
@@ -49,16 +52,9 @@ private:
 	std::shared_ptr<TetMesh> m_mesh;
 
 	gobj::Transform m_transform;
-
-	std::list<std::unique_ptr<gobj::Addon>> m_addons;
+	gobj::ElasticSim m_sim;
+	gobj::PrimitiveSelector m_selector;
+	//std::list<std::unique_ptr<gobj::Addon>> m_addons;
+	
 
 };
-
-template<typename T>
-inline T* GameObject::add_addon()
-{
-	T* ptr = new T();
-	std::unique_ptr<gobj::Addon> addon(ptr);
-	m_addons.push_back(std::move(addon));
-	return ptr;
-}

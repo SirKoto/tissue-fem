@@ -47,10 +47,10 @@ public:
 		eRotate = 1,
 		eScale = 2
 	};
-	void add_manipulation_guizmo(glm::mat4* transform, int32_t id) const;
-	void add_manipulation_guizmo(glm::mat4* transform, glm::mat4* delta_transform, int32_t id) const;
+	bool add_manipulation_guizmo(glm::mat4* transform, int32_t id) const;
+	bool add_manipulation_guizmo(glm::mat4* transform, glm::mat4* delta_transform, int32_t id) const;
 
-	void add_manipulation_guizmo(glm::mat4* transform, Context::GuizmosInteraction op, glm::mat4* delta_transform, int32_t id) const;
+	bool add_manipulation_guizmo(glm::mat4* transform, Context::GuizmosInteraction op, glm::mat4* delta_transform, int32_t id) const;
 
 private:
 
