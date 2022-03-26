@@ -27,6 +27,7 @@ public:
 	void render_ui(const Context& gc);
 
 	void update(const Context& gc);
+	void late_update(const Context& gc);
 
 	const glm::mat4& get_model_matrix() const { return m_transform.mat4(); }
 	const glm::mat4& get_inv_model_matrix() const { return m_transform.inverse(); }

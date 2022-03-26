@@ -16,6 +16,7 @@ class PrimitiveSelector final : public Addon {
 public:
 	void render_ui(const Context& ctx, GameObject* parent) override final;
 	void update(const Context& ctx, GameObject* parent) override final;
+	void late_update(const Context& ctx, GameObject* parent) override final;
 	const char* get_name() const override final;
 
 	const std::map<uint32_t, Delta>& get_movements() const { return m_node_movements; }
@@ -36,9 +37,12 @@ class Selection {
 public:
 
 	void render_ui(const Context& ctx, GameObject* parent, PrimitiveSelector* selector);
+	void update(const Context& ctx, GameObject* parent, PrimitiveSelector* selector);
 
 private:
-	uint32_t m_vertex = 0;
+	uint32_t m_node = 0;
+	bool m_fixed = true;
+	glm::vec3 m_translation = glm::vec3(0.f);
 };
 
 } // namespace gobj

@@ -38,6 +38,10 @@ void Scene::update(const Context& ctx)
 	for (const std::shared_ptr<GameObject>& obj : m_gameObjects) {
 		obj->update(ctx);
 	}
+
+	for (const std::shared_ptr<GameObject>& obj : m_gameObjects) {
+		obj->late_update(ctx);
+	}
 }
 
 void Scene::update_ui(const Context& ctx)

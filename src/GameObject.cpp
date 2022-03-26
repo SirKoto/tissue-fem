@@ -26,7 +26,7 @@ void GameObject::render() const
 	glm::mat4 model = get_model_matrix();
 	glm::mat3 inv_t = glm::transpose(glm::inverse(glm::mat3(model)));
 	glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(model));
-	glUniformMatrix3fv(1, 1, GL_FALSE, glm::value_ptr(glm::mat3(inv_t)));
+	//glUniformMatrix3fv(1, 1, GL_FALSE, glm::value_ptr(inv_t));
 
 	m_mesh->draw_triangles();
 }
@@ -126,8 +126,18 @@ void GameObject::update(const Context& gc)
 		return;
 	}
 
-	m_sim.update(gc, this);
 	m_selector.update(gc, this);
+	m_sim.update(gc, this);
+}
+
+void GameObject::late_update(const Context& gc)
+{
+	if (!m_mesh) {
+		return;
+	}
+
+	m_sim.late_update(gc, this);
+	m_selector.late_update(gc, this);
 }
 
 void GameObject::apply_model_transform()
