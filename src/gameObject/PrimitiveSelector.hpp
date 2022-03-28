@@ -10,39 +10,44 @@
 
 namespace gobj {
 
-class Selection;
-struct Delta;
+
 class PrimitiveSelector final : public Addon {
+private:
+	class Selection;
 public:
 	void render_ui(const Context& ctx, GameObject* parent) override final;
 	void update(const Context& ctx, GameObject* parent) override final;
 	void late_update(const Context& ctx, GameObject* parent) override final;
 	const char* get_name() const override final;
 
+	struct Delta;
 	const std::map<uint32_t, Delta>& get_movements() const { return m_node_movements; }
+
+
+	struct Delta {
+		glm::vec3 delta = glm::vec3(0.0f);
+	};
+
 
 private:
 	std::weak_ptr<TetMesh> m_mesh;
 	std::list<Selection> m_selections;
 	std::map<uint32_t, Delta> m_node_movements;
 
+	class Selection {
+	public:
+		Selection();
+		void render_ui(const Context& ctx, GameObject* parent, PrimitiveSelector* selector);
+		void update(const Context& ctx, GameObject* parent, PrimitiveSelector* selector);
+
+	private:
+		std::list<uint32_t> m_nodes;
+		bool m_fixed = true;
+	};
+
 	friend class Selection;
 }; // class PrimitiveSelector
 
-struct Delta {
-	glm::vec3 delta = glm::vec3(0.0f);
-};
 
-class Selection {
-public:
-
-	void render_ui(const Context& ctx, GameObject* parent, PrimitiveSelector* selector);
-	void update(const Context& ctx, GameObject* parent, PrimitiveSelector* selector);
-
-private:
-	uint32_t m_node = 0;
-	bool m_fixed = true;
-	glm::vec3 m_translation = glm::vec3(0.f);
-};
 
 } // namespace gobj

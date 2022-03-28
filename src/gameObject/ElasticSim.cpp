@@ -96,7 +96,7 @@ void ElasticSim::update(const Context& ctx, GameObject* parent)
 	if(m_step_once || m_run_simulation) {
 		float dt = ctx.delta_time();
 		const gobj::PrimitiveSelector& sel = parent->get_selector();
-		const std::map<uint32_t, Delta>& movements = sel.get_movements();
+		const std::map<uint32_t, PrimitiveSelector::Delta>& movements = sel.get_movements();
 		for (const auto& m : movements) {
 			m_sim->add_constraint(m.first, m.second.delta / dt);
 		}
