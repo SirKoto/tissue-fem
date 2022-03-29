@@ -17,15 +17,28 @@ void PrimitiveSelector::render_ui(const Context& ctx, GameObject* parent)
 	}
 
 	uint32_t id = 0;
-	for (Selection& sel : m_selections) {
+	std::list<Selection>::iterator it = m_selections.begin();
+	while (it != m_selections.end()) {
+		Selection& sel = *it;
 		ImGui::PushID(&sel);
 		ImGui::SetNextItemOpen(true, ImGuiCond_FirstUseEver);
-		if (ImGui::TreeNode(std::to_string(id).c_str())) {
+		if (ImGui::TreeNode(std::to_string(id++).c_str())) {
+			if (ImGui::BeginPopupContextItem()) {
+				if (ImGui::Selectable("Remove Selection")) {
+					it = m_selections.erase(it);
+					ImGui::EndPopup();
+					ImGui::TreePop();
+					ImGui::PopID();
+					continue;
+				}
+				ImGui::EndPopup();
+			}
 			sel.render_ui(ctx, parent, this);
 
 			ImGui::TreePop();
 		}
 		ImGui::PopID();
+		++it;
 	}
 
 	ImGui::PopID();
@@ -68,10 +81,23 @@ void PrimitiveSelector::Selection::render_ui(const Context& ctx, GameObject* par
 		}
 
 		std::list<uint32_t>::iterator it = m_nodes.begin();
+		uint32_t count = 0;
 		while (it != m_nodes.end()) {
-			ImGui::PushID(&(*it));
-			ImGui::InputScalar("", ImGuiDataType_U32, &(*it), &tmp);
+			ImGui::PushID(it._Ptr);
+			std::string id = "####in" + std::to_string(count++);
+			ImGui::InputScalar(id.c_str(),
+				ImGuiDataType_U32, &(*it), &tmp);
 			*it = std::min(*it, (uint32_t)parent->get_mesh()->nodes().size() - 1);
+
+			if (m_nodes.size() > 1 && ImGui::BeginPopupContextItem(id.c_str())) {
+				if (ImGui::Selectable("Remove Point")) {
+					it = m_nodes.erase(it);
+					ImGui::EndPopup();
+					ImGui::PopID();
+					continue;
+				}
+				ImGui::EndPopup();
+			}
 
 			ImGui::PopID();
 			++it;
@@ -110,7 +136,7 @@ void PrimitiveSelector::Selection::update(const Context& ctx, GameObject* parent
 	if (m_fixed) {
 		for (const uint32_t& node : m_nodes) {
 			if (!selector->m_node_movements.count(node)) {
-				selector->m_node_movements.insert({});
+				selector->m_node_movements.insert({ node, {} });
 			}
 		}
 	}
