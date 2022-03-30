@@ -98,7 +98,8 @@ void ElasticSim::update(const Context& ctx, GameObject* parent)
 		const gobj::PrimitiveSelector& sel = parent->get_selector();
 		const std::map<uint32_t, PrimitiveSelector::Delta>& movements = sel.get_movements();
 		for (const auto& m : movements) {
-			m_sim->add_constraint(m.first, m.second.delta / dt);
+			m_sim->add_constraint(m.first, glm::vec3(0.0f));
+			m_sim->add_position_alteration(m.first, m.second.delta);
 		}
 		
 		m_sim->step((sim::Float)dt);

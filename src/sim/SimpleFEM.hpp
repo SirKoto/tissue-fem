@@ -27,7 +27,9 @@ public:
 
 	void add_constraint(uint32_t node, const glm::vec3& v) override final;
 
-	void clear_constraints() override final { m_z.setZero();  m_constraints.setOnes(); }
+	void add_position_alteration(uint32_t node, const glm::vec3& dx) override final;
+
+	void clear_constraints() override final;
 
 	void pancake();
 
@@ -54,6 +56,7 @@ private:
 	Vec m_constraints;
 	Vec m_Sc;
 	SVec m_z;
+	SVec m_position_alteration;
 
 	std::vector<Mat3> m_DmInvs;
 

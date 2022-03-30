@@ -40,6 +40,7 @@ SimpleFem::SimpleFem(const std::shared_ptr<TetMesh>& mesh, Float young, Float nu
 	m_delta_v.setZero();
 	m_rhs.resize(3 * m_nodes.size());
 	m_z.resize(3 * m_nodes.size());
+	m_position_alteration.resize(3 * m_nodes.size());
 	m_constraints.resize(3 * m_nodes.size());
 	m_constraints.setOnes();
 
@@ -89,7 +90,8 @@ void SimpleFem::step(Float dt)
 	timer.reset();
 
 	// We are building the system
-	// 	   [M - Δt * df/dv - Δt^2 * df/dx] * Δv = Δt * f + Δt^2 * df/dx * v
+	// 	   [M - Δt * df/dv - Δt^2 * df/dx] * Δv = Δt * f + Δt^2 * df/dx * v + Δt * df/dx * y
+	// The last bit Δt * df/dx * y comes from the forced position alteration Δx=Δt(v0+Δv)+y
 	
 	EnergyDensity energy;
 	const EnergyFunction functionType = m_enum_energy;
@@ -140,6 +142,8 @@ void SimpleFem::step(Float dt)
 	timer.reset();
 	// add (df/dx * v) to the rhs
 	m_rhs += dt * dt * (m_dfdx_system * m_v);
+	// add Δt * df/dx * y
+	m_rhs += dt * (m_dfdx_system * m_position_alteration);
 
 	// subtract gravity from the y entries
 	for (size_t i = 0; i < m_nodes.size(); ++i) {
@@ -190,11 +194,16 @@ void SimpleFem::step(Float dt)
 		m_nodes[i].x() += dt * m_v[3 * i + 0];
 		m_nodes[i].y() += dt * m_v[3 * i + 1];
 		m_nodes[i].z() += dt * m_v[3 * i + 2];
+	}
 
-		/*if (m_nodes[i].y() < Float(0.0)) {
-			m_nodes[i].y() = Float(0.0);
-			m_v[3 * i + 1] = Float(0.0);
-		}*/
+	// Set position alteration
+	for (SVec::InnerIterator it(m_position_alteration); it;)
+	{
+		const uint32_t node_idx = (uint32_t)it.index() / 3;
+		// There must be values for the x y z
+		m_nodes[node_idx].x() += it.value(); ++it;
+		m_nodes[node_idx].y() += it.value(); ++it;
+		m_nodes[node_idx].z() += it.value(); ++it;
 	}
 
 	m_metric_time.step = (float)step_timer.getDuration<Timer::Seconds>().count();
@@ -223,6 +232,19 @@ void SimpleFem::add_constraint(uint32_t node, const glm::vec3& v)
 
 }
 
+void SimpleFem::add_position_alteration(uint32_t node, const glm::vec3& dx)
+{
+	m_position_alteration.coeffRef(3 * node + 0) = dx.x;
+	m_position_alteration.coeffRef(3 * node + 1) = dx.y;
+	m_position_alteration.coeffRef(3 * node + 2) = dx.z;
+}
+
+void SimpleFem::clear_constraints()
+{
+	m_z.setZero();
+	m_constraints.setOnes();
+	m_position_alteration.setZero();
+}
 void SimpleFem::pancake()
 {
 	for (size_t i = 0; i < m_nodes.size(); ++i) {
