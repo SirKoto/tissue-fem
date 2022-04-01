@@ -17,9 +17,11 @@ add_executable(${PROJECT_NAME}
 	sim/solvers/ConjugateGradient.hpp	sim/solvers/ConjugateGradient.cpp
 
 	graphics/Shader.hpp	graphics/Shader.cpp
+	graphics/ParticleManager.hpp	graphics/ParticleManager.cpp
 	graphics/ShaderProgram.hpp	graphics/ShaderProgram.cpp
 
 	utils/Timer.hpp	utils/Timer.cpp
+	utils/Icosphere.hpp	utils/Icosphere.cpp
 	utils/CircularBuffer.hpp
 
 	gameObject/Transform.hpp gameObject/Transform.cpp

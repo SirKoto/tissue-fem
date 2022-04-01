@@ -22,7 +22,7 @@ public:
 
 	bool load_tetgen(const std::filesystem::path& path, std::string* out_err = nullptr);
 
-	void render() const;
+	void render(const Context& ctx) const;
 
 	void render_ui(const Context& gc);
 
@@ -51,6 +51,7 @@ private:
 	std::string m_name;
 
 	std::shared_ptr<TetMesh> m_mesh;
+	ShaderProgram m_mesh_draw_program;
 
 	gobj::Transform m_transform;
 	gobj::ElasticSim m_sim;

@@ -18,6 +18,7 @@ set(MODEL_PATH "${RESOURCES_PATH}/models")
 
 set(COPY_DATA
     ${SHADER_PATH}/mesh.vert   ${SHADER_PATH}/mesh.frag
+    ${SHADER_PATH}/particles.vert   ${SHADER_PATH}/particles.frag
     ${SHADER_PATH}/generate_face_normal.geom
     ${SHADER_PATH}/simple_mesh.vert
 

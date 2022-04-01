@@ -36,8 +36,6 @@ private:
 	Camera m_camera;
 	glm::vec3 m_clear_color;
 
-	ShaderProgram m_mesh_draw_program;
-
 	// Models
 	std::list<std::shared_ptr<GameObject>> m_gameObjects;
 	std::list<std::shared_ptr<GameObject>>::iterator m_selected_object;

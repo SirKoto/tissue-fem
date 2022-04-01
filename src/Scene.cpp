@@ -13,21 +13,6 @@
 Scene::Scene() :
 	m_clear_color(0.45f, 0.55f, 0.60f)
 {
-	const std::filesystem::path proj_dir(PROJECT_DIR);
-	const std::filesystem::path shad_dir = proj_dir / "resources/shaders";
-
-	/*std::array<Shader, 2> mesh_shaders = {
-		Shader((shad_dir / "mesh.vert"), Shader::Type::Vertex),
-		Shader((shad_dir / "mesh.frag"), Shader::Type::Fragment)
-	};*/
-	std::array<Shader, 3> mesh_shaders = {
-		Shader((shad_dir / "simple_mesh.vert"), Shader::Type::Vertex),
-		Shader((shad_dir / "generate_face_normal.geom"), Shader::Type::Geometry),
-		Shader((shad_dir / "mesh.frag"), Shader::Type::Fragment)
-	};
-	m_mesh_draw_program = ShaderProgram(mesh_shaders.data(), (uint32_t)mesh_shaders.size());
-
-
 	m_selected_object = m_gameObjects.end();
 }
 
@@ -127,13 +112,9 @@ void Scene::update_ui(const Context& ctx)
 
 void Scene::render(const Context& ctx)
 {
-	const glm::mat4 view_proj_mat = m_camera.getProjView();
-
-	m_mesh_draw_program.use_program();
-	glUniformMatrix4fv(2, 1, GL_FALSE, glm::value_ptr(view_proj_mat));
 
 	for (const std::shared_ptr<GameObject>& obj : m_gameObjects) {
-		obj->render();
+		obj->render(ctx);
 	}
 }
 

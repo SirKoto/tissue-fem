@@ -3,10 +3,15 @@
 #include "Context.hpp"
 #include "GameObject.hpp"
 
+#include <glad/glad.h>
 #include <glm/gtx/string_cast.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
 namespace gobj {
+
+PrimitiveSelector::PrimitiveSelector()
+{
+}
 
 void PrimitiveSelector::render_ui(const Context& ctx, GameObject* parent)
 {
@@ -41,7 +46,15 @@ void PrimitiveSelector::render_ui(const Context& ctx, GameObject* parent)
 		++it;
 	}
 
+	ImGui::InputFloat("Particle radius", &m_particle_manager.particle_radius(), 0.01f);
+	m_particle_manager.particle_radius() = std::max(0.0f, m_particle_manager.particle_radius());
+
 	ImGui::PopID();
+}
+
+void PrimitiveSelector::render(const Context& ctx, const GameObject& parent) const
+{
+	m_particle_manager.draw(ctx, parent);
 }
 
 void PrimitiveSelector::update(const Context& ctx, GameObject* parent)
@@ -53,6 +66,15 @@ void PrimitiveSelector::update(const Context& ctx, GameObject* parent)
 	for (Selection& sel : m_selections) {
 		sel.update(ctx, parent, this);
 	}
+
+	auto mesh = m_mesh.lock();
+	std::vector<glm::vec3> pos;
+	for (Selection& sel : m_selections) {
+		for (uint32_t v : sel.nodes()) {
+			pos.push_back(mesh->nodes_glm()[v]);
+		}
+	}
+	m_particle_manager.set_particles(pos);
 }
 
 void PrimitiveSelector::late_update(const Context& ctx, GameObject* parent)

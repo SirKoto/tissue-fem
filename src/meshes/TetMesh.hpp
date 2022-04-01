@@ -33,6 +33,7 @@ public:
 	void clear();
 
 	const std::vector<Eigen::Vector3f>& nodes() const { return m_vertices; }
+	const std::vector<glm::vec3>& nodes_glm() const { return reinterpret_cast<const std::vector<glm::vec3>&>(m_vertices); }
 	const std::vector<Eigen::Vector4i>& elements() const { return m_elements; }
 	const std::vector<Eigen::Vector3i>& surface_faces() const { return m_surface_faces; }
 

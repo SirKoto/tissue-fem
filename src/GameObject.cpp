@@ -12,6 +12,21 @@
 
 GameObject::GameObject()
 {
+	const std::filesystem::path proj_dir(PROJECT_DIR);
+	const std::filesystem::path shad_dir = proj_dir / "resources/shaders";
+
+
+	/*std::array<Shader, 2> mesh_shaders = {
+		Shader((shad_dir / "mesh.vert"), Shader::Type::Vertex),
+		Shader((shad_dir / "mesh.frag"), Shader::Type::Fragment)
+	};*/
+	std::array<Shader, 3> mesh_shaders = {
+		Shader((shad_dir / "simple_mesh.vert"), Shader::Type::Vertex),
+		Shader((shad_dir / "generate_face_normal.geom"), Shader::Type::Geometry),
+		Shader((shad_dir / "mesh.frag"), Shader::Type::Fragment)
+	};
+	m_mesh_draw_program = ShaderProgram(mesh_shaders.data(), (uint32_t)mesh_shaders.size());
+
 }
 
 bool GameObject::load_tetgen(const std::filesystem::path& path, std::string* out_err)
@@ -21,14 +36,21 @@ bool GameObject::load_tetgen(const std::filesystem::path& path, std::string* out
 	return m_mesh->load_tetgen(path, out_err);;
 }
 
-void GameObject::render() const
+void GameObject::render(const Context& ctx) const
 {
 	glm::mat4 model = get_model_matrix();
 	glm::mat3 inv_t = glm::transpose(glm::inverse(glm::mat3(model)));
-	glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(model));
-	//glUniformMatrix3fv(1, 1, GL_FALSE, glm::value_ptr(inv_t));
+	
+	m_mesh_draw_program.use_program();
+	assert(glGetError() == GL_NO_ERROR);
+
+	ShaderProgram::setUniform(0, model);
+	ShaderProgram::setUniform(1, inv_t);
+	ShaderProgram::setUniform(2, ctx.camera().getProjView());
 
 	m_mesh->draw_triangles();
+
+	m_selector.render(ctx, *this);
 }
 
 void GameObject::render_ui(const Context& gc)
