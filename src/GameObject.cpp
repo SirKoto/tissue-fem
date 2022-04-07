@@ -77,7 +77,6 @@ void GameObject::render_ui(const Context& gc)
 		}
 		if (ImGui::Button("Recompute normals")) {
 			m_mesh->generate_normals();
-			m_mesh->upload_to_gpu();
 		}
 		ImGui::TreePop();
 	}
@@ -160,6 +159,7 @@ void GameObject::late_update(const Context& gc)
 
 	m_sim.late_update(gc, this);
 	m_selector.late_update(gc, this);
+	m_mesh->update();
 }
 
 void GameObject::apply_model_transform()

@@ -219,7 +219,6 @@ void SimpleFem::update_objects()
 	for (int32_t i = 0; i < (int32_t)m_nodes.size(); ++i) {
 		mesh->update_node(i, m_nodes[i].cast<float>());
 	}
-	mesh->upload_to_gpu(true, false);
 }
 
 void SimpleFem::add_constraint(uint32_t node, const glm::vec3& v)

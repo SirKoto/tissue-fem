@@ -10,6 +10,7 @@ add_executable(${PROJECT_NAME}
 	Engine.hpp			Engine.cpp
 
 	meshes/TetMesh.hpp	meshes/TetMesh.cpp
+	meshes/TriangleMesh.hpp	meshes/TriangleMesh.cpp
 
 	sim/IFEM.hpp		sim/IFEM.cpp
 	sim/SimpleFEM.hpp	sim/SimpleFEM.cpp
