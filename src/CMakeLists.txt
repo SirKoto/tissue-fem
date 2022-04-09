@@ -27,7 +27,7 @@ add_executable(${PROJECT_NAME}
 
 	gameObject/Transform.hpp gameObject/Transform.cpp
 	gameObject/ElasticSim.hpp gameObject/ElasticSim.cpp
-	gameObject/PrimitiveSelector.hpp gameObject/PrimitiveSelector.cpp
+	gameObject/extra/PrimitiveSelector.hpp gameObject/extra/PrimitiveSelector.cpp
 	gameObject/Addon.hpp
  )
 

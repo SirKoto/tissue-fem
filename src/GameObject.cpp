@@ -49,8 +49,6 @@ void GameObject::render(const Context& ctx) const
 	ShaderProgram::setUniform(2, ctx.camera().getProjView());
 
 	m_mesh->draw_triangles();
-
-	m_selector.render(ctx, *this);
 }
 
 void GameObject::render_ui(const Context& gc)
@@ -132,11 +130,6 @@ void GameObject::render_ui(const Context& gc)
 		ImGui::Separator();
 		ImGui::TreePop();
 	}
-	if (ImGui::TreeNode("Primitive Selector")) {
-		m_selector.render_ui(gc, this);
-		ImGui::Separator();
-		ImGui::TreePop();
-	}
 
 	ImGui::PopID();
 }
@@ -147,7 +140,6 @@ void GameObject::update(const Context& gc)
 		return;
 	}
 
-	m_selector.update(gc, this);
 	m_sim.update(gc, this);
 }
 
@@ -158,7 +150,6 @@ void GameObject::late_update(const Context& gc)
 	}
 
 	m_sim.late_update(gc, this);
-	m_selector.late_update(gc, this);
 	m_mesh->update();
 }
 

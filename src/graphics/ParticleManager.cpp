@@ -87,13 +87,13 @@ void ParticleManager::set_particles(const std::vector<glm::vec3>& particles)
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void ParticleManager::draw(const Context& ctx, const GameObject& obj) const
+void ParticleManager::draw(const Context& ctx, const glm::mat4& model_matrix) const
 {
 	m_shader.use_program();
 	assert(glGetError() == GL_NO_ERROR);
 	// Set uniforms
-	glm::mat3 inv_t = glm::transpose(glm::inverse(glm::mat3(obj.get_model_matrix())));
-	ShaderProgram::setUniform(0, obj.get_model_matrix());
+	glm::mat3 inv_t = glm::transpose(glm::inverse(glm::mat3(model_matrix)));
+	ShaderProgram::setUniform(0, model_matrix);
 	ShaderProgram::setUniform(1, inv_t);
 	ShaderProgram::setUniform(2, ctx.camera().getProjView());
 	ShaderProgram::setUniform(3, m_radius);

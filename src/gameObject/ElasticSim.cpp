@@ -82,6 +82,13 @@ void ElasticSim::render_ui(const Context& ctx, GameObject* parent)
 		ImGui::End();
 	}
 
+	if (ImGui::TreeNode("Primitive Selector")) {
+		m_selector.render_ui(ctx, parent);
+		ImGui::Separator();
+		ImGui::TreePop();
+	}
+	
+
 	ImGui::PopID();
 }
 
@@ -90,13 +97,13 @@ void ElasticSim::update(const Context& ctx, GameObject* parent)
 	if (!m_sim) {
 		m_sim = std::make_unique<sim::SimpleFem>(parent->get_mesh(), 100000.0f, 0.2f);
 	}
+	m_selector.update(ctx, parent);
 
 	m_sim->clear_constraints();
 
 	if(m_step_once || m_run_simulation) {
 		float dt = ctx.delta_time();
-		const gobj::PrimitiveSelector& sel = parent->get_selector();
-		const std::map<uint32_t, PrimitiveSelector::Delta>& movements = sel.get_movements();
+		const std::map<uint32_t, PrimitiveSelector::Delta>& movements = m_selector.get_movements();
 		for (const auto& m : movements) {
 			m_sim->add_constraint(m.first, glm::vec3(0.0f));
 			m_sim->add_position_alteration(m.first, m.second.delta);
@@ -108,6 +115,16 @@ void ElasticSim::update(const Context& ctx, GameObject* parent)
 
 		m_step_once = false;
 	}
+}
+
+void ElasticSim::late_update(const Context& ctx, GameObject* parent)
+{
+	m_selector.late_update(ctx, parent);
+}
+
+void ElasticSim::render(const Context& ctx, const GameObject& parent) const
+{
+	m_selector.render(ctx, parent);
 }
 
 const char* ElasticSim::get_name() const

@@ -54,7 +54,7 @@ void PrimitiveSelector::render_ui(const Context& ctx, GameObject* parent)
 
 void PrimitiveSelector::render(const Context& ctx, const GameObject& parent) const
 {
-	m_particle_manager.draw(ctx, parent);
+	m_particle_manager.draw(ctx, parent.get_model_matrix());
 }
 
 void PrimitiveSelector::update(const Context& ctx, GameObject* parent)
@@ -80,11 +80,6 @@ void PrimitiveSelector::update(const Context& ctx, GameObject* parent)
 void PrimitiveSelector::late_update(const Context& ctx, GameObject* parent)
 {
 	m_node_movements.clear();
-}
-
-const char* PrimitiveSelector::get_name() const
-{
-	return "Primitive Selector";
 }
 
 PrimitiveSelector::Selection::Selection()

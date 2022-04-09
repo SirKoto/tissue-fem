@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Addon.hpp"
 #include "meshes/TetMesh.hpp"
 #include "graphics/ParticleManager.hpp"
 
@@ -9,10 +8,10 @@
 #include <list>
 #include <glm/glm.hpp>
 
+class GameObject;
 namespace gobj {
 
-
-class PrimitiveSelector final : public Addon {
+class PrimitiveSelector {
 private:
 	class Selection;
 public:
@@ -22,11 +21,10 @@ public:
 	PrimitiveSelector& operator=(const PrimitiveSelector&) = delete;
 	PrimitiveSelector& operator=(PrimitiveSelector&&) = default;
 
-	void render_ui(const Context& ctx, GameObject* parent) override final;
+	void render_ui(const Context& ctx, GameObject* parent);
 	void render(const Context& ctx, const GameObject& parent) const;
-	void update(const Context& ctx, GameObject* parent) override final;
-	void late_update(const Context& ctx, GameObject* parent) override final;
-	const char* get_name() const override final;
+	void update(const Context& ctx, GameObject* parent);
+	void late_update(const Context& ctx, GameObject* parent);
 
 	struct Delta;
 	const std::map<uint32_t, Delta>& get_movements() const { return m_node_movements; }

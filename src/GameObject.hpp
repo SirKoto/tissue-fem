@@ -6,7 +6,6 @@
 #include "meshes/TetMesh.hpp"
 #include "gameObject/Transform.hpp"
 #include "gameObject/ElasticSim.hpp"
-#include "gameObject/PrimitiveSelector.hpp"
 
 class Context;
 class GameObject
@@ -39,10 +38,10 @@ public:
 
 	const std::shared_ptr<TetMesh>& get_mesh() const { return m_mesh; }
 	std::shared_ptr<TetMesh>& get_mesh() { return m_mesh; }
-	const gobj::ElasticSim& get_sim() const { return m_sim; }
-	gobj::ElasticSim& get_sim() { return m_sim; }
-	const gobj::PrimitiveSelector& get_selector() const { return m_selector; }
-	gobj::PrimitiveSelector& get_selector() { return m_selector; }
+	//const gobj::ElasticSim& get_sim() const { return m_sim; }
+	//gobj::ElasticSim& get_sim() { return m_sim; }
+	//const gobj::PrimitiveSelector& get_selector() const { return m_selector; }
+	//gobj::PrimitiveSelector& get_selector() { return m_selector; }
 	void apply_model_transform();
 
 
@@ -55,7 +54,6 @@ private:
 
 	gobj::Transform m_transform;
 	gobj::ElasticSim m_sim;
-	gobj::PrimitiveSelector m_selector;
 	//std::list<std::unique_ptr<gobj::Addon>> m_addons;
 	
 
