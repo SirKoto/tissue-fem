@@ -10,6 +10,7 @@ add_executable(${PROJECT_NAME}
 	Engine.hpp			Engine.cpp
 
 	meshes/TetMesh.hpp	meshes/TetMesh.cpp
+	meshes/Plane.hpp	meshes/Plane.cpp
 	meshes/TriangleMesh.hpp	meshes/TriangleMesh.cpp
 
 	sim/IFEM.hpp		sim/IFEM.cpp
@@ -17,12 +18,17 @@ add_executable(${PROJECT_NAME}
 
 	sim/solvers/ConjugateGradient.hpp	sim/solvers/ConjugateGradient.cpp
 
+	physics/PhysicsSystem.hpp	physics/PhysicsSystem.cpp
+	physics/RayIntersection.hpp	physics/RayIntersection.cpp
+	physics/Primitive.hpp
+
 	graphics/Shader.hpp	graphics/Shader.cpp
 	graphics/ParticleManager.hpp	graphics/ParticleManager.cpp
 	graphics/ShaderProgram.hpp	graphics/ShaderProgram.cpp
 
 	utils/Timer.hpp	utils/Timer.cpp
 	utils/Icosphere.hpp	utils/Icosphere.cpp
+	utils/BBox.hpp	utils/BBox.cpp
 	utils/CircularBuffer.hpp
 
 	gameObject/Transform.hpp gameObject/Transform.cpp

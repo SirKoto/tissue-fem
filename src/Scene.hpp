@@ -6,6 +6,7 @@
 #include "Camera.hpp"
 #include "graphics/ShaderProgram.hpp"
 #include "sim/IFEM.hpp"
+#include "physics/PhysicsSystem.hpp"
 #include "utils/CircularBuffer.hpp"
 
 class Context;
@@ -32,6 +33,9 @@ public:
 
 	void add_gameObject(std::shared_ptr<GameObject>& obj);
 
+	PhysicsSystem& physics() { m_physic_sys; }
+	const PhysicsSystem& physics() const { m_physic_sys; }
+
 private:
 	Camera m_camera;
 	glm::vec3 m_clear_color;
@@ -46,6 +50,8 @@ private:
 	bool m_show_simulation_window = true;
 	bool m_show_simulation_metrics = true;
 
+	// Physics
+	PhysicsSystem m_physic_sys;
 	
 };
 
