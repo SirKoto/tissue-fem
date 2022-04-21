@@ -55,6 +55,7 @@ public:
 	virtual void update_objects() = 0;
 
 	// Add a velocity constraint 
+	virtual void add_constraint(uint32_t node, const glm::vec3& v, const glm::vec3& dir) = 0;
 	// Constrain all degrees of freedom
 	virtual void add_constraint(uint32_t node, const glm::vec3& v) = 0;
 	virtual void add_position_alteration(uint32_t node, const glm::vec3& dx) = 0;

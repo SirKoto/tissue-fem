@@ -1,4 +1,4 @@
-﻿#include "SimpleFEM.hpp"
+#include "SimpleFEM.hpp"
 
 #include <iostream>
 #include <imgui.h>
@@ -41,8 +41,9 @@ SimpleFem::SimpleFem(const std::shared_ptr<TetMesh>& mesh, Float young, Float nu
 	m_rhs.resize(3 * m_nodes.size());
 	m_z.resize(3 * m_nodes.size());
 	m_position_alteration.resize(3 * m_nodes.size());
-	m_constraints.resize(3 * m_nodes.size());
-	m_constraints.setOnes();
+	m_S.resize(3 * m_nodes.size(), 3 * m_nodes.size());
+	// Reserve 3 values per column, as it is the maximum that will be in a constrain matrix
+	m_S.reserve(Eigen::VectorXi::Constant(3 * m_nodes.size(), 3));
 
 	// Build the sparse matrix
 	this->build_sparse_system();
@@ -154,22 +155,46 @@ void SimpleFem::step(Float dt)
 	m_dfdx_system *=  - (dt * dt) - m_beta_rayleigh * dt;
 	m_dfdx_system.diagonal().array() += m_node_mass * (Float(1.0) - m_alpha_rayleigh * dt);
 
+	// Sort constraints
+	std::sort(m_constraints3.begin(), m_constraints3.end());
+	// Fill S
+	m_S.setZero();
+	std::vector<Constraint>::const_iterator c = m_constraints3.begin();
+	for (uint32_t i = 0;
+		i < m_nodes.size(); ++i) {
+		const uint32_t idx = 3 * i;
+		if (c != m_constraints3.end() && c->node == i) {
+			for (uint32_t j = 0; j < 3; ++j) {
+				for (uint32_t k = 0; k < 3; ++k) {
+					m_S.insert(idx + k, idx + j) = c->constraint(k, j);
+				}
+			}
+		}
+		else {
+			m_S.insert(idx + 0, idx + 0) = Float(1.0);
+			m_S.insert(idx + 1, idx + 1) = Float(1.0);
+			m_S.insert(idx + 2, idx + 2) = Float(1.0);
+		}
+	}
+
 	// Pre-filtered Preconditioned Conjugate Gradient
 	// (SAS^T + I - S)y = Sc
 	//                y = x - z
 	//                c = b - Az
 	
 	// Compute rhs
-	m_Sc = m_constraints.asDiagonal() * (m_rhs - m_dfdx_system * m_z);
-
-	// Apply SAS^T
-	for (Eigen::Index i = 0; i < m_dfdx_system.outerSize(); ++i) {
-		for (SMat::InnerIterator it(m_dfdx_system, i); it; ++it) {
-			it.valueRef() *= m_constraints[it.row()] * m_constraints[it.col()];
-		}
+	m_Sc = (m_rhs - m_dfdx_system * m_z);
+	for (const Constraint& s : m_constraints3) {
+		m_Sc.segment<3>(3 * s.node) = s.constraint * m_Sc.segment<3>(3 * s.node);
 	}
-	m_dfdx_system.diagonal().array() += Float(1.0);
-	m_dfdx_system.diagonal() -= m_constraints;
+	// m_Sc = m_constraints.asDiagonal() * (m_rhs - m_dfdx_system * m_z);
+
+	// Apply SAS^T TODO
+	m_system = m_S * m_dfdx_system * m_S.transpose();
+
+	// SAS^T + I - S TODO
+	m_system -= m_S;
+	m_system.diagonal().array() += Float(1.0);
 
 	m_metric_time.system_finish = (float)timer.getDuration<Timer::Seconds>().count();
 	timer.reset();
@@ -184,7 +209,7 @@ void SimpleFem::step(Float dt)
 	if (solver.info() != Eigen::Success) {
 		std::cerr << "System did not converge" << std::endl;
 	}*/
-	solver.solve(m_dfdx_system, m_Sc, &m_delta_v);
+	solver.solve(m_system, m_Sc, &m_delta_v);
 	m_v += m_delta_v + m_z;
 	m_metric_time.solve = (float)timer.getDuration<Timer::Seconds>().count();
 	timer.reset();
@@ -221,14 +246,31 @@ void SimpleFem::update_objects()
 	}
 }
 
+void SimpleFem::add_constraint(uint32_t node, const glm::vec3& v, const glm::vec3& dir)
+{
+
+	m_z.coeffRef(3 * node + 0) = v.x - m_v[3 * node + 0];
+	m_z.coeffRef(3 * node + 1) = v.y - m_v[3 * node + 1];
+	m_z.coeffRef(3 * node + 2) = v.z - m_v[3 * node + 2];
+
+	const Vec3 d = reinterpret_cast<const Vec3&>(dir);
+
+	m_constraints3.push_back({
+			node,
+			Mat3::Identity() - (d * d.transpose())
+		});
+}
+
 void SimpleFem::add_constraint(uint32_t node, const glm::vec3& v)
 {
 	m_z.coeffRef(3 * node + 0) = v.x - m_v[3 * node + 0];
 	m_z.coeffRef(3 * node + 1) = v.y - m_v[3 * node + 1];
 	m_z.coeffRef(3 * node + 2) = v.z - m_v[3 * node + 2];
 
-	m_constraints.segment(3 * node, 3).setZero();
-
+	m_constraints3.push_back({
+			node,
+			Mat3::Zero()
+		});
 }
 
 void SimpleFem::add_position_alteration(uint32_t node, const glm::vec3& dx)
@@ -241,7 +283,7 @@ void SimpleFem::add_position_alteration(uint32_t node, const glm::vec3& dx)
 void SimpleFem::clear_constraints()
 {
 	m_z.setZero();
-	m_constraints.setOnes();
+	m_constraints3.clear();
 	m_position_alteration.setZero();
 }
 void SimpleFem::pancake()

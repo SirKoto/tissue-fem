@@ -16,7 +16,7 @@
 
 namespace sim {
 
-class SimpleFem : public IFEM {
+class SimpleFem final : public IFEM {
 public:
 
 	SimpleFem(const std::shared_ptr<TetMesh>& mesh, Float young, Float nu);
@@ -24,6 +24,8 @@ public:
 	void step(Float dt) override final;
 
 	void update_objects() override final;
+
+	void add_constraint(uint32_t node, const glm::vec3& v, const glm::vec3& dir) override final;
 
 	void add_constraint(uint32_t node, const glm::vec3& v) override final;
 
@@ -53,7 +55,10 @@ private:
 	Vec m_v;
 	Vec m_rhs;
 	SMat m_dfdx_system;
-	Vec m_constraints;
+	SMat m_system;
+	struct Constraint;
+	std::vector<Constraint> m_constraints3;
+	SMat m_S;
 	Vec m_Sc;
 	SVec m_z;
 	SVec m_position_alteration;
@@ -77,6 +82,15 @@ private:
 		}
 	};
 
+	struct Constraint {
+		uint32_t node;
+		Mat3 constraint;
+
+		bool operator<(const Constraint& o) const {
+			return this->node < o.node;
+		}
+	};
+
 	// sparse_cache has pointers to the 3x3 region of the sparse matrix where node i
 	// determines node j. In particular, it stores the 3 pointers to the first elements
 	// of the 3 columns of the 3x3 region.
@@ -92,7 +106,10 @@ private:
 	EnergyFunction m_enum_energy = EnergyFunction::HookeanSmith19;
 
 	void build_sparse_system();
+
+	
 	void assign_sparse_block(const Eigen::Block<const Mat12, 3, 3>& m, uint32_t i, uint32_t j);
+
 	void set_system_to_zero();
 
 	void update_lame();
