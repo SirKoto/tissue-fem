@@ -37,6 +37,7 @@ public:
 
 	float delta_time() const { return m_delta_time; }
 
+	const Scene& get_scene() const { return *m_engine->m_scene; }
 
 	typedef std::function<bool(const Context&, const std::filesystem::path&, std::string* err)> FilePickerCallback;
 	void open_file_picker(const FilePickerCallback& callback);

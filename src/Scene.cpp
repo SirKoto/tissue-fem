@@ -3,6 +3,8 @@
 #include "Context.hpp"
 #include "sim/SimpleFEM.hpp"
 
+#include "meshes/Plane.hpp"
+
 #include <glad/glad.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <imgui.h>
@@ -14,6 +16,7 @@ Scene::Scene() :
 	m_clear_color(0.45f, 0.55f, 0.60f)
 {
 	m_selected_object = m_gameObjects.end();
+	this->physics().insert_primitive(std::make_shared<Plane>(glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
 }
 
 void Scene::update(const Context& ctx)

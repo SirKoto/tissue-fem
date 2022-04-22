@@ -139,6 +139,7 @@ bool TetMesh::load_tetgen(std::filesystem::path path, std::string* out_err)
 
 void TetMesh::apply_transform(const glm::mat4& m)
 {
+	static_assert(sizeof(glm::vec3) == sizeof(m_vertices[0]), "Same FP type");
 	std::vector<glm::vec3>& vertices = reinterpret_cast<std::vector<glm::vec3>&>(m_vertices);
 
 	for (glm::vec3& v : vertices) {

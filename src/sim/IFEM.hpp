@@ -20,6 +20,8 @@ typedef Eigen::Matrix<Float, 9, 9> Mat9;
 typedef Eigen::Matrix<Float, 12, 12> Mat12;
 typedef Eigen::Matrix<Float, 9, 12> Mat9x12;
 
+inline glm::vec3 cast_vec3(const Vec3& v) { return glm::vec3(v.x(), v.y(), v.z()); }
+inline Vec3 cast_vec3(const glm::vec3& v) { return Vec3(v.x, v.y, v.z); }
 
 Mat9x12 compute_dFdx(const Mat3& DmInv);
 
@@ -59,6 +61,9 @@ public:
 	// Constrain all degrees of freedom
 	virtual void add_constraint(uint32_t node, const glm::vec3& v) = 0;
 	virtual void add_position_alteration(uint32_t node, const glm::vec3& dx) = 0;
+	virtual const Vec3& get_node(uint32_t node) const = 0;
+	virtual Vec3 get_velocity(uint32_t node) const = 0;
+
 
 	virtual void clear_constraints() = 0;
 	virtual void draw_ui() = 0;

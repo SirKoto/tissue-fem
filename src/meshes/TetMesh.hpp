@@ -28,7 +28,7 @@ public:
 	const std::vector<Eigen::Vector3f>& nodes() const { return reinterpret_cast<const std::vector<Eigen::Vector3f>&>(m_vertices); }
 	const std::vector<glm::vec3>& nodes_glm() const { return reinterpret_cast<const std::vector<glm::vec3>&>(m_vertices); }
 	const std::vector<Eigen::Vector4i>& elements() const { return reinterpret_cast<const std::vector<Eigen::Vector4i>&>(m_elements); }
-
+	const std::map<int32_t, int32_t>& global_to_local_surface_vertices() const { return m_global_to_local_surface_vertex; }
 	void update_node(int32_t idx, const glm::vec3& pos);
 
 	inline void update_node(int32_t idx, const Eigen::Vector3f& pos) {

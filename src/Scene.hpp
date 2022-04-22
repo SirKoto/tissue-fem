@@ -33,8 +33,8 @@ public:
 
 	void add_gameObject(std::shared_ptr<GameObject>& obj);
 
-	PhysicsSystem& physics() { m_physic_sys; }
-	const PhysicsSystem& physics() const { m_physic_sys; }
+	PhysicsSystem& physics() { return m_physic_sys; }
+	const PhysicsSystem& physics() const { return m_physic_sys; }
 
 private:
 	Camera m_camera;

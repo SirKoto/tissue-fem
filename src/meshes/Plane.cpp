@@ -3,15 +3,9 @@
 #include <imgui.h>
 #include <glm/gtc/type_ptr.hpp>
 
-namespace physics {
-
 std::optional<SurfaceIntersection> Plane::intersect(const Ray& ray, const float max_t) const
 {
 	float cos = glm::dot(m_normal, ray.direction);
-
-	if (cos <= 1e-4f) {
-		return {};
-	}
 
 	float t = -(glm::dot(ray.origin, m_normal) + m_displacement) / cos;
 	
@@ -39,5 +33,3 @@ void Plane::draw_ui()
 	ImGui::InputFloat("Displacement", &m_displacement);
 	ImGui::PopID();
 }
-
-}; // namespace physics

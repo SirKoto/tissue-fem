@@ -99,17 +99,44 @@ void ElasticSim::update(const Context& ctx, GameObject* parent)
 	}
 	m_selector.update(ctx, parent);
 
-	m_sim->clear_constraints();
 
 	if(m_step_once || m_run_simulation) {
-		float dt = ctx.delta_time();
+		float dt = std::min(ctx.delta_time(), 1.0f / 60.0f);
 		const std::map<uint32_t, PrimitiveSelector::Delta>& movements = m_selector.get_movements();
 		for (const auto& m : movements) {
 			m_sim->add_constraint(m.first, glm::vec3(0.0f));
 			m_sim->add_position_alteration(m.first, m.second.delta);
 		}
 		
+		// Solve system
 		m_sim->step((sim::Float)dt);
+
+		// Clear constraints after using them
+		m_sim->clear_constraints();
+
+		// Add constraints for surface faces with static objects
+		for (const auto& surface_vert : parent->get_mesh()->global_to_local_surface_vertices()) {
+			uint32_t node_idx = surface_vert.first;
+			Ray ray;
+			ray.origin = parent->get_mesh()->nodes_glm()[node_idx];
+			const glm::vec3 sim_pos = sim::cast_vec3(m_sim->get_node(node_idx));
+			ray.direction = sim_pos - ray.origin;
+			/*if (glm::dot(ray.direction, ray.direction) > 1e-8) {
+				std::optional<SurfaceIntersection> intersection = ctx.get_scene().physics().intersect(ray, 1.0f);
+
+				if (intersection.has_value()) {
+					m_sim->add_constraint(node_idx, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+					m_sim->add_position_alteration(node_idx, 1.01f * (intersection->point - sim_pos));
+				}
+			}*/
+			if (sim_pos.y < 0.0f) {
+				glm::vec3 np = sim_pos;
+				np.y = 0.001f;
+				glm::vec3 v(0.0f, -m_sim->get_velocity(node_idx).y(), 0.0f);
+				m_sim->add_constraint(node_idx, v, glm::vec3(0.0f, 1.0f, 0.0f));
+				m_sim->add_position_alteration(node_idx, np - sim_pos);
+			}
+		}
 
 		m_sim->update_objects();
 

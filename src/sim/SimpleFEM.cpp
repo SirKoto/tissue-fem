@@ -169,6 +169,7 @@ void SimpleFem::step(Float dt)
 					m_S.insert(idx + k, idx + j) = c->constraint(k, j);
 				}
 			}
+			++c;
 		}
 		else {
 			m_S.insert(idx + 0, idx + 0) = Float(1.0);
@@ -183,34 +184,38 @@ void SimpleFem::step(Float dt)
 	//                c = b - Az
 	
 	// Compute rhs
-	m_Sc = (m_rhs - m_dfdx_system * m_z);
-	for (const Constraint& s : m_constraints3) {
+	m_Sc = m_S * (m_rhs - m_dfdx_system * m_z);
+	/*for (const Constraint& s : m_constraints3) {
 		m_Sc.segment<3>(3 * s.node) = s.constraint * m_Sc.segment<3>(3 * s.node);
-	}
+	}*/
 	// m_Sc = m_constraints.asDiagonal() * (m_rhs - m_dfdx_system * m_z);
 
-	// Apply SAS^T TODO
+	// Apply SAS^T
 	m_system = m_S * m_dfdx_system * m_S.transpose();
 
-	// SAS^T + I - S TODO
+	// SAS^T + I - S
 	m_system -= m_S;
 	m_system.diagonal().array() += Float(1.0);
 
 	m_metric_time.system_finish = (float)timer.getDuration<Timer::Seconds>().count();
 	timer.reset();
 
-	/*Eigen::ConjugateGradient<SMat> solver(m_dfdx_system);
-	solver.setTolerance(1e-4);
+#if FALSE
+	Eigen::ConjugateGradient<SMat> solver(m_system);
+	//solver.setTolerance(1e-4);
 	//solver.setMaxIterations(20 * m_nodes.size());
 	if (solver.info() != Eigen::Success) {
 		std::cerr << "Can't build system" << std::endl;
 	}
-	m_v += solver.solve(m_rhs);
+	m_delta_v = solver.solve(m_Sc);
 	if (solver.info() != Eigen::Success) {
 		std::cerr << "System did not converge" << std::endl;
-	}*/
+	}
+#else
 	solver.solve(m_system, m_Sc, &m_delta_v);
+#endif
 	m_v += m_delta_v + m_z;
+
 	m_metric_time.solve = (float)timer.getDuration<Timer::Seconds>().count();
 	timer.reset();
 
@@ -253,7 +258,7 @@ void SimpleFem::add_constraint(uint32_t node, const glm::vec3& v, const glm::vec
 	m_z.coeffRef(3 * node + 1) = v.y - m_v[3 * node + 1];
 	m_z.coeffRef(3 * node + 2) = v.z - m_v[3 * node + 2];
 
-	const Vec3 d = reinterpret_cast<const Vec3&>(dir);
+	const Vec3 d(dir.x, dir.y, dir.z);
 
 	m_constraints3.push_back({
 			node,
@@ -286,6 +291,16 @@ void SimpleFem::clear_constraints()
 	m_constraints3.clear();
 	m_position_alteration.setZero();
 }
+const Vec3& SimpleFem::get_node(uint32_t node) const
+{
+	return m_nodes[node];
+}
+
+Vec3 SimpleFem::get_velocity(uint32_t node) const
+{
+	return m_v.segment<3>(3 * node);
+}
+
 void SimpleFem::pancake()
 {
 	for (size_t i = 0; i < m_nodes.size(); ++i) {

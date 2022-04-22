@@ -24,7 +24,7 @@ public:
 	void step(Float dt) override final;
 
 	void update_objects() override final;
-
+	
 	void add_constraint(uint32_t node, const glm::vec3& v, const glm::vec3& dir) override final;
 
 	void add_constraint(uint32_t node, const glm::vec3& v) override final;
@@ -32,6 +32,9 @@ public:
 	void add_position_alteration(uint32_t node, const glm::vec3& dx) override final;
 
 	void clear_constraints() override final;
+
+	const Vec3& get_node(uint32_t node) const override final;
+	Vec3 get_velocity(uint32_t node) const override final;
 
 	void pancake();
 
