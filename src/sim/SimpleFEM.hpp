@@ -60,10 +60,11 @@ private:
 	SMat m_dfdx_system;
 	SMat m_system;
 	struct Constraint;
-	std::vector<Constraint> m_constraints3;
+	std::map<uint32_t, Constraint> m_constraints3;
 	SMat m_S;
 	Vec m_Sc;
-	SVec m_z;
+	Vec m_constraint_forces;
+	Vec m_z;
 	SVec m_position_alteration;
 
 	std::vector<Mat3> m_DmInvs;
@@ -86,12 +87,9 @@ private:
 	};
 
 	struct Constraint {
-		uint32_t node;
+		Vec3 dir;
 		Mat3 constraint;
-
-		bool operator<(const Constraint& o) const {
-			return this->node < o.node;
-		}
+		bool erase_afterwards;
 	};
 
 	// sparse_cache has pointers to the 3x3 region of the sparse matrix where node i

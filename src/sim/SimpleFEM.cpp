@@ -39,8 +39,9 @@ SimpleFem::SimpleFem(const std::shared_ptr<TetMesh>& mesh, Float young, Float nu
 	m_delta_v.resize(3 * m_nodes.size());
 	m_delta_v.setZero();
 	m_rhs.resize(3 * m_nodes.size());
-	m_z.resize(3 * m_nodes.size());
+	m_z.resize(3 * m_nodes.size()); m_z.setZero();
 	m_position_alteration.resize(3 * m_nodes.size());
+	m_constraint_forces.resize(3 * m_nodes.size());
 	m_S.resize(3 * m_nodes.size(), 3 * m_nodes.size());
 	// Reserve 3 values per column, as it is the maximum that will be in a constrain matrix
 	m_S.reserve(Eigen::VectorXi::Constant(3 * m_nodes.size(), 3));
@@ -155,18 +156,17 @@ void SimpleFem::step(Float dt)
 	m_dfdx_system *=  - (dt * dt) - m_beta_rayleigh * dt;
 	m_dfdx_system.diagonal().array() += m_node_mass * (Float(1.0) - m_alpha_rayleigh * dt);
 
-	// Sort constraints
-	std::sort(m_constraints3.begin(), m_constraints3.end());
+
 	// Fill S
 	m_S.setZero();
-	std::vector<Constraint>::const_iterator c = m_constraints3.begin();
+	std::map<uint32_t, Constraint>::const_iterator c = m_constraints3.begin();
 	for (uint32_t i = 0;
 		i < m_nodes.size(); ++i) {
 		const uint32_t idx = 3 * i;
-		if (c != m_constraints3.end() && c->node == i) {
+		if (c != m_constraints3.end() && c->first == i) {
 			for (uint32_t j = 0; j < 3; ++j) {
 				for (uint32_t k = 0; k < 3; ++k) {
-					m_S.insert(idx + k, idx + j) = c->constraint(k, j);
+					m_S.insert(idx + k, idx + j) = c->second.constraint(k, j);
 				}
 			}
 			++c;
@@ -219,6 +219,14 @@ void SimpleFem::step(Float dt)
 	m_metric_time.solve = (float)timer.getDuration<Timer::Seconds>().count();
 	timer.reset();
 
+	// Compute constraint forces
+	if (m_constraints3.empty()) {
+		m_constraint_forces.setZero();
+	}
+	else {
+		m_constraint_forces = m_dfdx_system * m_delta_v - m_rhs;
+	}
+
 	// Assign new positions to the nodes
 	for (size_t i = 0; i < m_nodes.size(); ++i) {
 		m_nodes[i].x() += dt * m_v[3 * i + 0];
@@ -253,29 +261,52 @@ void SimpleFem::update_objects()
 
 void SimpleFem::add_constraint(uint32_t node, const glm::vec3& v, const glm::vec3& dir)
 {
+	std::map<uint32_t, Constraint>::iterator it = m_constraints3.find(node);
 
-	m_z.coeffRef(3 * node + 0) = v.x - m_v[3 * node + 0];
-	m_z.coeffRef(3 * node + 1) = v.y - m_v[3 * node + 1];
-	m_z.coeffRef(3 * node + 2) = v.z - m_v[3 * node + 2];
+	if (it != m_constraints3.end()) {
+		m_constraints3.erase(it);
+	}
+
+	m_z(3 * node + 0) = v.x - m_v[3 * node + 0];
+	m_z(3 * node + 1) = v.y - m_v[3 * node + 1];
+	m_z(3 * node + 2) = v.z - m_v[3 * node + 2];
 
 	const Vec3 d(dir.x, dir.y, dir.z);
 
-	m_constraints3.push_back({
-			node,
-			Mat3::Identity() - (d * d.transpose())
-		});
+	m_constraints3.emplace(node,
+		Constraint{ 
+			d,
+			Mat3::Identity() - (d * d.transpose()),
+			false
+		}
+		);
 }
 
 void SimpleFem::add_constraint(uint32_t node, const glm::vec3& v)
 {
-	m_z.coeffRef(3 * node + 0) = v.x - m_v[3 * node + 0];
-	m_z.coeffRef(3 * node + 1) = v.y - m_v[3 * node + 1];
-	m_z.coeffRef(3 * node + 2) = v.z - m_v[3 * node + 2];
 
-	m_constraints3.push_back({
-			node,
-			Mat3::Zero()
-		});
+	std::map<uint32_t, Constraint>::iterator it = m_constraints3.find(node);
+
+	if (it != m_constraints3.end()) {
+		if (it->second.dir.isZero() || it->second.dir.dot(cast_vec3(v)) < Float(0.0)) {
+			return;
+		}
+		else {
+			m_constraints3.erase(it);
+		}
+	}
+
+	m_z(3 * node + 0) = v.x - m_v[3 * node + 0];
+	m_z(3 * node + 1) = v.y - m_v[3 * node + 1];
+	m_z(3 * node + 2) = v.z - m_v[3 * node + 2];
+
+	m_constraints3.emplace(node,
+		Constraint{ 
+			Vec3::Zero(),
+			Mat3::Zero(),
+			true
+		}
+		);
 }
 
 void SimpleFem::add_position_alteration(uint32_t node, const glm::vec3& dx)
@@ -287,8 +318,29 @@ void SimpleFem::add_position_alteration(uint32_t node, const glm::vec3& dx)
 
 void SimpleFem::clear_constraints()
 {
-	m_z.setZero();
-	m_constraints3.clear();
+	std::map<uint32_t, Constraint>::const_iterator it = m_constraints3.begin();
+	while (it != m_constraints3.end()) {
+		volatile bool erase = it->second.erase_afterwards;
+
+		if (!erase && !it->second.dir.isZero()) {
+			// Check forces along direction
+			const Float dot = it->second.dir.dot(m_constraint_forces.segment<3>(it->first * 3));
+			if (dot < Float(0.0)) {
+				erase = true;
+			}
+		}
+
+		if (erase) {
+			m_z.segment<3>(it->first * 3).setZero();
+			it = m_constraints3.erase(it);
+		}
+		else {
+			++it;
+		}
+	}
+	
+	// m_z.setZero();
+	// m_constraints3.clear();
 	m_position_alteration.setZero();
 }
 const Vec3& SimpleFem::get_node(uint32_t node) const

@@ -130,11 +130,8 @@ void ElasticSim::update(const Context& ctx, GameObject* parent)
 				}
 			}*/
 			if (sim_pos.y < 0.0f) {
-				glm::vec3 v(0.0f, -m_sim->get_velocity(node_idx).y(), 0.0f);
-				v *= 0.1f;
-				float dp = -dt * v.y - sim_pos.y;
-				m_sim->add_constraint(node_idx, v, glm::vec3(0.0f, 1.0f, 0.0f));
-				m_sim->add_position_alteration(node_idx, glm::vec3(0.0f, dp, 0.0f));
+				m_sim->add_constraint(node_idx, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+				m_sim->add_position_alteration(node_idx, glm::vec3(0.0f, -sim_pos.y + 1e-4, 0.0f));
 			}
 		}
 
