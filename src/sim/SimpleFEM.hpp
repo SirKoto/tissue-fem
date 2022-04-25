@@ -23,7 +23,7 @@ public:
 
 	void step(Float dt) override final;
 
-	void update_objects() override final;
+	void update_objects(bool add_position_alteration) override final;
 	
 	void add_constraint(uint32_t node, const glm::vec3& v, const glm::vec3& dir) override final;
 

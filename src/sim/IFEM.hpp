@@ -54,7 +54,7 @@ public:
 
 	virtual void step(Float dt) = 0;
 
-	virtual void update_objects() = 0;
+	virtual void update_objects(bool add_position_alteration = false) = 0;
 
 	// Add a velocity constraint 
 	virtual void add_constraint(uint32_t node, const glm::vec3& v, const glm::vec3& dir) = 0;

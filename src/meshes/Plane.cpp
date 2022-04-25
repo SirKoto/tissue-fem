@@ -9,7 +9,7 @@ std::optional<SurfaceIntersection> Plane::intersect(const Ray& ray, const float 
 
 	float t = -(glm::dot(ray.origin, m_normal) + m_displacement) / cos;
 	
-	if (t > max_t) {
+	if (t > max_t || t <= 0.0f) {
 		return {};
 	}
 

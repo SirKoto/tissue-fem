@@ -121,21 +121,33 @@ void ElasticSim::update(const Context& ctx, GameObject* parent)
 			ray.origin = parent->get_mesh()->nodes_glm()[node_idx];
 			const glm::vec3 sim_pos = sim::cast_vec3(m_sim->get_node(node_idx));
 			ray.direction = sim_pos - ray.origin;
-			/*if (glm::dot(ray.direction, ray.direction) > 1e-8) {
+
+#if true
+			if (glm::dot(ray.direction, ray.direction) >= 2.0f * std::numeric_limits<float>::epsilon()) {
 				std::optional<SurfaceIntersection> intersection = ctx.get_scene().physics().intersect(ray, 1.0f);
 
 				if (intersection.has_value()) {
-					m_sim->add_constraint(node_idx, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-					m_sim->add_position_alteration(node_idx, 1.01f * (intersection->point - sim_pos));
+					m_sim->add_constraint(node_idx,
+						glm::vec3(0.0f),
+						intersection->normal);
+					glm::vec3 delta_x = 1.f * 
+						intersection->normal * (
+							glm::dot(intersection->normal, intersection->point - sim_pos)
+							+ 2.0f * std::numeric_limits<float>::epsilon()
+							);
+					m_sim->add_position_alteration(
+						node_idx, delta_x);
 				}
-			}*/
+			}
+#else
 			if (sim_pos.y < 0.0f) {
 				m_sim->add_constraint(node_idx, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 				m_sim->add_position_alteration(node_idx, glm::vec3(0.0f, -sim_pos.y + 1e-4, 0.0f));
 			}
+#endif
 		}
 
-		m_sim->update_objects();
+		m_sim->update_objects(true);
 
 		m_step_once = false;
 	}

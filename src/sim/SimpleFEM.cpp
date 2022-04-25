@@ -200,7 +200,7 @@ void SimpleFem::step(Float dt)
 	m_metric_time.system_finish = (float)timer.getDuration<Timer::Seconds>().count();
 	timer.reset();
 
-#if FALSE
+#if false
 	Eigen::ConjugateGradient<SMat> solver(m_system);
 	//solver.setTolerance(1e-4);
 	//solver.setMaxIterations(20 * m_nodes.size());
@@ -247,15 +247,22 @@ void SimpleFem::step(Float dt)
 	m_metric_time.step = (float)step_timer.getDuration<Timer::Seconds>().count();
 }
 
-void SimpleFem::update_objects()
+void SimpleFem::update_objects(bool add_position_alteration)
 {
 	if (m_mesh.expired()) {
 		return;
 	}
 	std::shared_ptr<TetMesh> mesh = m_mesh.lock();
 
+	SVec::InnerIterator it_dx(m_position_alteration);
 	for (int32_t i = 0; i < (int32_t)m_nodes.size(); ++i) {
-		mesh->update_node(i, m_nodes[i].cast<float>());
+		Vec3 pos = m_nodes[i].cast<float>();
+		if (add_position_alteration && it_dx && it_dx.index() == 3 * i) {
+			pos.x() += it_dx.value(); ++it_dx;
+			pos.y() += it_dx.value(); ++it_dx;
+			pos.z() += it_dx.value(); ++it_dx;
+		}
+		mesh->update_node(i, pos);
 	}
 }
 
@@ -325,13 +332,12 @@ void SimpleFem::clear_constraints()
 		if (!erase && !it->second.dir.isZero()) {
 			// Check forces along direction
 			const Float dot = it->second.dir.dot(m_constraint_forces.segment<3>(it->first * 3));
-			if (dot < Float(0.0)) {
+			if (dot < -std::numeric_limits<Float>::epsilon()) {
 				erase = true;
 			}
 		}
 
 		if (erase) {
-			m_z.segment<3>(it->first * 3).setZero();
 			it = m_constraints3.erase(it);
 		}
 		else {
@@ -339,8 +345,7 @@ void SimpleFem::clear_constraints()
 		}
 	}
 	
-	// m_z.setZero();
-	// m_constraints3.clear();
+	m_z.setZero();
 	m_position_alteration.setZero();
 }
 const Vec3& SimpleFem::get_node(uint32_t node) const
@@ -359,7 +364,7 @@ void SimpleFem::pancake()
 		m_nodes[i].y() *= Float(0.9f);
 	}
 
-	update_objects();
+	update_objects(false);
 }
 
 void SimpleFem::draw_ui()
