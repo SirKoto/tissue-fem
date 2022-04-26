@@ -93,7 +93,6 @@ private:
 	struct Constraint {
 		Vec3 dir;
 		Mat3 constraint;
-		bool erase_afterwards;
 	};
 
 	// sparse_cache has pointers to the 3x3 region of the sparse matrix where node i

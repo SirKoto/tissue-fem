@@ -105,10 +105,24 @@ void ElasticSim::update(const Context& ctx, GameObject* parent)
 
 	if(m_step_once || m_run_simulation) {
 		float dt = std::min(ctx.delta_time(), 1.0f / 60.0f);
+
 		const std::map<uint32_t, PrimitiveSelector::Delta>& movements = m_selector.get_movements();
 		for (const auto& m : movements) {
-			m_sim->add_constraint(m.first, glm::vec3(0.0f));
-			m_sim->add_position_alteration(m.first, m.second.delta);
+			const uint32_t node_idx = m.first;
+			if (m_constrained_nodes.count(node_idx) == 0) {
+				// Do not add the constraint if it traverses some kinematic collider
+				Ray ray;
+				ray.origin = parent->get_mesh()->nodes_glm()[node_idx];
+				const glm::vec3 next_pos = ray.origin + m.second.delta;
+				ray.direction = next_pos - ray.origin;
+				std::optional<SurfaceIntersection> intersection = ctx.get_scene().physics().intersect(ray, 1.0f);
+
+				if (m.second.delta == glm::vec3(0.0f) || !intersection.has_value()) {
+					m_sim->add_constraint(node_idx, glm::vec3(0.0f));
+					m_sim->add_position_alteration(node_idx, m.second.delta);
+					m_constrained_nodes.emplace(node_idx, Constraint(glm::vec3(0.0f), true));
+				}
+			}
 		}
 		
 		// Solve system
@@ -117,12 +131,12 @@ void ElasticSim::update(const Context& ctx, GameObject* parent)
 		// Clear constraints after using them
 		m_sim->clear_frame_alterations();
 
-		// Remove constraints that are applying negatve constraint forces
-		for (std::map<uint32_t, glm::vec3>::const_iterator it = m_constrained_nodes.begin(); it != m_constrained_nodes.end();) {
+		// Remove constraints that are applying negatve constraint forces or marked as to_delete
+		for (std::map<uint32_t, Constraint>::const_iterator it = m_constrained_nodes.begin(); it != m_constrained_nodes.end();) {
 			const uint32_t node_idx = it->first;
 			glm::vec3 constraint_force = sim::cast_vec3(m_sim->get_force_constraint(node_idx));
-			const float dot = glm::dot(constraint_force, it->second);
-			if (dot < -std::numeric_limits<float>::epsilon()) {
+			const float dot = glm::dot(constraint_force, it->second.normal);
+			if (it->second.to_delete || dot < -std::numeric_limits<float>::epsilon()) {
 				m_sim->erase_constraint(node_idx);
 				it = m_constrained_nodes.erase(it);
 			}

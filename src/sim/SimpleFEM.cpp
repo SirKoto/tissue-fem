@@ -285,8 +285,7 @@ void SimpleFem::add_constraint(uint32_t node, const glm::vec3& v, const glm::vec
 	m_constraints3.emplace(node,
 		Constraint{ 
 			d,
-			Mat3::Identity() - (d * d.transpose()),
-			false
+			Mat3::Identity() - (d * d.transpose())
 		}
 		);
 }
@@ -312,8 +311,7 @@ void SimpleFem::add_constraint(uint32_t node, const glm::vec3& v)
 	m_constraints3.emplace(node,
 		Constraint{ 
 			Vec3::Zero(),
-			Mat3::Zero(),
-			true
+			Mat3::Zero()
 		}
 		);
 }
@@ -331,18 +329,7 @@ void SimpleFem::add_position_alteration(uint32_t node, const glm::vec3& dx)
 }
 
 void SimpleFem::clear_frame_alterations()
-{
-	std::map<uint32_t, Constraint>::const_iterator it = m_constraints3.begin();
-	while (it != m_constraints3.end()) {
-		const bool erase = it->second.erase_afterwards;
-		if (erase) {
-			it = m_constraints3.erase(it);
-		}
-		else {
-			++it;
-		}
-	}
-	
+{	
 	m_z.setZero();
 	m_position_alteration.setZero();
 }
