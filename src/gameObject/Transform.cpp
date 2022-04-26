@@ -52,4 +52,13 @@ void Transform::translate(const glm::vec3& v)
 	m_inverse = glm::inverse(m_transform);
 }
 
+template<class Archive>
+void Transform::serialize(Archive& archive)
+{
+	archive(TF_SERIALIZE_NVP_MEMBER(m_transform));
+	archive(TF_SERIALIZE_NVP_MEMBER(m_inverse));
+}
+
+TF_SERIALIZE_TEMPLATE_EXPLICIT_IMPLEMENTATION(Transform)
+
 } // namespace gobj

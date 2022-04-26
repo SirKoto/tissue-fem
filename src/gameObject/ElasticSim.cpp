@@ -207,4 +207,12 @@ const char* ElasticSim::get_name() const
 	return "Elastic Simulator"; 
 }
 
+template<class Archive>
+void ElasticSim::serialize(Archive& archive)
+{
+	archive(TF_SERIALIZE_NVP_MEMBER(m_selector));
+}
+
+TF_SERIALIZE_TEMPLATE_EXPLICIT_IMPLEMENTATION(ElasticSim)
+
 } // namespace gobj

@@ -125,3 +125,14 @@ void Scene::add_gameObject(std::shared_ptr<GameObject>& obj)
 {
 	m_gameObjects.push_back(obj);
 }
+
+
+template<class Archive>
+void Scene::serialize(Archive& archive)
+{
+	archive(TF_SERIALIZE_NVP_MEMBER(m_camera));
+	archive(TF_SERIALIZE_NVP_MEMBER(m_clear_color));
+	archive(TF_SERIALIZE_NVP_MEMBER(m_gameObjects));
+}
+
+TF_SERIALIZE_TEMPLATE_EXPLICIT_IMPLEMENTATION(Scene)

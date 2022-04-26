@@ -159,4 +159,21 @@ void PrimitiveSelector::Selection::update(const Context& ctx, GameObject* parent
 	}
 }
 
+template<class Archive>
+void PrimitiveSelector::Selection::serialize(Archive& archive)
+{
+	archive(TF_SERIALIZE_NVP_MEMBER(m_nodes));
+	archive(TF_SERIALIZE_NVP_MEMBER(m_fixed));
+}
+
+TF_SERIALIZE_TEMPLATE_EXPLICIT_IMPLEMENTATION(PrimitiveSelector::Selection)
+
+template<class Archive>
+void PrimitiveSelector::serialize(Archive& archive)
+{
+	archive(TF_SERIALIZE_NVP_MEMBER(m_selections));
+}
+
+TF_SERIALIZE_TEMPLATE_EXPLICIT_IMPLEMENTATION(PrimitiveSelector)
+
 } // namespace gobj

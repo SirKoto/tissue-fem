@@ -8,6 +8,7 @@
 #include "sim/IFEM.hpp"
 #include "physics/PhysicsSystem.hpp"
 #include "utils/CircularBuffer.hpp"
+#include "utils/serialization.hpp"
 
 class Context;
 class Scene
@@ -53,5 +54,10 @@ private:
 	// Physics
 	PhysicsSystem m_physic_sys;
 	
+	// Serialization
+	template<typename Archive>
+	void serialize(Archive& archive);
+
+	TF_SERIALIZE_PRIVATE_MEMBERS
 };
 

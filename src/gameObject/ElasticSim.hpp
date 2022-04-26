@@ -8,7 +8,7 @@
 #include "utils/CircularBuffer.hpp"
 
 #include "extra/PrimitiveSelector.hpp"
-
+#include "utils/serialization.hpp"
 
 namespace gobj {
 
@@ -45,6 +45,12 @@ private:
 		glm::vec3 normal;
 		bool to_delete = false;
 	};
+
+	// Serialization
+	template<typename Archive>
+	void serialize(Archive& archive);
+
+	TF_SERIALIZE_PRIVATE_MEMBERS
 };
 
 } // namespace gobj

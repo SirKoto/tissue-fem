@@ -158,3 +158,13 @@ void GameObject::apply_model_transform()
 	m_mesh->apply_transform(get_model_matrix());
 	m_transform.set_identity();
 }
+
+template<class Archive>
+void GameObject::serialize(Archive& archive)
+{
+	archive(TF_SERIALIZE_NVP_MEMBER(m_name));
+	archive(TF_SERIALIZE_NVP_MEMBER(m_transform));
+	archive(TF_SERIALIZE_NVP_MEMBER(m_sim));
+}
+
+TF_SERIALIZE_TEMPLATE_EXPLICIT_IMPLEMENTATION(GameObject)

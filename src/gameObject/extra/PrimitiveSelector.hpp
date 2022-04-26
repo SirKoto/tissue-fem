@@ -2,6 +2,7 @@
 
 #include "meshes/TetMesh.hpp"
 #include "graphics/ParticleManager.hpp"
+#include "utils/serialization.hpp"
 
 #include <map>
 #include <memory>
@@ -52,9 +53,21 @@ private:
 	private:
 		std::list<uint32_t> m_nodes;
 		bool m_fixed = true;
+
+		// Serialization
+		template<typename Archive>
+		void serialize(Archive& archive);
+
+		TF_SERIALIZE_PRIVATE_MEMBERS
 	};
 
 	friend class Selection;
+
+	// Serialization
+	template<typename Archive>
+	void serialize(Archive& archive);
+
+	TF_SERIALIZE_PRIVATE_MEMBERS
 }; // class PrimitiveSelector
 
 

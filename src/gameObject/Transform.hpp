@@ -1,7 +1,7 @@
 #pragma once
 
 #include <glm/glm.hpp>
-
+#include "utils/serialization.hpp"
 
 class Context;
 namespace gobj {
@@ -23,6 +23,12 @@ public:
 private:
 	glm::mat4 m_transform = glm::mat4(1.0f);
 	glm::mat4 m_inverse = glm::mat4(1.0f);
+
+	// Serialization
+	template<typename Archive>
+	void serialize(Archive& archive);
+
+	TF_SERIALIZE_PRIVATE_MEMBERS
 };
 
 } // namespace gobj

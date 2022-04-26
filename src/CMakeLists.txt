@@ -30,6 +30,7 @@ add_executable(${PROJECT_NAME}
 	utils/Icosphere.hpp	utils/Icosphere.cpp
 	utils/BBox.hpp	utils/BBox.cpp
 	utils/CircularBuffer.hpp
+	utils/serialization.hpp
 
 	gameObject/Transform.hpp gameObject/Transform.cpp
 	gameObject/ElasticSim.hpp gameObject/ElasticSim.cpp

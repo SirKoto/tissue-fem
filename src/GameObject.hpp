@@ -6,6 +6,7 @@
 #include "meshes/TetMesh.hpp"
 #include "gameObject/Transform.hpp"
 #include "gameObject/ElasticSim.hpp"
+#include "utils/serialization.hpp"
 
 class Context;
 class GameObject
@@ -56,5 +57,10 @@ private:
 	gobj::ElasticSim m_sim;
 	//std::list<std::unique_ptr<gobj::Addon>> m_addons;
 	
+	// Serialization
+	template<typename Archive>
+	void serialize(Archive& archive);
+
+	TF_SERIALIZE_PRIVATE_MEMBERS
 
 };
