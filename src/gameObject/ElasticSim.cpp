@@ -4,6 +4,9 @@
 #include "Context.hpp"
 #include "sim/SimpleFEM.hpp"
 
+#undef NDEBUG
+#include <assert.h>
+
 namespace gobj {
 
 ElasticSim::ElasticSim()
@@ -112,39 +115,61 @@ void ElasticSim::update(const Context& ctx, GameObject* parent)
 		m_sim->step((sim::Float)dt);
 
 		// Clear constraints after using them
-		m_sim->clear_constraints();
+		m_sim->clear_frame_alterations();
+
+		// Remove constraints that are applying negatve constraint forces
+		for (std::map<uint32_t, glm::vec3>::const_iterator it = m_constrained_nodes.begin(); it != m_constrained_nodes.end();) {
+			const uint32_t node_idx = it->first;
+			glm::vec3 constraint_force = sim::cast_vec3(m_sim->get_force_constraint(node_idx));
+			const float dot = glm::dot(constraint_force, it->second);
+			if (dot < -std::numeric_limits<float>::epsilon()) {
+				m_sim->erase_constraint(node_idx);
+				it = m_constrained_nodes.erase(it);
+			}
+			else {
+				++it;
+			}
+		}
 
 		// Add constraints for surface faces with static objects
 		for (const auto& surface_vert : parent->get_mesh()->global_to_local_surface_vertices()) {
 			uint32_t node_idx = surface_vert.first;
+			if (m_constrained_nodes.count(node_idx)) {
+				continue;
+			}
+
 			Ray ray;
 			ray.origin = parent->get_mesh()->nodes_glm()[node_idx];
 			const glm::vec3 sim_pos = sim::cast_vec3(m_sim->get_node(node_idx));
 			ray.direction = sim_pos - ray.origin;
 
-#if true
 			if (glm::dot(ray.direction, ray.direction) >= 2.0f * std::numeric_limits<float>::epsilon()) {
 				std::optional<SurfaceIntersection> intersection = ctx.get_scene().physics().intersect(ray, 1.0f);
 
 				if (intersection.has_value()) {
-					m_sim->add_constraint(node_idx,
-						glm::vec3(0.0f),
-						intersection->normal);
-					glm::vec3 delta_x = 1.f * 
-						intersection->normal * (
-							glm::dot(intersection->normal, intersection->point - sim_pos)
-							+ 2.0f * std::numeric_limits<float>::epsilon()
-							);
+					
+					float dist_to_intersection = glm::dot(intersection->normal, intersection->point - sim_pos);
+					if (dist_to_intersection < 0.0f) {
+						continue;
+					}
+
+					glm::vec3 delta_x = intersection->normal * 
+						std::nextafter(dist_to_intersection, std::numeric_limits<float>::infinity());
 					m_sim->add_position_alteration(
 						node_idx, delta_x);
+
+					// Only add constraint if node's velocity goes against static surface
+					glm::vec3 v = sim::cast_vec3(m_sim->get_velocity(node_idx));
+					const float perp_velocity = glm::dot(intersection->normal, v);
+					if (perp_velocity < 0.0f) {
+						m_sim->add_constraint(node_idx,
+							glm::vec3(0.0f),
+							intersection->normal);
+						// Cache the constrained node
+						m_constrained_nodes.emplace(node_idx, intersection->normal);
+					}
 				}
 			}
-#else
-			if (sim_pos.y < 0.0f) {
-				m_sim->add_constraint(node_idx, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-				m_sim->add_position_alteration(node_idx, glm::vec3(0.0f, -sim_pos.y + 1e-4, 0.0f));
-			}
-#endif
 		}
 
 		m_sim->update_objects(true);

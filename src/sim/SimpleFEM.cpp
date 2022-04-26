@@ -1,5 +1,7 @@
 #include "SimpleFEM.hpp"
 
+#undef NDEBUG
+#include <assert.h>
 #include <iostream>
 #include <imgui.h>
 #include <glm/gtc/constants.hpp>
@@ -316,6 +318,11 @@ void SimpleFem::add_constraint(uint32_t node, const glm::vec3& v)
 		);
 }
 
+void SimpleFem::erase_constraint(uint32_t node)
+{
+	m_constraints3.erase(node);
+}
+
 void SimpleFem::add_position_alteration(uint32_t node, const glm::vec3& dx)
 {
 	m_position_alteration.coeffRef(3 * node + 0) = dx.x;
@@ -323,20 +330,11 @@ void SimpleFem::add_position_alteration(uint32_t node, const glm::vec3& dx)
 	m_position_alteration.coeffRef(3 * node + 2) = dx.z;
 }
 
-void SimpleFem::clear_constraints()
+void SimpleFem::clear_frame_alterations()
 {
 	std::map<uint32_t, Constraint>::const_iterator it = m_constraints3.begin();
 	while (it != m_constraints3.end()) {
-		volatile bool erase = it->second.erase_afterwards;
-
-		if (!erase && !it->second.dir.isZero()) {
-			// Check forces along direction
-			const Float dot = it->second.dir.dot(m_constraint_forces.segment<3>(it->first * 3));
-			if (dot < -std::numeric_limits<Float>::epsilon()) {
-				erase = true;
-			}
-		}
-
+		const bool erase = it->second.erase_afterwards;
 		if (erase) {
 			it = m_constraints3.erase(it);
 		}
@@ -356,6 +354,12 @@ const Vec3& SimpleFem::get_node(uint32_t node) const
 Vec3 SimpleFem::get_velocity(uint32_t node) const
 {
 	return m_v.segment<3>(3 * node);
+}
+
+Vec3 SimpleFem::get_force_constraint(uint32_t node) const
+{
+	assert(m_constraints3.count(node));
+	return m_constraint_forces.segment<3>(node * 3);
 }
 
 void SimpleFem::pancake()

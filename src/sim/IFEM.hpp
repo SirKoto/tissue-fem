@@ -60,12 +60,14 @@ public:
 	virtual void add_constraint(uint32_t node, const glm::vec3& v, const glm::vec3& dir) = 0;
 	// Constrain all degrees of freedom
 	virtual void add_constraint(uint32_t node, const glm::vec3& v) = 0;
+	virtual void erase_constraint(uint32_t node) = 0;
 	virtual void add_position_alteration(uint32_t node, const glm::vec3& dx) = 0;
 	virtual const Vec3& get_node(uint32_t node) const = 0;
 	virtual Vec3 get_velocity(uint32_t node) const = 0;
+	virtual Vec3 get_force_constraint(uint32_t node) const = 0;
 
 
-	virtual void clear_constraints() = 0;
+	virtual void clear_frame_alterations() = 0;
 	virtual void draw_ui() = 0;
 
 	struct MetricTimes {

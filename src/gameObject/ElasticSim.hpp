@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <map>
 
 #include "Addon.hpp"
 #include "sim/IFEM.hpp"
@@ -25,6 +26,7 @@ public:
 
 private:
 	std::unique_ptr<sim::IFEM> m_sim;
+	std::map<uint32_t, glm::vec3> m_constrained_nodes;
 	gobj::PrimitiveSelector m_selector;
 
 	bool m_step_once = false;
