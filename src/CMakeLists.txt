@@ -40,7 +40,7 @@ add_executable(${PROJECT_NAME}
 target_include_directories(${PROJECT_NAME} PRIVATE "./")
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
-	glfw glad ImGui ImGuiFileDialog ImGuizmo implot eigen glm ${CMAKE_DL_LIBS}
+	cereal glfw glad ImGui ImGuiFileDialog ImGuizmo implot eigen glm ${CMAKE_DL_LIBS}
 )
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)

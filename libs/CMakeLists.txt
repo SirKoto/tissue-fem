@@ -11,6 +11,9 @@ add_subdirectory(glm)
 add_library(eigen INTERFACE)
 target_include_directories(eigen INTERFACE eigen/)
 
+add_library(cereal INTERFACE)
+target_include_directories(cereal INTERFACE cereal/)
+
 add_library(implot
 	implot/implot.cpp implot/implot.h
 	implot/implot_internal.h
