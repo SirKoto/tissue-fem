@@ -13,12 +13,11 @@
 #include "Scene.hpp"
 #include "Engine.hpp"
 
-
 class Context
 {
 public:
 
-	Context(const Engine* engine);
+	Context(Engine* engine);
 
 	Context(const Context&) = delete;
 	Context& operator=(const Context&) = delete;
@@ -55,7 +54,7 @@ public:
 
 private:
 
-	const Engine* m_engine;
+	Engine* m_engine;
 
 	float m_time = 0.0f;
 	float m_delta_time = 0.0f;

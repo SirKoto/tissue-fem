@@ -1,6 +1,9 @@
 #include "Engine.hpp"
 
 #include "Context.hpp"
+#include "utils/serialization.hpp"
+#include <fstream>
+
 
 static void glfw_error_callback(int error, const char* description)
 {
@@ -21,7 +24,7 @@ gl_message_callback(GLenum source,
         type, severity, message);
 }
 
-Engine::Engine()
+Engine::Engine() : m_ctx(std::make_unique<Context>(this))
 {
     // Setup window
     {
@@ -103,7 +106,6 @@ Engine::~Engine()
 
 void Engine::run()
 {
-    Context gc(this);
 
     while (!m_error && !glfwWindowShouldClose(m_window)) {
 
@@ -120,12 +122,12 @@ void Engine::run()
         ImGuizmo::BeginFrame();
 
         // Update global context
-        gc.update();
+        m_ctx->update();
 
-        gc.draw_ui();
+        m_ctx->draw_ui();
 
-        m_scene->update_ui(gc);
-        m_scene->update(gc);
+        m_scene->update_ui(*m_ctx);
+        m_scene->update(*m_ctx);
         
 
         // Rendering
@@ -133,12 +135,12 @@ void Engine::run()
         int display_w, display_h;
         glfwGetFramebufferSize(m_window, &display_w, &display_h);
         glViewport(0, 0, display_w, display_h);
-        glClearColor(gc.get_clear_color().x, gc.get_clear_color().y, gc.get_clear_color().z, 1.0f);
+        glClearColor(m_ctx->get_clear_color().x, m_ctx->get_clear_color().y, m_ctx->get_clear_color().z, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // Render the scene
         glEnable(GL_DEPTH_TEST);
-        m_scene->render(gc);
+        m_scene->render(*m_ctx);
 
         // Render UI
         glDisable(GL_DEPTH_TEST);
@@ -146,4 +148,104 @@ void Engine::run()
 
         glfwSwapBuffers(m_window);
     }
+}
+
+bool Engine::reload_scene(std::string* error)
+{
+    assert(error != nullptr);
+    
+
+    if (!m_scene_path.has_extension()) {
+        *error = "ERROR: File " + m_scene_path.string() + " does not have extension";
+        return false;
+    }
+
+    bool read_json;
+    if (m_scene_path.extension().compare(".json") == 0) {
+        read_json = true;
+    }
+    else if (m_scene_path.extension().compare(".bin") == 0) {
+        read_json = false;
+    }
+    else {
+        *error = "ERROR: File " + m_scene_path.string() + " does not have .json or .bin";
+        return false;
+    }
+
+    // Create new scene
+    m_scene = std::make_unique<Scene>();
+    if (read_json) {
+        std::ifstream stream(m_scene_path, std::ios::in);
+
+        if (!stream) {
+            *error = "ERROR: Can't open file " + m_scene_path.string();
+            return false;
+        }
+
+        tf::JSONInputArchive ar(stream, *m_ctx);
+
+        ar(TF_SERIALIZE_NVP_MEMBER(m_scene));
+    }
+    else {
+        std::ifstream stream(m_scene_path, std::ios::binary | std::ios::in);
+
+        if (!stream) {
+            *error = "ERROR: Can't open file " + m_scene_path.string();
+            return false;
+        }
+
+        tf::BinaryInputArchive ar(stream, *m_ctx);
+
+        ar(TF_SERIALIZE_NVP_MEMBER(m_scene));
+    }
+    
+    
+    return true;
+}
+
+bool Engine::save_scene(std::string* error)
+{
+    if (!m_scene_path.has_extension()) {
+        *error = "ERROR: File " + m_scene_path.string() + " does not have extension";
+        return false;
+    }
+
+    bool read_json;
+    if (m_scene_path.extension().compare(".json") == 0) {
+        read_json = true;
+    }
+    else if (m_scene_path.extension().compare(".bin") == 0) {
+        read_json = false;
+    }
+    else {
+        *error = "ERROR: File " + m_scene_path.string() + " does not have .json or .bin";
+        return false;
+    }
+
+    if (read_json) {
+        std::ofstream stream(m_scene_path, std::ios::out);
+
+        if (!stream) {
+            *error = "ERROR: Can't open file " + m_scene_path.string();
+            return false;
+        }
+
+        tf::JSONOutputArchive ar(stream, *m_ctx);
+
+        ar(TF_SERIALIZE_NVP_MEMBER(m_scene));
+    }
+    else {
+        std::ofstream stream(m_scene_path, std::ios::binary | std::ios::out);
+
+        if (!stream) {
+            *error = "ERROR: Can't open file " + m_scene_path.string();
+            return false;
+        }
+
+        tf::BinaryOutputArchive ar(stream, *m_ctx);
+
+        ar(TF_SERIALIZE_NVP_MEMBER(m_scene));
+    }
+
+    return true;
 }

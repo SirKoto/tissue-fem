@@ -3,8 +3,8 @@
 #include <cereal/types/polymorphic.hpp>
 
 // only to use with binary or json encoding
-#include <cereal/archives/binary.hpp>
-#include <cereal/archives/json.hpp>
+#include "serialization/BinaryArchive.hpp"
+#include "serialization/JsonArchive.hpp"
 
 #include <cereal/types/list.hpp>
 #include <cereal/types/vector.hpp>
@@ -28,10 +28,11 @@
 #define TF_SERIALIZE_PRIVATE_MEMBERS friend class cereal::access;
 
 #define TF_SERIALIZE_TEMPLATE_EXPLICIT_IMPLEMENTATION(Type) \
-    template void Type::serialize<cereal::BinaryOutputArchive>(cereal::BinaryOutputArchive&); \
-    template void Type::serialize<cereal::BinaryInputArchive>(cereal::BinaryInputArchive&); \
-    template void Type::serialize<cereal::JSONOutputArchive>(cereal::JSONOutputArchive&); \
-    template void Type::serialize<cereal::JSONInputArchive>(cereal::JSONInputArchive&);
+    template void Type::serialize<tf::BinaryOutputArchive>(tf::BinaryOutputArchive&); \
+    template void Type::serialize<tf::BinaryInputArchive>(tf::BinaryInputArchive&); \
+    template void Type::serialize<tf::JSONOutputArchive>(tf::JSONOutputArchive&); \
+    template void Type::serialize<tf::JSONInputArchive>(tf::JSONInputArchive&);
+
 
 // GLM serialization
 

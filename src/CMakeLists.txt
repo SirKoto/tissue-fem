@@ -31,6 +31,9 @@ add_executable(${PROJECT_NAME}
 	utils/BBox.hpp	utils/BBox.cpp
 	utils/CircularBuffer.hpp
 	utils/serialization.hpp
+	utils/serialization/BaseArchive.hpp
+	utils/serialization/JsonArchive.hpp
+	utils/serialization/BinaryArchive.hpp
 
 	gameObject/Transform.hpp gameObject/Transform.cpp
 	gameObject/ElasticSim.hpp gameObject/ElasticSim.cpp

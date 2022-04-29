@@ -15,9 +15,12 @@
 #include "meshes/TetMesh.hpp"
 #include "sim/SimpleFEM.hpp"
 
-const char* STRING_IGFD_LOAD_MODEL = "FilePickerModel";
 
-Context::Context(const Engine* engine) :
+const char* STRING_IGFD_LOAD_MODEL = "FilePickerModel";
+const char* STRING_IGFD_SAVE_AS = "FilePickerSaveAs";
+const char* STRING_IGFD_LOAD = "FilePickerLoad";
+
+Context::Context(Engine* engine) :
 	m_engine(engine)
 {
 	assert(m_engine != nullptr);
@@ -60,6 +63,29 @@ void Context::draw_ui()
 					"Model Files (*.ele *.face *.node){.ele,.face,.node}",
 					"."
 				);
+			}
+			
+			if (ImGui::MenuItem("Save", nullptr, nullptr, !m_engine->m_scene_path.empty() && !m_file_picker_open)) {
+				if (!m_engine->save_scene(&m_file_picker_error)) {
+					ImGui::OpenPopup("PopupErrorFileDialog");
+				}
+			}
+
+			if (ImGui::MenuItem("Save As", nullptr, nullptr, !m_file_picker_open)) {
+
+				m_file_picker_open = true;
+				ImGuiFileDialog::Instance()->OpenDialog(
+					STRING_IGFD_SAVE_AS,
+					"Save As", ".bin,.json",
+					".", "", 1, nullptr, ImGuiFileDialogFlags_ConfirmOverwrite);
+			}
+
+			if (ImGui::MenuItem("Load Scene", nullptr, nullptr, !m_file_picker_open)) {
+				m_file_picker_open = true;
+				ImGuiFileDialog::Instance()->OpenDialog(
+					STRING_IGFD_LOAD,
+					"Save As", ".bin,.json",
+					".", "", 1, nullptr);
 			}
 
 			if (ImGui::BeginMenu("Example models")) {
@@ -233,6 +259,47 @@ void Context::handle_file_picker()
 			bool res = m_file_picker_callback(*this, file, &m_file_picker_error);
 			if (!res) {
 				ImGui::OpenPopup("PopupErrorFileDialog");
+			}
+		}
+
+		filedialog->Close();
+	}
+
+	if (filedialog->Display(STRING_IGFD_SAVE_AS, ImGuiWindowFlags_NoCollapse, ImVec2(0, 280))) {
+
+		m_file_picker_open = false;
+
+		if (filedialog->IsOk()) {
+
+			std::filesystem::path file = filedialog->GetFilePathName();
+			m_engine->m_scene_path = file;
+			if (!m_engine->save_scene(&m_file_picker_error)) {
+				m_engine->m_scene_path = "";
+				ImGui::OpenPopup("PopupErrorFileDialog");
+			}
+		}
+
+		filedialog->Close();
+	}
+
+	if (filedialog->Display(STRING_IGFD_LOAD, ImGuiWindowFlags_NoCollapse, ImVec2(0, 280))) {
+
+		m_file_picker_open = false;
+
+		if (filedialog->IsOk()) {
+
+			std::filesystem::path file = filedialog->GetFilePathName();
+			
+			if (!std::filesystem::exists(file)) {
+				m_file_picker_error = std::string("ERROR: ") + file.string() + " does not exist!";
+				ImGui::OpenPopup("PopupErrorFileDialog");
+			}
+			else {
+				m_engine->m_scene_path = file;
+				if (!m_engine->reload_scene(&m_file_picker_error)) {
+					m_engine->m_scene_path = "";
+					ImGui::OpenPopup("PopupErrorFileDialog");
+				}
 			}
 		}
 

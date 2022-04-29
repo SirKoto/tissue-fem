@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <memory>
+#include <filesystem>
 
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
@@ -31,6 +32,12 @@ private:
 	GLFWwindow* m_window;
 
 	std::unique_ptr<Scene> m_scene;
+	std::filesystem::path m_scene_path;
+
+	std::unique_ptr<Context> m_ctx;
+
+	bool reload_scene(std::string* error);
+	bool save_scene(std::string* error);
 
 	friend class Context;
 };
