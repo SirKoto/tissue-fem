@@ -89,9 +89,10 @@ public:
     /*! @param stream The stream to output to.
         @param options The JSON specific options to use.  See the Options struct
                        for the values of default parameters */
-    JSONOutputArchive(std::ostream& stream, const Context& ctx, Options const& options = Options::Default()) :
+    JSONOutputArchive(std::ostream& stream, const Context& ctx,
+        const std::filesystem::path& scene_path, Options const& options = Options::Default()) :
         cereal::OutputArchive<JSONOutputArchive>(this),
-        BaseArchive(ctx),
+        BaseArchive(ctx, scene_path),
         itsWriteStream(stream),
         itsWriter(itsWriteStream),
         itsNextName(nullptr)
@@ -367,9 +368,9 @@ public:
 
         //! Construct, reading from the provided stream
         /*! @param stream The stream to read from */
-    JSONInputArchive(std::istream& stream, const Context& ctx) :
+    JSONInputArchive(std::istream& stream, const Context& ctx, const std::filesystem::path& scene_path) :
         InputArchive<JSONInputArchive>(this),
-        BaseArchive(ctx),
+        BaseArchive(ctx, scene_path),
         itsNextName(nullptr),
         itsReadStream(stream)
     {

@@ -182,7 +182,7 @@ bool Engine::reload_scene(std::string* error)
             return false;
         }
 
-        tf::JSONInputArchive ar(stream, *m_ctx);
+        tf::JSONInputArchive ar(stream, *m_ctx, m_scene_path);
 
         ar(TF_SERIALIZE_NVP_MEMBER(m_scene));
     }
@@ -194,7 +194,7 @@ bool Engine::reload_scene(std::string* error)
             return false;
         }
 
-        tf::BinaryInputArchive ar(stream, *m_ctx);
+        tf::BinaryInputArchive ar(stream, *m_ctx, m_scene_path);
 
         ar(TF_SERIALIZE_NVP_MEMBER(m_scene));
     }
@@ -223,26 +223,26 @@ bool Engine::save_scene(std::string* error)
     }
 
     if (read_json) {
-        std::ofstream stream(m_scene_path, std::ios::out);
+        std::ofstream stream(m_scene_path, std::ios::out | std::ios::trunc);
 
         if (!stream) {
             *error = "ERROR: Can't open file " + m_scene_path.string();
             return false;
         }
 
-        tf::JSONOutputArchive ar(stream, *m_ctx);
+        tf::JSONOutputArchive ar(stream, *m_ctx, m_scene_path);
 
         ar(TF_SERIALIZE_NVP_MEMBER(m_scene));
     }
     else {
-        std::ofstream stream(m_scene_path, std::ios::binary | std::ios::out);
+        std::ofstream stream(m_scene_path, std::ios::binary | std::ios::out | std::ios::trunc);
 
         if (!stream) {
             *error = "ERROR: Can't open file " + m_scene_path.string();
             return false;
         }
 
-        tf::BinaryOutputArchive ar(stream, *m_ctx);
+        tf::BinaryOutputArchive ar(stream, *m_ctx, m_scene_path);
 
         ar(TF_SERIALIZE_NVP_MEMBER(m_scene));
     }

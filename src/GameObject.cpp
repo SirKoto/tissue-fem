@@ -165,6 +165,7 @@ void GameObject::serialize(Archive& archive)
 	archive(TF_SERIALIZE_NVP_MEMBER(m_name));
 	archive(TF_SERIALIZE_NVP_MEMBER(m_transform));
 	archive(TF_SERIALIZE_NVP_MEMBER(m_sim));
+	archive(TF_SERIALIZE_NVP_MEMBER(m_mesh));
 }
 
 TF_SERIALIZE_TEMPLATE_EXPLICIT_IMPLEMENTATION(GameObject)

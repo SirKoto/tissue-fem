@@ -24,6 +24,7 @@
 #define TF_SERIALIZE_POLYMORPHIC_RELATION(Base, Derived) CEREAL_REGISTER_POLYMORPHIC_RELATION(Base, Derived)
 // Create Name Value Pair of Member, with a tag that removes the first 2 chars of the name
 #define TF_SERIALIZE_NVP_MEMBER(Member) cereal::make_nvp((#Member) + 2, Member)
+#define TF_SERIALIZE_NVP(Name, Value) cereal::make_nvp(Name, Value)
 
 #define TF_SERIALIZE_PRIVATE_MEMBERS friend class cereal::access;
 
@@ -33,6 +34,11 @@
     template void Type::serialize<tf::JSONOutputArchive>(tf::JSONOutputArchive&); \
     template void Type::serialize<tf::JSONInputArchive>(tf::JSONInputArchive&);
 
+#define TF_SERIALIZE_LOAD_STORE_TEMPLATE_EXPLICIT_IMPLEMENTATION(Type) \
+    template void Type::save<tf::BinaryOutputArchive>(tf::BinaryOutputArchive&) const; \
+    template void Type::load<tf::BinaryInputArchive>(tf::BinaryInputArchive&); \
+    template void Type::save<tf::JSONOutputArchive>(tf::JSONOutputArchive&) const; \
+    template void Type::load<tf::JSONInputArchive>(tf::JSONInputArchive&);
 
 // GLM serialization
 

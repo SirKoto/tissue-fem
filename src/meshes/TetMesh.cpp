@@ -6,6 +6,7 @@
 
 bool TetMesh::load_tetgen(std::filesystem::path path, std::string* out_err)
 {
+	assert(path.is_absolute());
 	m_vertices.clear();
 	m_elements.clear();
 	std::vector<glm::ivec3> surface_faces;
@@ -132,6 +133,8 @@ bool TetMesh::load_tetgen(std::filesystem::path path, std::string* out_err)
 	this->create_surface_faces(std::move(surface_faces));
 	this->generate_normals();
 
+	// Set path to validate load
+	m_path = path;
 
 	return true;
 }
@@ -154,6 +157,7 @@ void TetMesh::apply_transform(const glm::mat4& m)
 void TetMesh::flip_face_orientation()
 {
 	m_tri_mesh.flip_face_orientation();
+	m_flip_face_orientation_on_load = !m_flip_face_orientation_on_load;
 }
 
 void TetMesh::draw_triangles() const
@@ -210,3 +214,38 @@ void TetMesh::generate_normals()
 {
 	m_tri_mesh.regenerate_normals();
 }
+
+template<class Archive>
+inline void TetMesh::save(Archive& ar) const
+{
+	// Save relative path
+	std::filesystem::path p = std::filesystem::relative(m_path, ar.save_path());
+
+	ar(TF_SERIALIZE_NVP("path", p.string()));
+	ar(TF_SERIALIZE_NVP_MEMBER(m_flip_face_orientation_on_load));
+}
+
+template<class Archive>
+void TetMesh::load(Archive& ar)
+{
+	std::string path_str;
+	ar(TF_SERIALIZE_NVP("path", path_str));
+	ar(TF_SERIALIZE_NVP_MEMBER(m_flip_face_orientation_on_load));
+
+	m_path = path_str;
+	if (m_path.is_relative()) {
+		// If it is relative, compose path with scene path
+		m_path = std::filesystem::canonical(ar.save_path() / m_path);
+	}
+
+
+	if (!m_path.empty()) {
+		bool res = this->load_tetgen(m_path);
+		assert(res);
+		if (m_flip_face_orientation_on_load) {
+			m_tri_mesh.flip_face_orientation();
+		}
+	}
+}
+
+TF_SERIALIZE_LOAD_STORE_TEMPLATE_EXPLICIT_IMPLEMENTATION(TetMesh)

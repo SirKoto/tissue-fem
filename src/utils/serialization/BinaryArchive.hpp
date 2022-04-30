@@ -72,9 +72,10 @@ public:
     /*! @param stream The stream to output to. Should be opened with std::ios::binary flag.
         @param options The PortableBinary specific options to use.  See the Options struct
                        for the values of default parameters */
-    BinaryOutputArchive(std::ostream& stream, const Context& ctx, Options const& options = Options::Default()) :
+    BinaryOutputArchive(std::ostream& stream, const Context& ctx, 
+        const std::filesystem::path& scene_path, Options const& options = Options::Default()) :
         cereal::OutputArchive<BinaryOutputArchive, cereal::AllowEmptyClassElision>(this),
-        BaseArchive(ctx),
+        BaseArchive(ctx, scene_path),
         itsStream(stream),
         itsConvertEndianness(cereal::portable_binary_detail::is_little_endian() ^ options.is_little_endian())
     {
@@ -183,9 +184,10 @@ public:
     /*! @param stream The stream to read from. Should be opened with std::ios::binary flag.
         @param options The PortableBinary specific options to use.  See the Options struct
                        for the values of default parameters */
-    BinaryInputArchive(std::istream& stream, const Context& ctx, Options const& options = Options::Default()) :
+    BinaryInputArchive(std::istream& stream, const Context& ctx,
+        const std::filesystem::path& scene_path, Options const& options = Options::Default()) :
         cereal::InputArchive<BinaryInputArchive, cereal::AllowEmptyClassElision>(this),
-        BaseArchive(ctx),
+        BaseArchive(ctx, scene_path),
         itsStream(stream),
         itsConvertEndianness(false)
     {
