@@ -23,10 +23,7 @@ void ElasticSim::render_ui(const Context& ctx, GameObject* parent)
 	ImGui::PushID(this);
 	m_sim->draw_ui();
 
-	ImGui::Checkbox("Keep running", &m_run_simulation);
-	if (ImGui::Button("Step simulator")) {
-		m_step_once = true;
-	}
+
 	if (ImGui::Button("Pancake")) {
 		reinterpret_cast<sim::SimpleFem*>(m_sim.get())->pancake();
 	}
@@ -38,7 +35,7 @@ void ElasticSim::render_ui(const Context& ctx, GameObject* parent)
 		const ImGuiViewport* main_viewport = ImGui::GetMainViewport();
 		ImGui::SetNextWindowPos(ImVec2(main_viewport->WorkPos.x + 650, main_viewport->WorkPos.y + 20), ImGuiCond_FirstUseEver);
 		if (ImGui::Begin("Simulation Metrics", &m_show_simulation_metrics)) {
-			if (m_sim && m_run_simulation) {
+			if (m_sim && ctx.is_simulation_running()) {
 				m_metric_times_buffer.push({ ctx.get_time(), m_sim->get_metric_times() });
 			}
 
@@ -103,7 +100,7 @@ void ElasticSim::update(const Context& ctx, GameObject* parent)
 	m_selector.update(ctx, parent);
 
 
-	if(m_step_once || m_run_simulation) {
+	if(ctx.is_simulation_running()) {
 		float dt = std::min(ctx.delta_time(), 1.0f / 60.0f);
 
 		const std::map<uint32_t, PrimitiveSelector::Delta>& movements = m_selector.get_movements();
@@ -187,8 +184,6 @@ void ElasticSim::update(const Context& ctx, GameObject* parent)
 		}
 
 		m_sim->update_objects(true);
-
-		m_step_once = false;
 	}
 }
 

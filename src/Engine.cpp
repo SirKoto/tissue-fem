@@ -90,6 +90,9 @@ Engine::Engine() : m_ctx(std::make_unique<Context>(this))
 
     // Create Scene
     m_scene = std::make_unique<Scene>();
+
+    // Search temporary path
+    m_scene_path_tmp = std::filesystem::temp_directory_path() / "tmp_scene.bin";
 }
 
 Engine::~Engine()
@@ -150,51 +153,51 @@ void Engine::run()
     }
 }
 
-bool Engine::reload_scene(std::string* error)
+bool Engine::reload_scene(const std::filesystem::path& path, std::string* error)
 {
     assert(error != nullptr);
     
 
-    if (!m_scene_path.has_extension()) {
-        *error = "ERROR: File " + m_scene_path.string() + " does not have extension";
+    if (!path.has_extension()) {
+        *error = "ERROR: File " + path.string() + " does not have extension";
         return false;
     }
 
     bool read_json;
-    if (m_scene_path.extension().compare(".json") == 0) {
+    if (path.extension().compare(".json") == 0) {
         read_json = true;
     }
-    else if (m_scene_path.extension().compare(".bin") == 0) {
+    else if (path.extension().compare(".bin") == 0) {
         read_json = false;
     }
     else {
-        *error = "ERROR: File " + m_scene_path.string() + " does not have .json or .bin";
+        *error = "ERROR: File " + path.string() + " does not have .json or .bin";
         return false;
     }
 
     // Create new scene
     m_scene = std::make_unique<Scene>();
     if (read_json) {
-        std::ifstream stream(m_scene_path, std::ios::in);
+        std::ifstream stream(path, std::ios::in);
 
         if (!stream) {
-            *error = "ERROR: Can't open file " + m_scene_path.string();
+            *error = "ERROR: Can't open file " + path.string();
             return false;
         }
 
-        tf::JSONInputArchive ar(stream, *m_ctx, m_scene_path);
+        tf::JSONInputArchive ar(stream, *m_ctx, path);
 
         ar(TF_SERIALIZE_NVP_MEMBER(m_scene));
     }
     else {
-        std::ifstream stream(m_scene_path, std::ios::binary | std::ios::in);
+        std::ifstream stream(path, std::ios::binary | std::ios::in);
 
         if (!stream) {
-            *error = "ERROR: Can't open file " + m_scene_path.string();
+            *error = "ERROR: Can't open file " + path.string();
             return false;
         }
 
-        tf::BinaryInputArchive ar(stream, *m_ctx, m_scene_path);
+        tf::BinaryInputArchive ar(stream, *m_ctx, path);
 
         ar(TF_SERIALIZE_NVP_MEMBER(m_scene));
     }
@@ -203,46 +206,46 @@ bool Engine::reload_scene(std::string* error)
     return true;
 }
 
-bool Engine::save_scene(std::string* error)
+bool Engine::save_scene(const std::filesystem::path& path, std::string* error)
 {
-    if (!m_scene_path.has_extension()) {
-        *error = "ERROR: File " + m_scene_path.string() + " does not have extension";
+    if (!path.has_extension()) {
+        *error = "ERROR: File " + path.string() + " does not have extension";
         return false;
     }
 
     bool read_json;
-    if (m_scene_path.extension().compare(".json") == 0) {
+    if (path.extension().compare(".json") == 0) {
         read_json = true;
     }
-    else if (m_scene_path.extension().compare(".bin") == 0) {
+    else if (path.extension().compare(".bin") == 0) {
         read_json = false;
     }
     else {
-        *error = "ERROR: File " + m_scene_path.string() + " does not have .json or .bin";
+        *error = "ERROR: File " + path.string() + " does not have .json or .bin";
         return false;
     }
 
     if (read_json) {
-        std::ofstream stream(m_scene_path, std::ios::out | std::ios::trunc);
+        std::ofstream stream(path, std::ios::out | std::ios::trunc);
 
         if (!stream) {
-            *error = "ERROR: Can't open file " + m_scene_path.string();
+            *error = "ERROR: Can't open file " + path.string();
             return false;
         }
 
-        tf::JSONOutputArchive ar(stream, *m_ctx, m_scene_path);
+        tf::JSONOutputArchive ar(stream, *m_ctx, path);
 
         ar(TF_SERIALIZE_NVP_MEMBER(m_scene));
     }
     else {
-        std::ofstream stream(m_scene_path, std::ios::binary | std::ios::out | std::ios::trunc);
+        std::ofstream stream(path, std::ios::binary | std::ios::out | std::ios::trunc);
 
         if (!stream) {
-            *error = "ERROR: Can't open file " + m_scene_path.string();
+            *error = "ERROR: Can't open file " + path.string();
             return false;
         }
 
-        tf::BinaryOutputArchive ar(stream, *m_ctx, m_scene_path);
+        tf::BinaryOutputArchive ar(stream, *m_ctx, path);
 
         ar(TF_SERIALIZE_NVP_MEMBER(m_scene));
     }

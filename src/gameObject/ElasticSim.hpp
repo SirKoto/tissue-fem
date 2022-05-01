@@ -30,8 +30,6 @@ private:
 	std::map<uint32_t, Constraint> m_constrained_nodes;
 	gobj::PrimitiveSelector m_selector;
 
-	bool m_step_once = false;
-	bool m_run_simulation = false;
 	bool m_show_simulation_metrics = false;
 
 	// Metrics

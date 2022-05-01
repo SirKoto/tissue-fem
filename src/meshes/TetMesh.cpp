@@ -219,7 +219,7 @@ template<class Archive>
 inline void TetMesh::save(Archive& ar) const
 {
 	// Save relative path
-	std::filesystem::path p = std::filesystem::relative(m_path, ar.save_path());
+	std::filesystem::path p = std::filesystem::proximate(m_path, ar.save_path());
 
 	ar(TF_SERIALIZE_NVP("path", p.string()));
 	ar(TF_SERIALIZE_NVP_MEMBER(m_flip_face_orientation_on_load));

@@ -29,15 +29,19 @@ public:
 private:
 	bool m_error = false;
 
+	bool m_simulation_mode = false;
+	bool m_run_simulation = true;
+
 	GLFWwindow* m_window;
 
 	std::unique_ptr<Scene> m_scene;
 	std::filesystem::path m_scene_path;
+	std::filesystem::path m_scene_path_tmp;
 
 	std::unique_ptr<Context> m_ctx;
 
-	bool reload_scene(std::string* error);
-	bool save_scene(std::string* error);
+	bool reload_scene(const std::filesystem::path& path, std::string* error);
+	bool save_scene(const std::filesystem::path& path, std::string* error);
 
 	friend class Context;
 };

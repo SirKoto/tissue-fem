@@ -66,7 +66,7 @@ void Context::draw_ui()
 			}
 			
 			if (ImGui::MenuItem("Save", nullptr, nullptr, !m_engine->m_scene_path.empty() && !m_file_picker_open)) {
-				if (!m_engine->save_scene(&m_file_picker_error)) {
+				if (!m_engine->save_scene(m_engine->m_scene_path , &m_file_picker_error)) {
 					ImGui::OpenPopup("PopupErrorFileDialog");
 				}
 			}
@@ -155,6 +155,29 @@ void Context::draw_ui()
 		
 
 		ImGui::Text("Framerate %.1f", ImGui::GetIO().Framerate);
+
+		if (ImGui::MenuItem("Play", nullptr, &m_engine->m_simulation_mode)) {
+
+			// Save or retrieve the scene
+			std::string err;
+			bool res;
+			if (m_engine->m_simulation_mode) {
+				res = m_engine->save_scene(m_engine->m_scene_path_tmp, &err);
+			}
+			else {
+				res = m_engine->reload_scene(m_engine->m_scene_path_tmp, &err);
+			}
+
+			if (res) {
+				ImGui::OpenPopup("PopupErrorFileDialog");
+			}
+
+			m_engine->m_run_simulation = true;
+		}
+		if (ImGui::MenuItem("Pause", nullptr, !m_engine->m_run_simulation, m_engine->m_simulation_mode)) {
+			m_engine->m_run_simulation = !m_engine->m_run_simulation;
+		}
+
 		ImGui::EndMainMenuBar();
 	}
 
@@ -238,6 +261,7 @@ void Context::handle_file_picker()
 {
 
 	if (ImGui::BeginPopup("PopupErrorFileDialog")) {
+		ImGui::Text("ERROR:");
 		ImGui::Text(m_file_picker_error.c_str());
 		ImGui::EndPopup();
 	}
@@ -273,7 +297,7 @@ void Context::handle_file_picker()
 
 			std::filesystem::path file = filedialog->GetFilePathName();
 			m_engine->m_scene_path = file;
-			if (!m_engine->save_scene(&m_file_picker_error)) {
+			if (!m_engine->save_scene(file, &m_file_picker_error)) {
 				m_engine->m_scene_path = "";
 				ImGui::OpenPopup("PopupErrorFileDialog");
 			}
@@ -296,7 +320,7 @@ void Context::handle_file_picker()
 			}
 			else {
 				m_engine->m_scene_path = file;
-				if (!m_engine->reload_scene(&m_file_picker_error)) {
+				if (!m_engine->reload_scene(file, &m_file_picker_error)) {
 					m_engine->m_scene_path = "";
 					ImGui::OpenPopup("PopupErrorFileDialog");
 				}
