@@ -45,6 +45,7 @@ private:
 	bool save_scene(const std::filesystem::path& path, std::string* error);
 
 	void signal_start_simulation();
+	void stop_simulation();
 
 	friend class Context;
 };

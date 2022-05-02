@@ -59,7 +59,10 @@ private:
 
 	// Serialization
 	template<typename Archive>
-	void serialize(Archive& archive);
+	void save(Archive& archive) const;
+
+	template<typename Archive>
+	void load(Archive& archive);
 
 	TF_SERIALIZE_PRIVATE_MEMBERS
 };

@@ -69,16 +69,22 @@ void GameObject::render_ui(const Context& gc)
 		return;
 	}
 
-	ImGui::PushID(this);
+	ImGui::PushID(m_name.c_str());
+
 	ImGui::SetNextItemOpen(true, ImGuiCond_Once);
 	if (ImGui::TreeNode("Transform##transform")) {
+		ImGui::BeginDisabled(gc.has_simulation_started());
+
 		m_transform.draw_ui(gc);
+
+		ImGui::EndDisabled();
 		ImGui::TreePop();
 	}
 
 	ImGui::Separator();
 
 	if (ImGui::TreeNode("Mesh ops##mesh ops")) {
+		ImGui::BeginDisabled(gc.has_simulation_started());
 
 		if (ImGui::Button("Flip face orientation")) {
 			m_mesh->flip_face_orientation();
@@ -86,6 +92,8 @@ void GameObject::render_ui(const Context& gc)
 		if (ImGui::Button("Recompute normals")) {
 			m_mesh->generate_normals();
 		}
+
+		ImGui::EndDisabled();
 		ImGui::TreePop();
 	}
 

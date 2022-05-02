@@ -135,11 +135,47 @@ void Scene::add_gameObject(std::shared_ptr<GameObject>& obj)
 
 
 template<class Archive>
-void Scene::serialize(Archive& archive)
+void Scene::save(Archive& archive) const
 {
 	archive(TF_SERIALIZE_NVP_MEMBER(m_camera));
 	archive(TF_SERIALIZE_NVP_MEMBER(m_clear_color));
 	archive(TF_SERIALIZE_NVP_MEMBER(m_gameObjects));
+
+	int32_t selected_idx = -1;
+	if (m_selected_object != m_gameObjects.end()) {
+		selected_idx = 0;
+		std::list<std::shared_ptr<GameObject>>::const_iterator it = m_gameObjects.begin();
+		while (it != m_selected_object) {
+			it = std::next(it);
+			selected_idx += 1;
+		}
+	}
+
+	archive(TF_SERIALIZE_NVP("selected", selected_idx));
 }
 
-TF_SERIALIZE_TEMPLATE_EXPLICIT_IMPLEMENTATION(Scene)
+template<class Archive>
+void Scene::load(Archive& archive)
+{
+	archive(TF_SERIALIZE_NVP_MEMBER(m_camera));
+	archive(TF_SERIALIZE_NVP_MEMBER(m_clear_color));
+	archive(TF_SERIALIZE_NVP_MEMBER(m_gameObjects));
+
+	int32_t selected_idx = -1;
+	archive(TF_SERIALIZE_NVP("selected", selected_idx));
+	if (selected_idx != -1) {
+		if (selected_idx > 0) {
+			m_selected_object = std::next(m_gameObjects.begin(), selected_idx);
+		}
+		else {
+			m_selected_object = m_gameObjects.begin();
+		}
+		m_show_inspector_window = true;
+	}
+	else {
+		m_selected_object = m_gameObjects.end();
+	}
+
+}
+
+TF_SERIALIZE_LOAD_STORE_TEMPLATE_EXPLICIT_IMPLEMENTATION(Scene)

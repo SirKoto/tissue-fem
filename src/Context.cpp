@@ -155,24 +155,27 @@ void Context::draw_ui()
 
 		ImGui::Text("Framerate %.1f", ImGui::GetIO().Framerate);
 
-		if (ImGui::MenuItem("Play", nullptr, &m_engine->m_simulation_mode)) {
+		if (ImGui::MenuItem("Play", nullptr, m_engine->m_simulation_mode)) {
 
 			// Save or retrieve the scene
 			std::string err;
 			bool res;
-			if (m_engine->m_simulation_mode) {
+			if (!m_engine->m_simulation_mode) {
 				res = m_engine->save_scene(m_engine->m_scene_path_tmp, &err);
 			}
 			else {
 				res = m_engine->reload_scene(m_engine->m_scene_path_tmp, &err);
 			}
 
-			if (res) {
+			if (!res) {
 				ImGui::OpenPopup("PopupErrorFileDialog");
+				m_engine->stop_simulation();
 			}
-
-			if (m_engine->m_simulation_mode) {
+			else if (!m_engine->m_simulation_mode) {
 				m_engine->signal_start_simulation();
+			}
+			else {
+				m_engine->stop_simulation();
 			}
 
 		}
