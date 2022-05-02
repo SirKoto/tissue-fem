@@ -171,7 +171,9 @@ void Context::draw_ui()
 				ImGui::OpenPopup("PopupErrorFileDialog");
 			}
 
-			m_engine->signal_start_simulation();
+			if (m_engine->m_simulation_mode) {
+				m_engine->signal_start_simulation();
+			}
 
 		}
 		if (ImGui::MenuItem("Pause", nullptr, !m_engine->m_run_simulation, m_engine->m_simulation_mode)) {

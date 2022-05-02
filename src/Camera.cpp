@@ -130,6 +130,9 @@ inline void Camera::serialize(Archive& archive)
 	archive(TF_SERIALIZE_NVP_MEMBER(m_mouse_sensitivity));
 	archive(TF_SERIALIZE_NVP_MEMBER(m_speed));
 	archive(TF_SERIALIZE_NVP_MEMBER(m_zoom));
+
+	this->updateCameraVectors();
+	this->computeProjView();
 }
 
 TF_SERIALIZE_TEMPLATE_EXPLICIT_IMPLEMENTATION(Camera)
