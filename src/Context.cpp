@@ -100,7 +100,6 @@ void Context::draw_ui()
 					obj.get_transform().scale(0.01f);
 					obj.get_transform().rotate(glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(180.0f));
 					obj.get_mesh()->flip_face_orientation();
-					obj.apply_model_transform();
 					m_engine->m_scene->add_gameObject(std::make_shared<GameObject>(std::move(obj)));
 				}
 				ImGui::EndMenu();
@@ -172,7 +171,8 @@ void Context::draw_ui()
 				ImGui::OpenPopup("PopupErrorFileDialog");
 			}
 
-			m_engine->m_run_simulation = true;
+			m_engine->signal_start_simulation();
+
 		}
 		if (ImGui::MenuItem("Pause", nullptr, !m_engine->m_run_simulation, m_engine->m_simulation_mode)) {
 			m_engine->m_run_simulation = !m_engine->m_run_simulation;

@@ -19,7 +19,9 @@ namespace sim {
 class SimpleFem final : public IFEM {
 public:
 
-	SimpleFem(const std::shared_ptr<TetMesh>& mesh, Float young, Float nu);
+	SimpleFem(Float young, Float nu);
+
+	void set_tetmesh(const std::shared_ptr<TetMesh>& mesh) override final;
 
 	void step(Float dt) override final;
 
@@ -51,7 +53,7 @@ private:
 	Float m_young;
 	Float m_nu;
 
-	Float m_node_mass = 1.0f;
+	Float m_node_mass = 1.0e-2f;
 	Float m_gravity = 9.8f;
 	Float m_mu = 0.0f;
 	Float m_lambda = 0.0f;

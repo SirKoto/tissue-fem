@@ -121,6 +121,13 @@ void Scene::render(const Context& ctx)
 	}
 }
 
+void Scene::start_simulation(const Context& ctx)
+{
+	for (const std::shared_ptr<GameObject>& obj : m_gameObjects) {
+		obj->start_simulation(ctx);
+	}
+}
+
 void Scene::add_gameObject(std::shared_ptr<GameObject>& obj)
 {
 	m_gameObjects.push_back(obj);

@@ -11,7 +11,7 @@ namespace gobj {
 
 ElasticSim::ElasticSim()
 {
-
+	m_sim = std::make_unique<sim::SimpleFem>(10000.0f, 0.3f);
 }
 
 void ElasticSim::render_ui(const Context& ctx, GameObject* parent)
@@ -94,9 +94,6 @@ void ElasticSim::render_ui(const Context& ctx, GameObject* parent)
 
 void ElasticSim::update(const Context& ctx, GameObject* parent)
 {
-	if (!m_sim) {
-		m_sim = std::make_unique<sim::SimpleFem>(parent->get_mesh(), 100000.0f, 0.2f);
-	}
 	m_selector.update(ctx, parent);
 
 
@@ -195,6 +192,11 @@ void ElasticSim::late_update(const Context& ctx, GameObject* parent)
 void ElasticSim::render(const Context& ctx, const GameObject& parent) const
 {
 	m_selector.render(ctx, parent);
+}
+
+void ElasticSim::start_simulation(const Context& ctx, const GameObject& parent)
+{
+	m_sim->set_tetmesh(parent.get_mesh());
 }
 
 const char* ElasticSim::get_name() const

@@ -21,6 +21,7 @@ public:
 	void update(const Context& ctx, GameObject* parent) override final;
 	void late_update(const Context& ctx, GameObject* parent) override final;
 	void render(const Context& ctx, const GameObject& parent) const override final;
+	void start_simulation(const Context& ctx, const GameObject& parent);
 
 	const char* get_name() const override final;
 

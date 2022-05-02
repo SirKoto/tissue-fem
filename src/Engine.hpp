@@ -31,6 +31,7 @@ private:
 
 	bool m_simulation_mode = false;
 	bool m_run_simulation = true;
+	bool m_first_simulation_frame = false;
 
 	GLFWwindow* m_window;
 
@@ -42,6 +43,8 @@ private:
 
 	bool reload_scene(const std::filesystem::path& path, std::string* error);
 	bool save_scene(const std::filesystem::path& path, std::string* error);
+
+	void signal_start_simulation();
 
 	friend class Context;
 };

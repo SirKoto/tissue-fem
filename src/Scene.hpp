@@ -25,6 +25,8 @@ public:
 
 	void render(const Context& ctx);
 
+	void start_simulation(const Context& ctx);
+
 	const glm::vec3& get_clear_color() const {
 		return m_clear_color;
 	}

@@ -9,12 +9,16 @@
 #include "utils/Timer.hpp"
 
 namespace sim {
-SimpleFem::SimpleFem(const std::shared_ptr<TetMesh>& mesh, Float young, Float nu) :
-	m_mesh(mesh),
+SimpleFem::SimpleFem(Float young, Float nu) :
 	m_young(young), m_nu(nu)
 {
-	assert(mesh);
 	update_lame();
+}
+
+void SimpleFem::set_tetmesh(const std::shared_ptr<TetMesh>& mesh)
+{
+	assert(static_cast<bool>(mesh));
+	m_mesh = mesh;
 
 	// Load elements
 	m_elements = mesh->elements();
@@ -33,7 +37,7 @@ SimpleFem::SimpleFem(const std::shared_ptr<TetMesh>& mesh, Float young, Float nu
 	}
 
 	// Reserve enough memory to solve the linear system
-	m_dfdx_system = SMat(3 * m_nodes.size(), 3 * m_nodes.size());
+	m_dfdx_system.resize(3 * m_nodes.size(), 3 * m_nodes.size());
 	m_dfdx_system.reserve(Eigen::VectorXi::Constant(3 * m_nodes.size(), 3 * 4 * 6));
 
 	m_v.resize(3 * m_nodes.size());
@@ -52,6 +56,7 @@ SimpleFem::SimpleFem(const std::shared_ptr<TetMesh>& mesh, Float young, Float nu
 	this->build_sparse_system();
 
 	solver.resize(3 * m_nodes.size());
+
 }
 
 void SimpleFem::assign_sparse_block(const Eigen::Block<const Mat12, 3, 3>& m, uint32_t node_i, uint32_t node_j) {

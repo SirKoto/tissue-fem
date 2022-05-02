@@ -130,7 +130,14 @@ void Engine::run()
         m_ctx->draw_ui();
 
         m_scene->update_ui(*m_ctx);
-        m_scene->update(*m_ctx);
+
+        if (m_first_simulation_frame) {
+            m_first_simulation_frame = false;
+            m_scene->start_simulation(*m_ctx);
+        }
+        else {
+            m_scene->update(*m_ctx);
+        }
         
 
         // Rendering
@@ -251,4 +258,9 @@ bool Engine::save_scene(const std::filesystem::path& path, std::string* error)
     }
 
     return true;
+}
+
+void Engine::signal_start_simulation()
+{
+    m_first_simulation_frame = true;
 }

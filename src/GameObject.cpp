@@ -36,6 +36,18 @@ bool GameObject::load_tetgen(const std::filesystem::path& path, std::string* out
 	return m_mesh->load_tetgen(path, out_err);;
 }
 
+void GameObject::start_simulation(const Context& ctx)
+{
+	if (!m_mesh) {
+		return;
+	}
+
+	m_mesh->apply_transform(this->get_model_matrix());
+	m_transform.set_identity();
+
+	m_sim.start_simulation(ctx, *this);
+}
+
 void GameObject::render(const Context& ctx) const
 {
 	glm::mat4 model = get_model_matrix();
@@ -67,9 +79,7 @@ void GameObject::render_ui(const Context& gc)
 	ImGui::Separator();
 
 	if (ImGui::TreeNode("Mesh ops##mesh ops")) {
-		if (ImGui::Button("Apply transform to model")) {
-			apply_model_transform();
-		}
+
 		if (ImGui::Button("Flip face orientation")) {
 			m_mesh->flip_face_orientation();
 		}
@@ -153,11 +163,6 @@ void GameObject::late_update(const Context& gc)
 	m_mesh->update();
 }
 
-void GameObject::apply_model_transform()
-{
-	m_mesh->apply_transform(get_model_matrix());
-	m_transform.set_identity();
-}
 
 template<class Archive>
 void GameObject::serialize(Archive& archive)

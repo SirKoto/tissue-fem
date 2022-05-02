@@ -4,6 +4,7 @@
 #include <Eigen/Sparse>
 #include <glm/glm.hpp>
 
+#include "meshes/TetMesh.hpp"
 namespace sim
 {
 
@@ -53,6 +54,8 @@ class IFEM {
 public:
 
 	virtual void step(Float dt) = 0;
+
+	virtual void set_tetmesh(const std::shared_ptr<TetMesh>& mesh) = 0;
 
 	virtual void update_objects(bool add_position_alteration = false) = 0;
 

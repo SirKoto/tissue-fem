@@ -22,6 +22,8 @@ public:
 
 	bool load_tetgen(const std::filesystem::path& path, std::string* out_err = nullptr);
 
+	void start_simulation(const Context& ctx);
+
 	void render(const Context& ctx) const;
 
 	void render_ui(const Context& gc);
@@ -43,7 +45,6 @@ public:
 	//gobj::ElasticSim& get_sim() { return m_sim; }
 	//const gobj::PrimitiveSelector& get_selector() const { return m_selector; }
 	//gobj::PrimitiveSelector& get_selector() { return m_selector; }
-	void apply_model_transform();
 
 
 private:
