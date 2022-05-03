@@ -2,7 +2,51 @@
 
 #include "BaseArchive.hpp"
 
-#include <cereal/archives/json.hpp>
+#include "cereal/cereal.hpp"
+#include "cereal/details/util.hpp"
+
+namespace cereal
+{
+//! An exception thrown when rapidjson fails an internal assertion
+/*! @ingroup Utility */
+struct RapidJSONException : Exception
+{
+    RapidJSONException(const char* what_) : Exception(what_) {}
+};
+}
+
+// Inform rapidjson that assert will throw
+#ifndef CEREAL_RAPIDJSON_ASSERT_THROWS
+#define CEREAL_RAPIDJSON_ASSERT_THROWS
+#endif // CEREAL_RAPIDJSON_ASSERT_THROWS
+
+// Override rapidjson assertions to throw exceptions by default
+#ifndef CEREAL_RAPIDJSON_ASSERT
+#define CEREAL_RAPIDJSON_ASSERT(x) if(!(x)){ \
+  throw ::cereal::RapidJSONException("rapidjson internal assertion failure: " #x); }
+#endif // RAPIDJSON_ASSERT
+
+// Enable support for parsing of nan, inf, -inf
+#ifndef CEREAL_RAPIDJSON_WRITE_DEFAULT_FLAGS
+#define CEREAL_RAPIDJSON_WRITE_DEFAULT_FLAGS kWriteNanAndInfFlag
+#endif
+
+// Enable support for parsing of nan, inf, -inf
+#ifndef CEREAL_RAPIDJSON_PARSE_DEFAULT_FLAGS
+#define CEREAL_RAPIDJSON_PARSE_DEFAULT_FLAGS kParseFullPrecisionFlag | kParseNanAndInfFlag
+#endif
+
+#include "cereal/external/rapidjson/prettywriter.h"
+#include "cereal/external/rapidjson/ostreamwrapper.h"
+#include "cereal/external/rapidjson/istreamwrapper.h"
+#include "cereal/external/rapidjson/document.h"
+#include "cereal/external/base64.hpp"
+
+#include <limits>
+#include <sstream>
+#include <stack>
+#include <vector>
+#include <string>
 
 namespace tf {
 // ######################################################################

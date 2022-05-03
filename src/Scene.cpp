@@ -98,7 +98,7 @@ void Scene::update_ui(const Context& ctx)
 	}
 
 	
-
+	/*
 	Context::FilePickerCallback callback =
 		[&](const Context& ctx, const std::filesystem::path& file, std::string* err) -> bool
 	{
@@ -110,7 +110,7 @@ void Scene::update_ui(const Context& ctx)
 			m_gameObjects.push_back(std::make_shared<GameObject>(std::move(obj)));
 			return true;
 		}
-	};
+	};*/
 }
 
 void Scene::render(const Context& ctx)
@@ -128,7 +128,12 @@ void Scene::start_simulation(const Context& ctx)
 	}
 }
 
-void Scene::add_gameObject(std::shared_ptr<GameObject>& obj)
+void Scene::add_gameObject(const std::shared_ptr<GameObject>& obj)
+{
+	m_gameObjects.push_back(obj);
+}
+
+void Scene::add_gameObject(std::shared_ptr<GameObject>&& obj)
 {
 	m_gameObjects.push_back(obj);
 }

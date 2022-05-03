@@ -3,6 +3,7 @@
 #include <imgui.h>
 #include "Context.hpp"
 #include "sim/SimpleFEM.hpp"
+#include "SimulatedGameObject.hpp"
 
 #undef NDEBUG
 #include <assert.h>
@@ -14,7 +15,7 @@ ElasticSim::ElasticSim()
 	m_sim = std::make_unique<sim::SimpleFem>(10000.0f, 0.3f);
 }
 
-void ElasticSim::render_ui(const Context& ctx, GameObject* parent)
+void ElasticSim::render_ui(const Context& ctx, SimulatedGameObject* parent)
 {
 	if (!m_sim) {
 		return;
@@ -92,7 +93,7 @@ void ElasticSim::render_ui(const Context& ctx, GameObject* parent)
 	ImGui::PopID();
 }
 
-void ElasticSim::update(const Context& ctx, GameObject* parent)
+void ElasticSim::update(const Context& ctx, SimulatedGameObject* parent)
 {
 	m_selector.update(ctx, parent);
 
@@ -184,24 +185,19 @@ void ElasticSim::update(const Context& ctx, GameObject* parent)
 	}
 }
 
-void ElasticSim::late_update(const Context& ctx, GameObject* parent)
+void ElasticSim::late_update(const Context& ctx, SimulatedGameObject* parent)
 {
 	m_selector.late_update(ctx, parent);
 }
 
-void ElasticSim::render(const Context& ctx, const GameObject& parent) const
+void ElasticSim::render(const Context& ctx, const SimulatedGameObject& parent) const
 {
 	m_selector.render(ctx, parent);
 }
 
-void ElasticSim::start_simulation(const Context& ctx, const GameObject& parent)
+void ElasticSim::start_simulation(const Context& ctx, const SimulatedGameObject& parent)
 {
 	m_sim->set_tetmesh(parent.get_mesh());
-}
-
-const char* ElasticSim::get_name() const
-{
-	return "Elastic Simulator"; 
 }
 
 template<class Archive>

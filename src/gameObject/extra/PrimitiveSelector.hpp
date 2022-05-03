@@ -9,7 +9,7 @@
 #include <list>
 #include <glm/glm.hpp>
 
-class GameObject;
+class SimulatedGameObject;
 namespace gobj {
 
 class PrimitiveSelector {
@@ -22,10 +22,10 @@ public:
 	PrimitiveSelector& operator=(const PrimitiveSelector&) = delete;
 	PrimitiveSelector& operator=(PrimitiveSelector&&) = default;
 
-	void render_ui(const Context& ctx, GameObject* parent);
-	void render(const Context& ctx, const GameObject& parent) const;
-	void update(const Context& ctx, GameObject* parent);
-	void late_update(const Context& ctx, GameObject* parent);
+	void render_ui(const Context& ctx, SimulatedGameObject* parent);
+	void render(const Context& ctx, const SimulatedGameObject& parent) const;
+	void update(const Context& ctx, SimulatedGameObject* parent);
+	void late_update(const Context& ctx, SimulatedGameObject* parent);
 
 	struct Delta;
 	const std::map<uint32_t, Delta>& get_movements() const { return m_node_movements; }
@@ -46,8 +46,8 @@ private:
 	class Selection {
 	public:
 		Selection();
-		void render_ui(const Context& ctx, GameObject* parent, PrimitiveSelector* selector);
-		void update(const Context& ctx, GameObject* parent, PrimitiveSelector* selector);
+		void render_ui(const Context& ctx, SimulatedGameObject* parent, PrimitiveSelector* selector);
+		void update(const Context& ctx, SimulatedGameObject* parent, PrimitiveSelector* selector);
 
 		const std::list<uint32_t>& nodes() const { return m_nodes; }
 	private:

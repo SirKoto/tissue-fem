@@ -8,7 +8,7 @@
 
 namespace gobj {
 
-void Transform::draw_ui(const Context& gc)
+void Transform::draw_ui(const Context& gc, bool show_gizmo)
 {
 	ImGui::PushID(this);
 
@@ -25,10 +25,12 @@ void Transform::draw_ui(const Context& gc)
 			m_inverse = glm::inverse(m_transform);
 		}
 	}
-
-	bool updated = gc.add_manipulation_guizmo(&m_transform, (int32_t)((uint64_t) this >> 2));
-	if (updated) {
-		m_inverse = glm::inverse(m_transform);
+	
+	if (show_gizmo) {
+		bool updated = gc.add_manipulation_guizmo(&m_transform, (int32_t)((uint64_t)this >> 2));
+		if (updated) {
+			m_inverse = glm::inverse(m_transform);
+		}
 	}
 
 	ImGui::PopID();

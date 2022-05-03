@@ -1,7 +1,7 @@
 #include "PrimitiveSelector.hpp"
 
 #include "Context.hpp"
-#include "GameObject.hpp"
+#include "gameObject/SimulatedGameObject.hpp"
 
 #include <glad/glad.h>
 #include <glm/gtx/string_cast.hpp>
@@ -13,7 +13,7 @@ PrimitiveSelector::PrimitiveSelector()
 {
 }
 
-void PrimitiveSelector::render_ui(const Context& ctx, GameObject* parent)
+void PrimitiveSelector::render_ui(const Context& ctx, SimulatedGameObject* parent)
 {
 	ImGui::PushID(this);
 	
@@ -52,12 +52,12 @@ void PrimitiveSelector::render_ui(const Context& ctx, GameObject* parent)
 	ImGui::PopID();
 }
 
-void PrimitiveSelector::render(const Context& ctx, const GameObject& parent) const
+void PrimitiveSelector::render(const Context& ctx, const SimulatedGameObject& parent) const
 {
 	m_particle_manager.draw(ctx, parent.get_model_matrix());
 }
 
-void PrimitiveSelector::update(const Context& ctx, GameObject* parent)
+void PrimitiveSelector::update(const Context& ctx, SimulatedGameObject* parent)
 {
 	if (m_mesh.expired()) {
 		m_mesh = parent->get_mesh();
@@ -77,7 +77,7 @@ void PrimitiveSelector::update(const Context& ctx, GameObject* parent)
 	m_particle_manager.set_particles(pos);
 }
 
-void PrimitiveSelector::late_update(const Context& ctx, GameObject* parent)
+void PrimitiveSelector::late_update(const Context& ctx, SimulatedGameObject* parent)
 {
 	m_node_movements.clear();
 }
@@ -87,7 +87,7 @@ PrimitiveSelector::Selection::Selection()
 	m_nodes.push_back({});
 }
 
-void PrimitiveSelector::Selection::render_ui(const Context& ctx, GameObject* parent, PrimitiveSelector* selector)
+void PrimitiveSelector::Selection::render_ui(const Context& ctx, SimulatedGameObject* parent, PrimitiveSelector* selector)
 {
 	ImGui::Checkbox("Fixed", &m_fixed);
 	const int tmp = 1;
@@ -148,7 +148,7 @@ void PrimitiveSelector::Selection::render_ui(const Context& ctx, GameObject* par
 	}
 }
 
-void PrimitiveSelector::Selection::update(const Context& ctx, GameObject* parent, PrimitiveSelector* selector)
+void PrimitiveSelector::Selection::update(const Context& ctx, SimulatedGameObject* parent, PrimitiveSelector* selector)
 {
 	if (m_fixed) {
 		for (const uint32_t& node : m_nodes) {

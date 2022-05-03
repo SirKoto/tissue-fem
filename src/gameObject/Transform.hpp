@@ -9,7 +9,7 @@ namespace gobj {
 class Transform {
 public:
 
-	void draw_ui(const Context& gc);
+	void draw_ui(const Context& gc, bool show_gizmo = true);
 
 	const glm::mat4& mat4() const { return m_transform; }
 	const glm::mat4& inverse() const { return m_inverse; }

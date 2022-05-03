@@ -1,7 +1,34 @@
 #pragma once
 
 #include "BaseArchive.hpp"
-#include <cereal/archives/portable_binary.hpp>
+
+#include "cereal/cereal.hpp"
+#include "cereal/details/util.hpp"
+
+namespace cereal
+{
+    namespace portable_binary_detail
+    {
+        //! Returns true if the current machine is little endian
+        /*! @ingroup Internal */
+        inline std::uint8_t is_little_endian()
+        {
+            static std::int32_t test = 1;
+            return *reinterpret_cast<std::int8_t*>(&test) == 1;
+        }
+
+        //! Swaps the order of bytes for some chunk of memory
+        /*! @param data The data as a uint8_t pointer
+            @tparam DataSize The true size of the data
+            @ingroup Internal */
+        template <std::size_t DataSize>
+        inline void swap_bytes(std::uint8_t* data)
+        {
+            for (std::size_t i = 0, end = DataSize / 2; i < end; ++i)
+                std::swap(data[i], data[DataSize - i - 1]);
+        }
+    } // end namespace portable_binary_detail
+} // namespace cereal
 
 namespace tf {
 // ######################################################################
@@ -23,7 +50,7 @@ namespace tf {
 
     \ingroup Archives */
 class BinaryOutputArchive :
-    public cereal::OutputArchive<BinaryOutputArchive, cereal::AllowEmptyClassElision>,
+    public cereal::OutputArchive<tf::BinaryOutputArchive, cereal::AllowEmptyClassElision>,
     public BaseArchive
 {
 public:

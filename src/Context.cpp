@@ -11,6 +11,7 @@
 #include <chrono>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "gameObject/SimulatedGameObject.hpp"
 #include "gameObject/ElasticSim.hpp"
 #include "meshes/TetMesh.hpp"
 #include "sim/SimpleFEM.hpp"
@@ -93,14 +94,14 @@ void Context::draw_ui()
 				if (ImGui::MenuItem("Armadillo Simple")) {
 					const std::filesystem::path proj_dir(PROJECT_DIR);
 					const std::filesystem::path file = proj_dir / "resources/models/armadilloSimp/armadSimp.ele";
-					GameObject obj;
-					bool loaded = obj.load_tetgen(file);
+					std::shared_ptr<SimulatedGameObject> obj = std::make_shared<SimulatedGameObject>();
+					bool loaded = obj->load_tetgen(file);
 					assert(loaded);
-					obj.get_transform().translate(glm::vec3(0.0f, 2.0f, 0.0f));
-					obj.get_transform().scale(0.01f);
-					obj.get_transform().rotate(glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(180.0f));
-					obj.get_mesh()->flip_face_orientation();
-					m_engine->m_scene->add_gameObject(std::make_shared<GameObject>(std::move(obj)));
+					obj->get_transform().translate(glm::vec3(0.0f, 2.0f, 0.0f));
+					obj->get_transform().scale(0.01f);
+					obj->get_transform().rotate(glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(180.0f));
+					obj->get_mesh()->flip_face_orientation();
+					m_engine->m_scene->add_gameObject(std::move(obj));
 				}
 				ImGui::EndMenu();
 			}

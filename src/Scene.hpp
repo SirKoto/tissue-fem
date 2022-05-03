@@ -34,7 +34,8 @@ public:
 	const Camera& camera() const { return m_camera; }
 	Camera& camera() { return m_camera; }
 
-	void add_gameObject(std::shared_ptr<GameObject>& obj);
+	void add_gameObject(const std::shared_ptr<GameObject>& obj);
+	void add_gameObject(std::shared_ptr<GameObject>&& obj);
 
 	PhysicsSystem& physics() { return m_physic_sys; }
 	const PhysicsSystem& physics() const { return m_physic_sys; }

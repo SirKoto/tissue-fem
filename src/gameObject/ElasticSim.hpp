@@ -3,27 +3,26 @@
 #include <memory>
 #include <map>
 
-#include "Addon.hpp"
 #include "sim/IFEM.hpp"
 #include "utils/CircularBuffer.hpp"
 
 #include "extra/PrimitiveSelector.hpp"
 #include "utils/serialization.hpp"
 
+class SimulatedGameObject;
+class Context;
 namespace gobj {
 
-class ElasticSim final : public Addon {
+class ElasticSim final{
 public:
 
 	ElasticSim();
 
-	void render_ui(const Context& ctx, GameObject* parent) override final;
-	void update(const Context& ctx, GameObject* parent) override final;
-	void late_update(const Context& ctx, GameObject* parent) override final;
-	void render(const Context& ctx, const GameObject& parent) const override final;
-	void start_simulation(const Context& ctx, const GameObject& parent);
-
-	const char* get_name() const override final;
+	void render_ui(const Context& ctx, SimulatedGameObject* parent);
+	void update(const Context& ctx, SimulatedGameObject* parent);
+	void late_update(const Context& ctx, SimulatedGameObject* parent);
+	void render(const Context& ctx, const SimulatedGameObject& parent) const;
+	void start_simulation(const Context& ctx, const SimulatedGameObject& parent);
 
 private:
 	std::unique_ptr<sim::IFEM> m_sim;
