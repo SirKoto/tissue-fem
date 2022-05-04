@@ -8,7 +8,7 @@ class SimulatedGameObject final : public GameObject {
 public:
 	SimulatedGameObject();
 
-	void start_simulation(const Context& ctx) override final;
+	void start_simulation(Context& ctx) override final;
 
 	void render(const Context& ctx) const override final;
 

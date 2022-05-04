@@ -15,7 +15,7 @@ GameObject::GameObject()
 
 }
 
-void GameObject::start_simulation(const Context& ctx)
+void GameObject::start_simulation(Context& ctx)
 {
 	
 }

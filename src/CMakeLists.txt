@@ -36,6 +36,7 @@ add_executable(${PROJECT_NAME}
 	utils/serialization/BinaryArchive.hpp
 
 	gameObject/SimulatedGameObject.hpp gameObject/SimulatedGameObject.cpp
+	gameObject/StaticColliderGameObject.hpp gameObject/StaticColliderGameObject.cpp
 	gameObject/Transform.hpp gameObject/Transform.cpp
 	gameObject/ElasticSim.hpp gameObject/ElasticSim.cpp
 	gameObject/extra/PrimitiveSelector.hpp gameObject/extra/PrimitiveSelector.cpp

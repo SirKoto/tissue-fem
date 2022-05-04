@@ -19,7 +19,7 @@ public:
 	GameObject& operator=(GameObject&&) = default;
 
 
-	virtual void start_simulation(const Context& ctx);
+	virtual void start_simulation(Context& ctx);
 
 	virtual void render(const Context& ctx) const = 0;
 

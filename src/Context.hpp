@@ -56,6 +56,14 @@ public:
 
 	bool add_manipulation_guizmo(glm::mat4* transform, Context::GuizmosInteraction op, glm::mat4* delta_transform, int32_t id) const;
 
+
+	PhysicsSystem::PhysicEntityId insert_static_physics_primitive(const PhysicsSystem::PrimitivePtr& primitive) {
+		return m_engine->m_scene->physics().insert_primitive(primitive);
+	}
+	PhysicsSystem::PhysicEntityId insert_static_physics_primitive(PhysicsSystem::PrimitivePtr&& primitive) {
+		return m_engine->m_scene->physics().insert_primitive(primitive);
+	}
+
 private:
 
 	Engine* m_engine;

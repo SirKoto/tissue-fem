@@ -31,7 +31,7 @@ SimulatedGameObject::SimulatedGameObject() : GameObject()
 
 }
 
-void SimulatedGameObject::start_simulation(const Context& ctx)
+void SimulatedGameObject::start_simulation(Context& ctx)
 {
 	this->GameObject::start_simulation(ctx);
 

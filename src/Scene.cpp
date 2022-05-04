@@ -4,6 +4,7 @@
 #include "sim/SimpleFEM.hpp"
 
 #include "meshes/Plane.hpp"
+#include "gameObject/StaticColliderGameObject.hpp"
 
 #include <glad/glad.h>
 #include <glm/gtc/type_ptr.hpp>
@@ -16,7 +17,6 @@ Scene::Scene() :
 	m_clear_color(0.45f, 0.55f, 0.60f)
 {
 	m_selected_object = m_gameObjects.end();
-	this->physics().insert_primitive(std::make_shared<Plane>(glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
 }
 
 void Scene::update(const Context& ctx)
@@ -50,6 +50,11 @@ void Scene::update_ui(const Context& ctx)
 	if (m_show_objects_window) {
 		ImGui::SetNextWindowSize(ImVec2(250, 280), ImGuiCond_FirstUseEver);
 		if (ImGui::Begin("GameObjects", &m_show_objects_window)) {
+			if (ImGui::Button("jeje")) {
+				auto ptr = std::make_shared<StaticColliderGameObject>();
+				ptr->get_name() = "Plane jeje";
+				add_gameObject(std::move(ptr));
+			}
 			std::list<std::shared_ptr<GameObject>>::iterator it = m_gameObjects.begin();
 			std::stringstream ss;
 			while (it != m_gameObjects.end()) {
@@ -121,7 +126,7 @@ void Scene::render(const Context& ctx)
 	}
 }
 
-void Scene::start_simulation(const Context& ctx)
+void Scene::start_simulation(Context& ctx)
 {
 	for (const std::shared_ptr<GameObject>& obj : m_gameObjects) {
 		obj->start_simulation(ctx);
