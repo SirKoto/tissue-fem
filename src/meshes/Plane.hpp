@@ -33,6 +33,7 @@ public:
 		m_point(p),
 		m_displacement(glm::dot(p, n)) {}
 
+	float distance(const glm::vec3& p) const override final;
 	std::optional<SurfaceIntersection> intersect(const Ray& ray, const float max_t) const override final;
 	BBox world_bbox() const override final;
 	void draw_ui() override final;

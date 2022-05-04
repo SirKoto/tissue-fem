@@ -16,6 +16,7 @@ public:
 	Primitive(const Primitive&) = delete;
 	Primitive& operator=(const Primitive&) = delete;
 
+	virtual float distance(const glm::vec3& p) const = 0;
 	virtual std::optional<SurfaceIntersection> intersect(const Ray& ray, const float max_t) const = 0;
 	virtual BBox world_bbox() const = 0;
 	virtual void draw_ui() = 0;

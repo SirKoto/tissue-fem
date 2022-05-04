@@ -5,7 +5,7 @@
 
 #include "sim/IFEM.hpp"
 #include "utils/CircularBuffer.hpp"
-
+#include "physics/RayIntersection.hpp"
 #include "extra/PrimitiveSelector.hpp"
 #include "utils/serialization.hpp"
 
@@ -36,11 +36,13 @@ private:
 	CircularBuffer<std::pair<float, sim::IFEM::MetricTimes>> m_metric_times_buffer;
 	float m_metrics_past_seconds = 20.0f;
 
+	typedef physics::Primitive Primitive;
 	// Constraint
 	struct Constraint {
-		Constraint(const glm::vec3& n) : normal(n) {}
-		Constraint(const glm::vec3& n, bool delete_next) : normal(n), to_delete(delete_next) {}
+		Constraint(const glm::vec3& n, const Primitive* primitive) : normal(n), primitive(primitive){}
+		Constraint(const glm::vec3& n, const Primitive* primitive, bool delete_next) : normal(n), primitive(primitive), to_delete(delete_next) {}
 		glm::vec3 normal;
+		const Primitive* primitive;
 		bool to_delete = false;
 	};
 

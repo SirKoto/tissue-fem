@@ -115,7 +115,7 @@ void ElasticSim::update(const Context& ctx, SimulatedGameObject* parent)
 				if (m.second.delta == glm::vec3(0.0f) || !intersection.has_value()) {
 					m_sim->add_constraint(node_idx, glm::vec3(0.0f));
 					m_sim->add_position_alteration(node_idx, m.second.delta);
-					m_constrained_nodes.emplace(node_idx, Constraint(glm::vec3(0.0f), true));
+					m_constrained_nodes.emplace(node_idx, Constraint(glm::vec3(0.0f), nullptr, true));
 				}
 			}
 		}
@@ -129,9 +129,11 @@ void ElasticSim::update(const Context& ctx, SimulatedGameObject* parent)
 		// Remove constraints that are applying negatve constraint forces or marked as to_delete
 		for (std::map<uint32_t, Constraint>::const_iterator it = m_constrained_nodes.begin(); it != m_constrained_nodes.end();) {
 			const uint32_t node_idx = it->first;
-			glm::vec3 constraint_force = sim::cast_vec3(m_sim->get_force_constraint(node_idx));
+			const glm::vec3 constraint_force = sim::cast_vec3(m_sim->get_force_constraint(node_idx));
 			const float dot = glm::dot(constraint_force, it->second.normal);
-			if (it->second.to_delete || dot < -std::numeric_limits<float>::epsilon()) {
+			const float distance = it->second.primitive != nullptr ? it->second.primitive->distance(sim::cast_vec3(m_sim->get_node(node_idx))) : 0.0f;
+			if (it->second.to_delete || dot < -std::numeric_limits<float>::epsilon() ||
+				distance > 1e-3f) {
 				m_sim->erase_constraint(node_idx);
 				it = m_constrained_nodes.erase(it);
 			}
@@ -175,7 +177,7 @@ void ElasticSim::update(const Context& ctx, SimulatedGameObject* parent)
 							glm::vec3(0.0f),
 							intersection->normal);
 						// Cache the constrained node
-						m_constrained_nodes.emplace(node_idx, intersection->normal);
+						m_constrained_nodes.emplace(node_idx, Constraint(intersection->normal, intersection->primitive));
 					}
 				}
 			}
