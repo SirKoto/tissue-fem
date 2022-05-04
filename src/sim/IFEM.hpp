@@ -5,6 +5,8 @@
 #include <glm/glm.hpp>
 
 #include "meshes/TetMesh.hpp"
+#include "utils/serialization.hpp"
+
 namespace sim
 {
 
@@ -50,10 +52,11 @@ Mat9 compute_H1(const Mat3& U, const Vec3& singular_values, const Mat3& V);
 inline Mat9 compute_H2() { return Float(2.0) * Mat9::Identity(); }
 Mat9 compute_H3(const Mat3& F);
 
+class Parameters;
 class IFEM {
 public:
 
-	virtual void step(Float dt) = 0;
+	virtual void step(Float dt, const Parameters& params) = 0;
 
 	virtual void set_tetmesh(const std::shared_ptr<TetMesh>& mesh) = 0;
 
@@ -71,7 +74,6 @@ public:
 
 
 	virtual void clear_frame_alterations() = 0;
-	virtual void draw_ui() = 0;
 
 	struct MetricTimes {
 		float step = 0.0f;
@@ -99,6 +101,55 @@ private:
 	Mat3 m_pk1;
 	Mat9 m_hessian;
 
+};
+
+enum EnergyFunction {
+	HookeanSmith19 = 0,
+	Corrotational = 1,
+	HookeanBW08 = 2,
+};
+
+class Parameters {
+public:
+	Parameters() { this->update_lame(); }
+	Parameters(Float young, Float nu) :
+		m_young(young), m_nu(nu) { this->update_lame(); }
+
+	const Float& young() const { return m_young; }
+	const Float& nu() const { return m_nu; }
+	const Float& gravity() const { return m_gravity; }
+	const Float& mu() const { return m_mu; }
+	const Float& lambda() const { return m_lambda; }
+	const Float& alpha_rayleigh() const { return m_alpha_rayleigh; }
+	const Float& beta_rayleigh() const { return m_beta_rayleigh; }
+	const Float& mass() const { return m_node_mass; }
+	const EnergyFunction& energy_function() const { return m_enum_energy; }
+
+	void draw_ui();
+
+
+private:
+	Float m_young;
+	Float m_nu;
+
+	Float m_node_mass = 1.0e-2f;
+	Float m_gravity = 9.8f;
+	Float m_mu = 0.0f;
+	Float m_lambda = 0.0f;
+	Float m_alpha_rayleigh = 0.01f;
+	Float m_beta_rayleigh = 0.001f;
+
+	EnergyFunction m_enum_energy = EnergyFunction::HookeanSmith19;
+
+	
+
+	void update_lame();
+
+	// Serialization
+	template<typename Archive>
+	void serialize(Archive& archive);
+
+	TF_SERIALIZE_PRIVATE_MEMBERS
 };
 
 } // namespace sim

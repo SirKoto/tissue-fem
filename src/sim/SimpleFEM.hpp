@@ -19,11 +19,11 @@ namespace sim {
 class SimpleFem final : public IFEM {
 public:
 
-	SimpleFem(Float young, Float nu);
+	SimpleFem();
 
 	void set_tetmesh(const std::shared_ptr<TetMesh>& mesh) override final;
 
-	void step(Float dt) override final;
+	void step(Float dt, const Parameters& params) override final;
 
 	void update_objects(bool add_position_alteration) override final;
 	
@@ -44,21 +44,9 @@ public:
 
 	void pancake();
 
-	void draw_ui() override final;
-
 private:
 
 	std::weak_ptr<TetMesh> m_mesh;
-
-	Float m_young;
-	Float m_nu;
-
-	Float m_node_mass = 1.0e-2f;
-	Float m_gravity = 9.8f;
-	Float m_mu = 0.0f;
-	Float m_lambda = 0.0f;
-	Float m_alpha_rayleigh = 0.01f;
-	Float m_beta_rayleigh = 0.001f;
 
 	Vec m_delta_v;
 	Vec m_v;
@@ -104,21 +92,13 @@ private:
 	std::unordered_map<std::pair<uint32_t, uint32_t>, SMatPtrs, hash_pair> m_sparse_cache;
 
 
-	enum class EnergyFunction {
-		HookeanSmith19 = 0,
-		Corrotational = 1,
-		HookeanBW08 = 2,
-	};
-	EnergyFunction m_enum_energy = EnergyFunction::HookeanSmith19;
+	
 
 	void build_sparse_system();
 
-	
 	void assign_sparse_block(const Eigen::Block<const Mat12, 3, 3>& m, uint32_t i, uint32_t j);
 
 	void set_system_to_zero();
-
-	void update_lame();
 
 };
 

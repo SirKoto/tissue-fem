@@ -9,10 +9,8 @@
 #include "utils/Timer.hpp"
 
 namespace sim {
-SimpleFem::SimpleFem(Float young, Float nu) :
-	m_young(young), m_nu(nu)
+SimpleFem::SimpleFem() 
 {
-	update_lame();
 }
 
 void SimpleFem::set_tetmesh(const std::shared_ptr<TetMesh>& mesh)
@@ -79,14 +77,8 @@ void SimpleFem::set_system_to_zero()
 	}
 }
 
-void SimpleFem::update_lame()
-{
-	m_mu = m_young / (Float(2) + Float(2) * m_nu);
-	m_lambda = (m_young * m_nu / ((Float(1) + m_nu) * (Float(1) - Float(2) * m_nu)));
-}
 
-
-void SimpleFem::step(Float dt)
+void SimpleFem::step(Float dt, const Parameters& cfg)
 {
 	Timer step_timer;
 	Timer timer;
@@ -103,20 +95,20 @@ void SimpleFem::step(Float dt)
 	// The last bit Δt * df/dx * y comes from the forced position alteration Δx=Δt(v0+Δv)+y
 	
 	EnergyDensity energy;
-	const EnergyFunction functionType = m_enum_energy;
+	const EnergyFunction functionType = cfg.energy_function();
 	// Add contribution of each element
 	for (size_t i = 0; i < m_elements.size(); ++i) {
 		const Vec4i& element = m_elements[i];
 		const Mat3 F = compute_Ds(element, m_nodes) * m_DmInvs[i];
 		// Compute the energy function
 		if (functionType == EnergyFunction::HookeanSmith19) {
-			energy.HookeanSmith19(F, m_mu, m_lambda);
+			energy.HookeanSmith19(F, cfg.mu(), cfg.lambda());
 		}
 		else if (functionType == EnergyFunction::Corrotational) {
-			energy.Corrotational(F, m_mu, m_lambda);
+			energy.Corrotational(F, cfg.mu(), cfg.lambda());
 		}
 		else {
-			energy.HookeanBW08(F, m_mu, m_lambda);
+			energy.HookeanBW08(F, cfg.mu(), cfg.lambda());
 		}
 
 		// Compute force derivative df/dx = -vol * ddPhi/ddx = -vol * ( dF/dx * ddPhi/ddF * dF/dx )
@@ -156,12 +148,12 @@ void SimpleFem::step(Float dt)
 
 	// subtract gravity from the y entries
 	for (size_t i = 0; i < m_nodes.size(); ++i) {
-		m_rhs(3 * i + 1) -= dt * m_node_mass * m_gravity;
+		m_rhs(3 * i + 1) -= dt * cfg.mass() * cfg.gravity();
 	}
 
 	// Apply rayleigh damping df/dv = -alpha * M - beta * df/dx
-	m_dfdx_system *=  - (dt * dt) - m_beta_rayleigh * dt;
-	m_dfdx_system.diagonal().array() += m_node_mass * (Float(1.0) - m_alpha_rayleigh * dt);
+	m_dfdx_system *=  - (dt * dt) - cfg.beta_rayleigh() * dt;
+	m_dfdx_system.diagonal().array() += cfg.mass() * (Float(1.0) - cfg.alpha_rayleigh() * dt);
 
 
 	// Fill S
@@ -363,32 +355,6 @@ void SimpleFem::pancake()
 	update_objects(false);
 }
 
-void SimpleFem::draw_ui()
-{
-	ImGui::PushID("SimpleFem");
-	ImGui::Text("Simple Fem Configuration");
-
-	constexpr ImGuiDataType dtype = sizeof(Float) == 4 ? ImGuiDataType_Float : ImGuiDataType_Double;
-
-	const Float stepYoung = 100.f;
-	bool updateLame = ImGui::InputScalar("Young", dtype, &m_young, &stepYoung, nullptr, "%f", ImGuiInputTextFlags_CharsScientific);
-	const Float stepNu = 0.01f;
-	updateLame |= ImGui::InputScalar("Nu", dtype, &m_nu, &stepNu, nullptr, "%.3f", ImGuiInputTextFlags_CharsScientific);
-	ImGui::InputScalar("Node mass", dtype, &m_node_mass, nullptr, nullptr, "%f", ImGuiInputTextFlags_CharsScientific);
-	ImGui::Text("Model mass: %f", (float)m_node_mass * (float)m_nodes.size());
-	ImGui::InputScalar("Alpha Rayleigh", dtype, &m_alpha_rayleigh, &stepNu, nullptr, "%f", ImGuiInputTextFlags_CharsScientific);
-	ImGui::InputScalar("Beta Rayleigh", dtype, &m_beta_rayleigh, &stepNu, nullptr, "%f", ImGuiInputTextFlags_CharsScientific);
-
-	if (updateLame) {
-		this->update_lame();
-	}
-
-	ImGui::Combo("Energy function",
-		reinterpret_cast<int*>(&m_enum_energy),
-		"HookeanSmith19\0Corrotational\0HookeanBW08\0");
-
-	ImGui::PopID();
-}
 
 void SimpleFem::build_sparse_system()
 {

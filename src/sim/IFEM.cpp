@@ -1,7 +1,7 @@
 #include "IFEM.hpp"
 
 #include <glm/gtc/constants.hpp>
-
+#include <imgui.h>
 
 namespace sim {
 
@@ -218,5 +218,49 @@ void EnergyDensity::HookeanBW08(const Mat3& F, Float mu, Float lambda)
 	const Float H_fact = (lambda * logI3 - mu) / I3;
 	m_hessian = mu * Mat9::Identity() + g_fact * g3 * g3.transpose() + H_fact * H3;
 }
+
+void Parameters::draw_ui()
+{
+	ImGui::PushID("SimpleFem");
+	ImGui::Text("Simple Fem Configuration");
+
+	constexpr ImGuiDataType dtype = sizeof(Float) == 4 ? ImGuiDataType_Float : ImGuiDataType_Double;
+
+	const Float stepYoung = 100.f;
+	bool updateLame = ImGui::InputScalar("Young", dtype, &m_young, &stepYoung, nullptr, "%f", ImGuiInputTextFlags_CharsScientific);
+	const Float stepNu = 0.01f;
+	updateLame |= ImGui::InputScalar("Nu", dtype, &m_nu, &stepNu, nullptr, "%.3f", ImGuiInputTextFlags_CharsScientific);
+	ImGui::InputScalar("Node mass", dtype, &m_node_mass, nullptr, nullptr, "%f", ImGuiInputTextFlags_CharsScientific);
+	ImGui::InputScalar("Alpha Rayleigh", dtype, &m_alpha_rayleigh, &stepNu, nullptr, "%f", ImGuiInputTextFlags_CharsScientific);
+	ImGui::InputScalar("Beta Rayleigh", dtype, &m_beta_rayleigh, &stepNu, nullptr, "%f", ImGuiInputTextFlags_CharsScientific);
+
+	if (updateLame) {
+		this->update_lame();
+	}
+
+	ImGui::Combo("Energy function",
+		reinterpret_cast<int*>(&m_enum_energy),
+		"HookeanSmith19\0Corrotational\0HookeanBW08\0");
+
+	ImGui::PopID();
+}
+
+void Parameters::update_lame()
+{
+	m_mu = m_young / (Float(2) + Float(2) * m_nu);
+	m_lambda = (m_young * m_nu / ((Float(1) + m_nu) * (Float(1) - Float(2) * m_nu)));
+}
+
+template<class Archive>
+void Parameters::serialize(Archive& ar)
+{
+	ar(TF_SERIALIZE_NVP_MEMBER(m_young), TF_SERIALIZE_NVP_MEMBER(m_nu));
+	ar(TF_SERIALIZE_NVP_MEMBER(m_node_mass), TF_SERIALIZE_NVP_MEMBER(m_gravity));
+	ar(TF_SERIALIZE_NVP_MEMBER(m_mu), TF_SERIALIZE_NVP_MEMBER(m_lambda));
+	ar(TF_SERIALIZE_NVP_MEMBER(m_alpha_rayleigh), TF_SERIALIZE_NVP_MEMBER(m_beta_rayleigh));
+	ar(TF_SERIALIZE_NVP_MEMBER(m_enum_energy));
+}
+
+TF_SERIALIZE_TEMPLATE_EXPLICIT_IMPLEMENTATION(Parameters)
 
 } // namespace sim

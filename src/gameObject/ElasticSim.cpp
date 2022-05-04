@@ -10,9 +10,9 @@
 
 namespace gobj {
 
-ElasticSim::ElasticSim()
+ElasticSim::ElasticSim() : m_params(1000.0f, 0.3f)
 {
-	m_sim = std::make_unique<sim::SimpleFem>(10000.0f, 0.3f);
+	m_sim = std::make_unique<sim::SimpleFem>();
 }
 
 void ElasticSim::render_ui(const Context& ctx, SimulatedGameObject* parent)
@@ -22,8 +22,8 @@ void ElasticSim::render_ui(const Context& ctx, SimulatedGameObject* parent)
 	}
 
 	ImGui::PushID(this);
-	m_sim->draw_ui();
-
+	m_params.draw_ui();
+	
 
 	if (ImGui::Button("Pancake")) {
 		reinterpret_cast<sim::SimpleFem*>(m_sim.get())->pancake();
@@ -121,7 +121,7 @@ void ElasticSim::update(const Context& ctx, SimulatedGameObject* parent)
 		}
 		
 		// Solve system
-		m_sim->step((sim::Float)dt);
+		m_sim->step((sim::Float)dt, m_params);
 
 		// Clear constraints after using them
 		m_sim->clear_frame_alterations();
@@ -206,6 +206,7 @@ template<class Archive>
 void ElasticSim::serialize(Archive& archive)
 {
 	archive(TF_SERIALIZE_NVP_MEMBER(m_selector));
+	archive(TF_SERIALIZE_NVP_MEMBER(m_params));
 }
 
 TF_SERIALIZE_TEMPLATE_EXPLICIT_IMPLEMENTATION(ElasticSim)

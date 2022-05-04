@@ -25,6 +25,7 @@ public:
 	void start_simulation(const Context& ctx, const SimulatedGameObject& parent);
 
 private:
+	sim::Parameters m_params;
 	std::unique_ptr<sim::IFEM> m_sim;
 	struct Constraint;
 	std::map<uint32_t, Constraint> m_constrained_nodes;
