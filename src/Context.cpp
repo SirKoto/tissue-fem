@@ -57,13 +57,27 @@ void Context::draw_ui()
 		{
 			if (ImGui::MenuItem("Load Mesh", nullptr, nullptr, !m_file_picker_open))
 			{
-				m_file_picker_open = true;
-				ImGuiFileDialog::Instance()->OpenDialog(
-					STRING_IGFD_LOAD_MODEL,
-					"Pick a model to load",
+				this->open_file_picker("Pick a model to load",
 					"Model Files (*.ele *.face *.node){.ele,.face,.node}",
-					"."
-				);
+
+					[](const Context& ctx, 
+						Scene& scene, 
+						const std::filesystem::path& p, 
+						std::string* err) -> bool {
+
+						std::shared_ptr<SimulatedGameObject> obj = std::make_shared<SimulatedGameObject>();
+
+						bool res = obj->load_tetgen(p, err);
+						if (!res) {
+							return false;
+						}
+
+						scene.add_gameObject(std::move(obj));
+
+						return true;
+					}
+					);
+				
 			}
 			
 			if (ImGui::MenuItem("Save", nullptr, nullptr, !m_engine->m_scene_path.empty() && !m_file_picker_open)) {
@@ -258,8 +272,23 @@ bool Context::add_manipulation_guizmo(glm::mat4* transform, Context::GuizmosInte
 		(float*)delta_transform);
 }
 
-void Context::open_file_picker(const FilePickerCallback& callback)
+void Context::open_file_picker(
+	const char* window_title,
+	const char* filter, 
+	const FilePickerCallback& callback)
 {
+	if (m_file_picker_open) {
+		return;
+	}
+
+	m_file_picker_open = true;
+	ImGuiFileDialog::Instance()->OpenDialog(
+		STRING_IGFD_LOAD_MODEL,
+		window_title,
+		filter,
+		"."
+	);
+
 	m_file_picker_callback = callback;
 }
 
@@ -286,7 +315,7 @@ void Context::handle_file_picker()
 
 			std::filesystem::path file = filedialog->GetFilePathName();
 
-			bool res = m_file_picker_callback(*this, file, &m_file_picker_error);
+			bool res = m_file_picker_callback(*this, *m_engine->m_scene, file, &m_file_picker_error);
 			if (!res) {
 				ImGui::OpenPopup("PopupErrorFileDialog");
 			}

@@ -50,9 +50,9 @@ void Scene::update_ui(const Context& ctx)
 	if (m_show_objects_window) {
 		ImGui::SetNextWindowSize(ImVec2(250, 280), ImGuiCond_FirstUseEver);
 		if (ImGui::Begin("GameObjects", &m_show_objects_window)) {
-			if (ImGui::Button("jeje")) {
+			if (ImGui::Button("Add plane Collider")) {
 				auto ptr = std::make_shared<StaticColliderGameObject>();
-				ptr->get_name() = "Plane jeje";
+				ptr->get_name() = "Plane Collider";
 				add_gameObject(std::move(ptr));
 			}
 			std::list<std::shared_ptr<GameObject>>::iterator it = m_gameObjects.begin();

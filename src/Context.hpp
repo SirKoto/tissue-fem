@@ -42,8 +42,14 @@ public:
 
 	bool is_simulation_running() const { return m_engine->m_simulation_mode && m_engine->m_run_simulation; }
 
-	typedef std::function<bool(const Context&, const std::filesystem::path&, std::string* err)> FilePickerCallback;
-	void open_file_picker(const FilePickerCallback& callback);
+	typedef std::function<bool(const Context&, 
+		Scene& scene,
+		const std::filesystem::path&, 
+		std::string* err)> FilePickerCallback;
+	void open_file_picker(
+		const char* window_title,
+		const char* filter,
+		const FilePickerCallback& callback);
 
 	// guizmos interaction
 	enum class GuizmosInteraction {
