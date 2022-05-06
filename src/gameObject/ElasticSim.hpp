@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <map>
+#include <chrono>
 
 #include "sim/IFEM.hpp"
 #include "utils/CircularBuffer.hpp"
@@ -30,6 +31,9 @@ private:
 	struct Constraint;
 	std::map<uint32_t, Constraint> m_constrained_nodes;
 	gobj::PrimitiveSelector m_selector;
+
+	uint32_t m_last_frame_iterations = 1;
+	std::chrono::duration<double> m_last_step_time_cost;
 
 	bool m_show_simulation_metrics = false;
 
