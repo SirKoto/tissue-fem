@@ -38,7 +38,11 @@ private:
 	bool m_show_simulation_metrics = false;
 
 	// Metrics
-	CircularBuffer<std::pair<float, sim::IFEM::MetricTimes>> m_metric_times_buffer;
+	struct Metrics {
+		sim::IFEM::MetricTimes times;
+		float volume;
+	};
+	CircularBuffer<std::pair<float, Metrics>> m_metric_times_buffer;
 	float m_metrics_past_seconds = 20.0f;
 
 	typedef physics::Primitive Primitive;

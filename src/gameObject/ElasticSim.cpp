@@ -34,48 +34,64 @@ void ElasticSim::render_ui(const Context& ctx, SimulatedGameObject* parent)
 	ImGui::Text("Iterations in step: %i", m_last_frame_iterations);
 
 	if (m_show_simulation_metrics) {
-		ImGui::SetNextWindowSize(ImVec2(450, 280), ImGuiCond_FirstUseEver);
+		ImGui::SetNextWindowSize(ImVec2(450, 380), ImGuiCond_FirstUseEver);
 		const ImGuiViewport* main_viewport = ImGui::GetMainViewport();
 		ImGui::SetNextWindowPos(ImVec2(main_viewport->WorkPos.x + 650, main_viewport->WorkPos.y + 20), ImGuiCond_FirstUseEver);
 		if (ImGui::Begin("Simulation Metrics", &m_show_simulation_metrics)) {
 			if (m_sim && ctx.is_simulation_running()) {
-				m_metric_times_buffer.push({ ctx.get_time(), m_sim->get_metric_times() });
+				m_metric_times_buffer.push({ ctx.get_time(), 
+					{m_sim->get_metric_times(), (float)m_sim->compute_volume()} });
 			}
 
 			ImGui::SliderFloat("Past seconds", &m_metrics_past_seconds, 0.1f, 30.0f, "%.1f");
 
-			if (ImPlot::BeginPlot("##SolverMetrics", ImVec2(-1, -1))) {
+
+			if (ImPlot::BeginPlot("##SolverMetrics", ImVec2(-1, 160))) {
 				ImPlot::SetupAxes("time (s)", "dt (s)");
 				float x = m_metric_times_buffer.size() > 0 ? m_metric_times_buffer.back().first : 0.0f;
 				ImPlot::SetupAxisLimits(ImAxis_X1, x - m_metrics_past_seconds, x, ImGuiCond_Always);
 				ImPlot::SetupAxisLimits(ImAxis_Y1, 0, 0.0055);
 				ImPlot::PlotLine("Step time",
 					&m_metric_times_buffer.data()->first,
-					&m_metric_times_buffer.data()->second.step,
+					&m_metric_times_buffer.data()->second.times.step,
 					(int)m_metric_times_buffer.size(),
 					(int)m_metric_times_buffer.offset(),
 					sizeof(*m_metric_times_buffer.data()));
 				ImPlot::PlotLine("Set Zero System",
 					&m_metric_times_buffer.data()->first,
-					&m_metric_times_buffer.data()->second.set_zero,
+					&m_metric_times_buffer.data()->second.times.set_zero,
 					(int)m_metric_times_buffer.size(),
 					(int)m_metric_times_buffer.offset(),
 					sizeof(*m_metric_times_buffer.data()));
 				ImPlot::PlotLine("Blocks Assign",
 					&m_metric_times_buffer.data()->first,
-					&m_metric_times_buffer.data()->second.blocks_assign,
+					&m_metric_times_buffer.data()->second.times.blocks_assign,
 					(int)m_metric_times_buffer.size(),
 					(int)m_metric_times_buffer.offset(),
 					sizeof(*m_metric_times_buffer.data()));
 				ImPlot::PlotLine("System finish",
 					&m_metric_times_buffer.data()->first,
-					&m_metric_times_buffer.data()->second.system_finish,
+					&m_metric_times_buffer.data()->second.times.system_finish,
 					(int)m_metric_times_buffer.size(),
 					(int)m_metric_times_buffer.offset(),
 					sizeof(*m_metric_times_buffer.data()));
 				ImPlot::PlotLine("Solve",
 					&m_metric_times_buffer.data()->first,
-					&m_metric_times_buffer.data()->second.solve,
+					&m_metric_times_buffer.data()->second.times.solve,
+					(int)m_metric_times_buffer.size(),
+					(int)m_metric_times_buffer.offset(),
+					sizeof(*m_metric_times_buffer.data()));
+				ImPlot::EndPlot();
+			}
+		
+			if (ImPlot::BeginPlot("Volume##Volume", ImVec2(-1, 160))) {
+				ImPlot::SetupAxes("time (s)", "vol (m^3)");
+				float x = m_metric_times_buffer.size() > 0 ? m_metric_times_buffer.back().first : 0.0f;
+				ImPlot::SetupAxisLimits(ImAxis_X1, x - m_metrics_past_seconds, x, ImGuiCond_Always);
+
+				ImPlot::PlotLine("##volume",
+					&m_metric_times_buffer.data()->first,
+					&m_metric_times_buffer.data()->second.volume,
 					(int)m_metric_times_buffer.size(),
 					(int)m_metric_times_buffer.offset(),
 					sizeof(*m_metric_times_buffer.data()));

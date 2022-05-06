@@ -346,6 +346,17 @@ Vec3 SimpleFem::get_force_constraint(uint32_t node) const
 	return m_constraint_forces.segment<3>(node * 3);
 }
 
+Float SimpleFem::compute_volume() const
+{
+	Float vol = Float(0);
+	for (size_t i = 0; i < m_elements.size(); ++i) {
+		const Mat3 Ds = compute_Ds(m_elements[i], m_nodes);
+		vol += std::abs(Ds.determinant()) / Float(6.0);
+	}
+
+	return vol;
+}
+
 void SimpleFem::pancake()
 {
 	for (size_t i = 0; i < m_nodes.size(); ++i) {

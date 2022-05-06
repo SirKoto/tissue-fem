@@ -72,6 +72,7 @@ public:
 	virtual Vec3 get_velocity(uint32_t node) const = 0;
 	virtual Vec3 get_force_constraint(uint32_t node) const = 0;
 
+	virtual Float compute_volume() const = 0;
 
 	virtual void clear_frame_alterations() = 0;
 

@@ -41,6 +41,8 @@ public:
 	Vec3 get_velocity(uint32_t node) const override final;
 	Vec3 get_force_constraint(uint32_t node) const override final;
 
+	Float compute_volume() const override final;
+
 
 	void pancake();
 
