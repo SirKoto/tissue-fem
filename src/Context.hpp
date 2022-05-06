@@ -36,6 +36,9 @@ public:
 
 	float delta_time() const { return m_delta_time; }
 
+	float objective_dt() const { return m_objective_dt; }
+	float objective_fps() const { return m_objective_fps; }
+
 	const Scene& get_scene() const { return *m_engine->m_scene; }
 
 	bool has_simulation_started() const { return m_engine->m_simulation_mode; }
@@ -77,6 +80,8 @@ private:
 	float m_time = 0.0f;
 	float m_delta_time = 0.0f;
 
+	float m_objective_fps = 60.0f;
+	float m_objective_dt = 1.0f / 60.0f;
 
 	// Windows
 	bool m_show_imgui_demo_window = false;

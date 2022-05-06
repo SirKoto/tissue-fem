@@ -101,7 +101,7 @@ void ElasticSim::update(const Context& ctx, SimulatedGameObject* parent)
 
 
 	if(ctx.is_simulation_running()) {
-		const float dt = std::min(ctx.delta_time(), 1.0f / 60.0f);
+		const float dt = std::min(ctx.delta_time(), 1.0f / 30.0f);
 
 		const std::map<uint32_t, PrimitiveSelector::Delta>& movements = m_selector.get_movements();
 		for (const auto& m : movements) {
@@ -123,7 +123,7 @@ void ElasticSim::update(const Context& ctx, SimulatedGameObject* parent)
 		}
 
 		uint32_t max_repetitions;
-		if (ctx.delta_time() > (1.0 / 56.0) && m_last_frame_iterations > 1) {
+		if (ctx.delta_time() > ctx.objective_dt() && m_last_frame_iterations > 1) {
 			max_repetitions = m_last_frame_iterations - 1;
 		}
 		else {
@@ -131,7 +131,7 @@ void ElasticSim::update(const Context& ctx, SimulatedGameObject* parent)
 
 			const double avg_time = m_last_step_time_cost.count() / m_last_frame_iterations;
 
-			if (m_last_step_time_cost.count() + avg_time < (1.0 / 60.0)) {
+			if (m_last_step_time_cost.count() + avg_time < ctx.objective_dt()) {
 				max_repetitions += 1;
 			}
 		}

@@ -131,6 +131,14 @@ void Context::draw_ui()
 			ImGui::EndMenu();
 		}
 
+		if (ImGui::BeginMenu("Edit"))
+		{
+			if (ImGui::InputFloat("Aim FPS", &m_objective_fps, 1.0f)) {
+				m_objective_dt = 1.0f / m_objective_fps;
+			}
+			ImGui::EndMenu();
+		}
+
 		if (ImGui::BeginMenu("Guizmos")) {
 			ImGui::Checkbox("Enable World Grid", &m_show_world_grid);
 			ImGui::Checkbox("Enable Guizmos", &m_show_guizmos);
@@ -166,7 +174,6 @@ void Context::draw_ui()
 
 			ImGui::EndMenu();
 		}
-		
 
 		ImGui::Text("Framerate %.1f", ImGui::GetIO().Framerate);
 
