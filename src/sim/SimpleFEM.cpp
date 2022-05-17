@@ -189,8 +189,8 @@ void SimpleFem::step(Float dt, const Parameters& cfg)
 	}*/
 	// m_Sc = m_constraints.asDiagonal() * (m_rhs - m_dfdx_system * m_z);
 
-	// Apply SAS^T
-	m_system = m_S * m_dfdx_system * m_S.transpose();
+	// Apply SAS^T, S symetric
+	m_system = m_S * m_dfdx_system * m_S;
 
 	// SAS^T + I - S
 	m_system -= m_S;

@@ -119,24 +119,7 @@ void ElasticSim::update(const Context& ctx, SimulatedGameObject* parent)
 	if(ctx.is_simulation_running()) {
 		const float dt = std::min(ctx.delta_time(), 1.0f / 30.0f);
 
-		const std::map<uint32_t, PrimitiveSelector::Delta>& movements = m_selector.get_movements();
-		for (const auto& m : movements) {
-			const uint32_t node_idx = m.first;
-			if (m_constrained_nodes.count(node_idx) == 0) {
-				// Do not add the constraint if it traverses some kinematic collider
-				Ray ray;
-				ray.origin = parent->get_mesh()->nodes_glm()[node_idx];
-				const glm::vec3 next_pos = ray.origin + m.second.delta;
-				ray.direction = next_pos - ray.origin;
-				std::optional<SurfaceIntersection> intersection = ctx.get_scene().physics().intersect(ray, 1.0f);
-
-				if (m.second.delta == glm::vec3(0.0f) || !intersection.has_value()) {
-					m_sim->add_constraint(node_idx, glm::vec3(0.0f));
-					m_sim->add_position_alteration(node_idx, m.second.delta);
-					m_constrained_nodes.emplace(node_idx, Constraint(glm::vec3(0.0f), nullptr, true));
-				}
-			}
-		}
+		
 
 		uint32_t max_repetitions;
 		if (ctx.delta_time() > ctx.objective_dt() && m_last_frame_iterations > 1) {
@@ -155,6 +138,25 @@ void ElasticSim::update(const Context& ctx, SimulatedGameObject* parent)
 		const auto init_step_timer = std::chrono::high_resolution_clock::now();
 
 		for (uint32_t repetitions = 0; repetitions < max_repetitions; ++repetitions) {
+			// Add constraints for interaction
+			const std::map<uint32_t, PrimitiveSelector::Delta>& movements = m_selector.get_movements();
+			for (const auto& m : movements) {
+				const uint32_t node_idx = m.first;
+				if (m_constrained_nodes.count(node_idx) == 0) {
+					// Do not add the constraint if it traverses some kinematic collider
+					Ray ray;
+					ray.origin = parent->get_mesh()->nodes_glm()[node_idx];
+					const glm::vec3 next_pos = ray.origin + m.second.delta;
+					ray.direction = next_pos - ray.origin;
+					std::optional<SurfaceIntersection> intersection = ctx.get_scene().physics().intersect(ray, 1.0f);
+
+					if (m.second.delta == glm::vec3(0.0f) || !intersection.has_value()) {
+						m_sim->add_constraint(node_idx, glm::vec3(0.0f));
+						m_sim->add_position_alteration(node_idx, m.second.delta / (float)max_repetitions);
+						m_constrained_nodes.emplace(node_idx, Constraint(glm::vec3(0.0f), nullptr, true));
+					}
+				}
+			}
 
 			// Solve system
 			m_sim->step((sim::Float)dt / (sim::Float)max_repetitions, m_params);
