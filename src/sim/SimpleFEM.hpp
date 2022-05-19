@@ -21,11 +21,13 @@ public:
 
 	SimpleFem();
 
-	void set_tetmesh(const std::shared_ptr<TetMesh>& mesh) override final;
+	void initialize(const std::vector<const TetMesh*>& meshes) override final;
 
 	void step(Float dt, const Parameters& params) override final;
 
-	void update_objects(bool add_position_alteration) override final;
+	void update_objects(TetMesh* mesh,
+		uint32_t from_sim_idx, uint32_t to_sim_idx, 
+		bool add_position_alteration) override final;
 	
 	void add_constraint(uint32_t node, const glm::vec3& v, const glm::vec3& dir) override final;
 
@@ -43,13 +45,7 @@ public:
 
 	Float compute_volume() const override final;
 
-
-	void pancake();
-
 private:
-
-	std::weak_ptr<TetMesh> m_mesh;
-
 	Vec m_delta_v;
 	Vec m_v;
 	Vec m_rhs;
@@ -70,7 +66,7 @@ private:
 	std::vector<Eigen::Vector4i> m_elements;
 	std::vector<Vec3> m_nodes;
 
-	ConjugateGradient solver;
+	ConjugateGradient m_cg_solver;
 
 	struct hash_pair {
 		template <class T1, class T2>

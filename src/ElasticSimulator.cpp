@@ -10,7 +10,12 @@ ElasticSimulator::ElasticSimulator() : m_params(1000.0f, 0.3f)
 
 void ElasticSimulator::add_simulated_object(SimulatedGameObject* obj)
 {
-	m_simulated_objects.push_back(obj);
+	uint32_t offset = 0;
+	if (!m_simulated_objects.empty()) {
+		offset = m_simulated_objects.back().offset +
+			(uint32_t)m_simulated_objects.back().obj->get_mesh()->nodes().size();
+	}
+	m_simulated_objects.push_back(SimulatedEntity(offset, obj));
 }
 
 void ElasticSimulator::reset()
@@ -24,9 +29,13 @@ void ElasticSimulator::start_simulation(const Context& ctx)
 {
 	m_metric_times_buffer.clear();
 
-	for (const SimulatedGameObject* obj : m_simulated_objects) {
-		m_sim->set_tetmesh(obj->get_mesh());
+	std::vector<const TetMesh*> objs;
+	objs.reserve(m_simulated_objects.size());
+	for (const SimulatedEntity& e : m_simulated_objects) {
+		objs.push_back(e.obj->get_mesh().get());
 	}
+
+	m_sim->initialize(objs);
 }
 
 void ElasticSimulator::update(const Context& ctx)
@@ -54,23 +63,25 @@ void ElasticSimulator::update(const Context& ctx)
 	const auto init_step_timer = std::chrono::high_resolution_clock::now();
 
 	for (uint32_t repetitions = 0; repetitions < max_repetitions; ++repetitions) {
-		for (const SimulatedGameObject* obj : m_simulated_objects) {
+		for (const SimulatedEntity& e : m_simulated_objects) {
 			// Add constraints for interaction
-			const std::map<uint32_t, gobj::PrimitiveSelector::Delta>& movements = obj->get_selector().get_movements();
+			const std::map<uint32_t, gobj::PrimitiveSelector::Delta>& movements = 
+				e.obj->get_selector().get_movements();
 			for (const auto& m : movements) {
 				const uint32_t node_idx = m.first;
-				if (m_constrained_nodes.count(node_idx) == 0) {
+				const uint32_t sim_node_idx = e.offset + m.first;
+				if (m_constrained_nodes.count(sim_node_idx) == 0) {
 					// Do not add the constraint if it traverses some kinematic collider
 					Ray ray;
-					ray.origin = obj->get_mesh()->nodes_glm()[node_idx];
+					ray.origin = e.obj->get_mesh()->nodes_glm()[node_idx];
 					const glm::vec3 next_pos = ray.origin + m.second.delta;
 					ray.direction = next_pos - ray.origin;
 					std::optional<SurfaceIntersection> intersection = ctx.get_scene().physics().intersect(ray, 1.0f);
 
 					if (m.second.delta == glm::vec3(0.0f) || !intersection.has_value()) {
-						m_sim->add_constraint(node_idx, glm::vec3(0.0f));
-						m_sim->add_position_alteration(node_idx, m.second.delta / (float)max_repetitions);
-						m_constrained_nodes.emplace(node_idx, Constraint(glm::vec3(0.0f), nullptr, true));
+						m_sim->add_constraint(sim_node_idx, glm::vec3(0.0f));
+						m_sim->add_position_alteration(sim_node_idx, m.second.delta / (float)max_repetitions);
+						m_constrained_nodes.emplace(sim_node_idx, Constraint(glm::vec3(0.0f), nullptr, true));
 					}
 				}
 			}
@@ -84,13 +95,13 @@ void ElasticSimulator::update(const Context& ctx)
 
 		// Remove constraints that are applying negative constraint forces or marked as to_delete
 		for (std::map<uint32_t, Constraint>::const_iterator it = m_constrained_nodes.begin(); it != m_constrained_nodes.end();) {
-			const uint32_t node_idx = it->first;
-			const glm::vec3 constraint_force = sim::cast_vec3(m_sim->get_force_constraint(node_idx));
+			const uint32_t sim_node_idx = it->first;
+			const glm::vec3 constraint_force = sim::cast_vec3(m_sim->get_force_constraint(sim_node_idx));
 			const float dot = glm::dot(constraint_force, it->second.normal);
-			const float distance = it->second.primitive != nullptr ? it->second.primitive->distance(sim::cast_vec3(m_sim->get_node(node_idx))) : 0.0f;
+			const float distance = it->second.primitive != nullptr ? it->second.primitive->distance(sim::cast_vec3(m_sim->get_node(sim_node_idx))) : 0.0f;
 			if (it->second.to_delete || dot < -std::numeric_limits<float>::epsilon() ||
 				distance > 1e-3f) {
-				m_sim->erase_constraint(node_idx);
+				m_sim->erase_constraint(sim_node_idx);
 				it = m_constrained_nodes.erase(it);
 			}
 			else {
@@ -98,17 +109,18 @@ void ElasticSimulator::update(const Context& ctx)
 			}
 		}
 
-		for (const SimulatedGameObject* obj : m_simulated_objects) {
+		for (const SimulatedEntity& e : m_simulated_objects) {
 			// Add constraints for surface faces with static objects
-			for (const auto& surface_vert : obj->get_mesh()->global_to_local_surface_vertices()) {
+			for (const auto& surface_vert : e.obj->get_mesh()->global_to_local_surface_vertices()) {
 				uint32_t node_idx = surface_vert.first;
+				uint32_t sim_node_idx = e.offset + surface_vert.first;
 				if (m_constrained_nodes.count(node_idx)) {
 					continue;
 				}
 
 				Ray ray;
-				ray.origin = obj->get_mesh()->nodes_glm()[node_idx];
-				const glm::vec3 sim_pos = sim::cast_vec3(m_sim->get_node(node_idx));
+				ray.origin = e.obj->get_mesh()->nodes_glm()[node_idx];
+				const glm::vec3 sim_pos = sim::cast_vec3(m_sim->get_node(sim_node_idx));
 				ray.direction = sim_pos - ray.origin;
 
 				if (glm::dot(ray.direction, ray.direction) >= 2.0f * std::numeric_limits<float>::epsilon()) {
@@ -124,24 +136,29 @@ void ElasticSimulator::update(const Context& ctx)
 						glm::vec3 delta_x = intersection->normal *
 							std::nextafter(dist_to_intersection, std::numeric_limits<float>::infinity());
 						m_sim->add_position_alteration(
-							node_idx, delta_x);
+							sim_node_idx, delta_x);
 
 						// Only add constraint if node's velocity goes against static surface
-						glm::vec3 v = sim::cast_vec3(m_sim->get_velocity(node_idx));
+						glm::vec3 v = sim::cast_vec3(m_sim->get_velocity(sim_node_idx));
 						const float perp_velocity = glm::dot(intersection->normal, v);
 						if (perp_velocity < 0.0f) {
-							m_sim->add_constraint(node_idx,
+							m_sim->add_constraint(sim_node_idx,
 								glm::vec3(0.0f),
 								intersection->normal);
 							// Cache the constrained node
-							m_constrained_nodes.emplace(node_idx, Constraint(intersection->normal, intersection->primitive));
+							m_constrained_nodes.emplace(sim_node_idx, Constraint(intersection->normal, intersection->primitive));
 						}
 					}
 				}
 			}
 		}
 
-		m_sim->update_objects(true);
+		for (const SimulatedEntity& e : m_simulated_objects) {
+			m_sim->update_objects(e.obj->get_mesh().get(),
+				e.offset, e.offset + (uint32_t)e.obj->get_mesh()->nodes().size(),
+				true);
+		}
+		
 	}
 
 	const auto end_step_timer = std::chrono::high_resolution_clock::now();

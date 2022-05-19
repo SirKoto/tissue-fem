@@ -13,16 +13,34 @@ SimpleFem::SimpleFem()
 {
 }
 
-void SimpleFem::set_tetmesh(const std::shared_ptr<TetMesh>& mesh)
+void SimpleFem::initialize(const std::vector<const TetMesh*>& meshes)
 {
-	assert(static_cast<bool>(mesh));
-	m_mesh = mesh;
+	uint32_t num_elements = 0;
+	uint32_t num_nodes = 0;
+	std::vector<uint32_t> offsets;
+	offsets.reserve(meshes.size());
+	for (const TetMesh* mesh : meshes) {
+		assert(mesh != nullptr);
+		offsets.push_back(num_nodes);
+		num_elements += (uint32_t)mesh->elements().size();
+		num_nodes += (uint32_t)mesh->nodes().size();
+	}
 
 	// Load elements
-	m_elements = mesh->elements();
-	m_nodes.resize(mesh->nodes().size());
-	for (size_t i = 0; i < m_nodes.size(); ++i) {
-		m_nodes[i] = mesh->nodes()[i].cast<Float>();
+	m_elements.reserve(num_elements);
+	m_nodes.reserve(num_nodes);
+	for (size_t mesh_idx = 0; mesh_idx < meshes.size(); ++mesh_idx) {
+		const TetMesh* mesh = meshes[mesh_idx];
+		assert(mesh != nullptr);
+		m_nodes.insert(m_nodes.end(), mesh->nodes().begin(), mesh->nodes().end());
+		for (size_t e = 0; e < mesh->elements().size(); ++e) {
+			Vec4i element = mesh->elements()[e];
+			element[0] += offsets[mesh_idx];
+			element[1] += offsets[mesh_idx];
+			element[2] += offsets[mesh_idx];
+			element[3] += offsets[mesh_idx];
+			m_elements.push_back(element);
+		}
 	}
 
 	// Precompute volumes and matrix to build the deformation gradient
@@ -50,12 +68,13 @@ void SimpleFem::set_tetmesh(const std::shared_ptr<TetMesh>& mesh)
 	// Reserve 3 values per column, as it is the maximum that will be in a constrain matrix
 	m_S.reserve(Eigen::VectorXi::Constant(3 * m_nodes.size(), 3));
 
+
 	// Build the sparse matrix
 	this->build_sparse_system();
 
-	solver.resize(3 * m_nodes.size());
-
+	m_cg_solver.resize(3 * m_nodes.size());
 }
+
 
 void SimpleFem::assign_sparse_block(const Eigen::Block<const Mat12, 3, 3>& m, uint32_t node_i, uint32_t node_j) {
 
@@ -211,7 +230,7 @@ void SimpleFem::step(Float dt, const Parameters& cfg)
 		std::cerr << "System did not converge" << std::endl;
 	}
 #else
-	solver.solve(m_system, m_Sc, &m_delta_v);
+	m_cg_solver.solve(m_system, m_Sc, &m_delta_v);
 #endif
 	m_v += m_delta_v + m_z;
 
@@ -246,22 +265,27 @@ void SimpleFem::step(Float dt, const Parameters& cfg)
 	m_metric_time.step = (float)step_timer.getDuration<Timer::Seconds>().count();
 }
 
-void SimpleFem::update_objects(bool add_position_alteration)
+void SimpleFem::update_objects(TetMesh* mesh, 
+	uint32_t from_sim_idx, uint32_t to_sim_idx, 
+	bool add_position_alteration)
 {
-	if (m_mesh.expired()) {
-		return;
-	}
-	std::shared_ptr<TetMesh> mesh = m_mesh.lock();
+	assert(mesh != nullptr);
 
 	SVec::InnerIterator it_dx(m_position_alteration);
-	for (int32_t i = 0; i < (int32_t)m_nodes.size(); ++i) {
+	if (add_position_alteration && from_sim_idx > 0) {
+		while (it_dx && it_dx.index() < (size_t)from_sim_idx) {
+			++it_dx;
+		}
+	}
+
+	for (uint32_t i = from_sim_idx; i < to_sim_idx; ++i) {
 		Vec3 pos = m_nodes[i].cast<float>();
 		if (add_position_alteration && it_dx && it_dx.index() == 3 * i) {
 			pos.x() += it_dx.value(); ++it_dx;
 			pos.y() += it_dx.value(); ++it_dx;
 			pos.z() += it_dx.value(); ++it_dx;
 		}
-		mesh->update_node(i, pos);
+		mesh->update_node((int32_t)(i - from_sim_idx), pos);
 	}
 }
 
@@ -355,15 +379,6 @@ Float SimpleFem::compute_volume() const
 	}
 
 	return vol;
-}
-
-void SimpleFem::pancake()
-{
-	for (size_t i = 0; i < m_nodes.size(); ++i) {
-		m_nodes[i].y() *= Float(0.9f);
-	}
-
-	update_objects(false);
 }
 
 

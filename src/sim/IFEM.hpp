@@ -58,9 +58,11 @@ public:
 
 	virtual void step(Float dt, const Parameters& params) = 0;
 
-	virtual void set_tetmesh(const std::shared_ptr<TetMesh>& mesh) = 0;
+	virtual void initialize(const std::vector<const TetMesh*>& meshes) = 0;
 
-	virtual void update_objects(bool add_position_alteration = false) = 0;
+	virtual void update_objects(TetMesh* mesh,
+		uint32_t from_sim_idx, uint32_t to_sim_idx,
+		bool add_position_alteration = false) = 0;
 
 	// Add a velocity constraint 
 	virtual void add_constraint(uint32_t node, const glm::vec3& v, const glm::vec3& dir) = 0;

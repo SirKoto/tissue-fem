@@ -31,7 +31,8 @@ private:
 	struct Constraint;
 	std::map<uint32_t, Constraint> m_constrained_nodes;
 
-	std::vector<SimulatedGameObject*> m_simulated_objects;
+	struct SimulatedEntity;
+	std::vector<SimulatedEntity> m_simulated_objects;
 
 	uint32_t m_last_frame_iterations = 1;
 	std::chrono::duration<double> m_last_step_time_cost;
@@ -54,6 +55,12 @@ private:
 		glm::vec3 normal;
 		const Primitive* primitive;
 		bool to_delete = false;
+	};
+
+	struct SimulatedEntity {
+		SimulatedEntity(uint32_t offset, SimulatedGameObject* obj) : offset(offset), obj(obj) {}
+		uint32_t offset;
+		SimulatedGameObject* obj;
 	};
 
 	// TODO: remove
