@@ -36,6 +36,10 @@ private:
 
 	uint32_t m_last_frame_iterations = 1;
 	std::chrono::duration<double> m_last_step_time_cost;
+	float m_update_meshes_time;
+	float m_remove_constraints_time;
+	float m_physics_time;
+
 
 	bool m_show_simulation_metrics = false;
 
@@ -43,6 +47,10 @@ private:
 	struct Metrics {
 		sim::IFEM::MetricTimes times;
 		float volume;
+		float step_time;
+		float update_meshes;
+		float remove_constraints;
+		float physics;
 	};
 	CircularBuffer<std::pair<float, Metrics>> m_metric_times_buffer;
 	float m_metrics_past_seconds = 20.0f;

@@ -59,6 +59,10 @@ void ElasticSimulator::update(const Context& ctx)
 		}
 	}
 
+	m_update_meshes_time = 0.0f;
+	m_remove_constraints_time = 0.0f;
+	m_physics_time = 0.0f;
+
 	// Full-step timer
 	const auto init_step_timer = std::chrono::high_resolution_clock::now();
 
@@ -93,6 +97,7 @@ void ElasticSimulator::update(const Context& ctx)
 		// Clear constraints after using them
 		m_sim->clear_frame_alterations();
 
+		const auto remove_constraints_timer = std::chrono::high_resolution_clock::now();
 		// Remove constraints that are applying negative constraint forces or marked as to_delete
 		for (std::map<uint32_t, Constraint>::const_iterator it = m_constrained_nodes.begin(); it != m_constrained_nodes.end();) {
 			const uint32_t sim_node_idx = it->first;
@@ -108,7 +113,7 @@ void ElasticSimulator::update(const Context& ctx)
 				++it;
 			}
 		}
-
+		const auto physics_timer = std::chrono::high_resolution_clock::now();
 		for (const SimulatedEntity& e : m_simulated_objects) {
 			// Add constraints for surface faces with static objects
 			for (const auto& surface_vert : e.obj->get_mesh()->global_to_local_surface_vertices()) {
@@ -153,19 +158,24 @@ void ElasticSimulator::update(const Context& ctx)
 			}
 		}
 
+		const auto update_meshes_timer = std::chrono::high_resolution_clock::now();
+
 		for (const SimulatedEntity& e : m_simulated_objects) {
 			m_sim->update_objects(e.obj->get_mesh().get(),
 				e.offset, e.offset + (uint32_t)e.obj->get_mesh()->nodes().size(),
 				true);
 		}
-		
+		const auto end_sub_step_timer = std::chrono::high_resolution_clock::now();
+
+		m_update_meshes_time = std::chrono::duration<float>(end_sub_step_timer - update_meshes_timer).count();
+		m_remove_constraints_time = std::chrono::duration<float>(physics_timer - remove_constraints_timer).count();
+		m_physics_time = std::chrono::duration<float>(update_meshes_timer - physics_timer).count();
 	}
 
 	const auto end_step_timer = std::chrono::high_resolution_clock::now();
 
 	m_last_step_time_cost = end_step_timer - init_step_timer;
 	m_last_frame_iterations = max_repetitions;
-
 }
 
 void ElasticSimulator::render_ui(const Context& ctx)
@@ -183,7 +193,13 @@ void ElasticSimulator::render_ui(const Context& ctx)
 		if (ImGui::Begin("Simulation Metrics", &m_show_simulation_metrics)) {
 			if (m_sim && ctx.is_simulation_running()) {
 				m_metric_times_buffer.push({ ctx.get_time(),
-					{m_sim->get_metric_times(), (float)m_sim->compute_volume()} });
+					{m_sim->get_metric_times(), 
+					(float)m_sim->compute_volume(),
+					(float)m_last_step_time_cost.count() / m_last_frame_iterations,
+					m_update_meshes_time / m_last_frame_iterations,
+					m_remove_constraints_time / m_last_frame_iterations,
+					m_physics_time / m_last_frame_iterations
+					} });
 			}
 
 			ImGui::SliderFloat("Past seconds", &m_metrics_past_seconds, 0.1f, 30.0f, "%.1f");
@@ -227,6 +243,45 @@ void ElasticSimulator::render_ui(const Context& ctx)
 				ImPlot::EndPlot();
 			}
 
+			if (ImPlot::BeginPlot("General Sim##General", ImVec2(-1, 160))) {
+				ImPlot::SetupAxes("time (s)", "vol (m^3)");
+				float x = m_metric_times_buffer.size() > 0 ? m_metric_times_buffer.back().first : 0.0f;
+				ImPlot::SetupAxisLimits(ImAxis_X1, x - m_metrics_past_seconds, x, ImGuiCond_Always);
+				ImPlot::SetupAxisLimits(ImAxis_Y1, 0, 0.0055);
+
+				ImPlot::PlotLine("Total",
+					&m_metric_times_buffer.data()->first,
+					&m_metric_times_buffer.data()->second.step_time,
+					(int)m_metric_times_buffer.size(),
+					(int)m_metric_times_buffer.offset(),
+					sizeof(*m_metric_times_buffer.data()));
+				ImPlot::PlotLine("FEM time",
+					&m_metric_times_buffer.data()->first,
+					&m_metric_times_buffer.data()->second.times.step,
+					(int)m_metric_times_buffer.size(),
+					(int)m_metric_times_buffer.offset(),
+					sizeof(*m_metric_times_buffer.data()));
+				ImPlot::PlotLine("Update Meshes",
+					&m_metric_times_buffer.data()->first,
+					&m_metric_times_buffer.data()->second.update_meshes,
+					(int)m_metric_times_buffer.size(),
+					(int)m_metric_times_buffer.offset(),
+					sizeof(*m_metric_times_buffer.data()));
+				ImPlot::PlotLine("Remove constraints",
+					&m_metric_times_buffer.data()->first,
+					&m_metric_times_buffer.data()->second.remove_constraints,
+					(int)m_metric_times_buffer.size(),
+					(int)m_metric_times_buffer.offset(),
+					sizeof(*m_metric_times_buffer.data()));
+				ImPlot::PlotLine("Physics",
+					&m_metric_times_buffer.data()->first,
+					&m_metric_times_buffer.data()->second.physics,
+					(int)m_metric_times_buffer.size(),
+					(int)m_metric_times_buffer.offset(),
+					sizeof(*m_metric_times_buffer.data()));
+				ImPlot::EndPlot();
+			}
+
 			if (ImPlot::BeginPlot("Volume##Volume", ImVec2(-1, 160))) {
 				ImPlot::SetupAxes("time (s)", "vol (m^3)");
 				float x = m_metric_times_buffer.size() > 0 ? m_metric_times_buffer.back().first : 0.0f;
@@ -250,6 +305,8 @@ template<class Archive>
 void ElasticSimulator::serialize(Archive& archive)
 {
 	archive(TF_SERIALIZE_NVP_MEMBER(m_params));
+	archive(TF_SERIALIZE_NVP_MEMBER(m_show_simulation_metrics));
+
 }
 
 TF_SERIALIZE_TEMPLATE_EXPLICIT_IMPLEMENTATION(ElasticSimulator)

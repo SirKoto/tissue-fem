@@ -107,7 +107,7 @@ void Scene::update_ui(const Context& ctx)
 
 	if (m_show_simulation_window) {
 		ImGui::SetNextWindowSize(ImVec2(250, 280), ImGuiCond_FirstUseEver);
-		if (ImGui::Begin("Simulation Engine", &m_show_objects_window)) {
+		if (ImGui::Begin("Simulation Engine", &m_show_simulation_window)) {
 			m_elastic_simulator.render_ui(ctx);
 		}
 		ImGui::End();
