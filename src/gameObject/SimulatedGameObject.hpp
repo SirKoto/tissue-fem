@@ -30,6 +30,8 @@ private:
 	ShaderProgram m_mesh_draw_program;
 	gobj::PrimitiveSelector m_selector;
 
+	glm::vec3 m_color = glm::vec3(.5f, 0.8f, 0.2f);
+
 	// Serialization
 	template<typename Archive>
 	void serialize(Archive& archive);

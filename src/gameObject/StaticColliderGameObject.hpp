@@ -23,6 +23,8 @@ private:
 	TriangleMesh m_mesh;
 	ShaderProgram m_mesh_draw_program;
 
+	glm::vec3 m_color = glm::vec3(.5f, 0.2f, 0.8f);
+
 	// Serialization
 	template<typename Archive>
 	void serialize(Archive& archive);

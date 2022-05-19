@@ -61,6 +61,8 @@ void SimulatedGameObject::render(const Context& ctx) const
 	ShaderProgram::setUniform(1, inv_t);
 	ShaderProgram::setUniform(2, ctx.camera().getProjView());
 
+	ShaderProgram::setUniform(3, m_color);
+
 	m_mesh->draw_triangles();
 
 	m_selector.render(ctx, *this);
@@ -92,6 +94,8 @@ void SimulatedGameObject::render_ui(const Context& gc)
 		ImGui::EndDisabled();
 		ImGui::TreePop();
 	}
+
+	ImGui::ColorEdit3("Color", glm::value_ptr(m_color));
 
 	ImGui::Separator();
 
@@ -138,6 +142,7 @@ void SimulatedGameObject::serialize(Archive& archive)
 {
 	archive(cereal::base_class<GameObject>(this));
 
+	archive(TF_SERIALIZE_NVP_MEMBER(m_color));
 	archive(TF_SERIALIZE_NVP_MEMBER(m_mesh));
 	archive(TF_SERIALIZE_NVP_MEMBER(m_selector));
 }

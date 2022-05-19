@@ -56,12 +56,16 @@ void StaticColliderGameObject::render(const Context& ctx) const
 	ShaderProgram::setUniform(1, inv_t);
 	ShaderProgram::setUniform(2, ctx.camera().getProjView());
 
+	ShaderProgram::setUniform(3, m_color);
+
 	m_mesh.draw_triangles();
 }
 
 void StaticColliderGameObject::render_ui(const Context& gc)
 {
 	this->GameObject::render_ui(gc);
+
+	ImGui::ColorEdit3("Color", glm::value_ptr(m_color));
 }
 
 void StaticColliderGameObject::update(const Context& gc)
@@ -75,6 +79,8 @@ template<class Archive>
 void StaticColliderGameObject::serialize(Archive& archive)
 {
 	archive(cereal::base_class<GameObject>(this));
+
+	archive(TF_SERIALIZE_NVP_MEMBER(m_color));
 }
 
 
