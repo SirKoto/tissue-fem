@@ -8,6 +8,7 @@ add_executable(${PROJECT_NAME}
 	GameObject.hpp		GameObject.cpp
 	Scene.hpp			Scene.cpp
 	Engine.hpp			Engine.cpp
+	ElasticSimulator.hpp ElasticSimulator.cpp
 
 	meshes/TetMesh.hpp	meshes/TetMesh.cpp
 	meshes/Plane.hpp	meshes/Plane.cpp
@@ -38,7 +39,6 @@ add_executable(${PROJECT_NAME}
 	gameObject/SimulatedGameObject.hpp gameObject/SimulatedGameObject.cpp
 	gameObject/StaticColliderGameObject.hpp gameObject/StaticColliderGameObject.cpp
 	gameObject/Transform.hpp gameObject/Transform.cpp
-	gameObject/ElasticSim.hpp gameObject/ElasticSim.cpp
 	gameObject/extra/PrimitiveSelector.hpp gameObject/extra/PrimitiveSelector.cpp
 	gameObject/Addon.hpp
  )

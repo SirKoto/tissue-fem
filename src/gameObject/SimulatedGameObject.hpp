@@ -1,8 +1,8 @@
 #pragma once
 
 #include "GameObject.hpp"
-#include "gameObject/ElasticSim.hpp"
 #include "meshes/TetMesh.hpp"
+#include "gameObject/extra/PrimitiveSelector.hpp"
 
 class SimulatedGameObject final : public GameObject {
 public:
@@ -21,15 +21,14 @@ public:
 
 	const std::shared_ptr<TetMesh>& get_mesh() const { return m_mesh; }
 	std::shared_ptr<TetMesh>& get_mesh() { return m_mesh; }
+	const gobj::PrimitiveSelector& get_selector() const { return m_selector; }
 
 private:
 
 
 	std::shared_ptr<TetMesh> m_mesh;
 	ShaderProgram m_mesh_draw_program;
-
-	gobj::ElasticSim m_sim;
-
+	gobj::PrimitiveSelector m_selector;
 
 	// Serialization
 	template<typename Archive>

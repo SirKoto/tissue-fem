@@ -45,7 +45,8 @@ void SimulatedGameObject::start_simulation(Context& ctx)
 	m_mesh->apply_transform(this->get_model_matrix());
 	m_transform.set_identity();
 
-	m_sim.start_simulation(ctx, *this);
+	// TODO
+	ctx.get_simulator().add_simulated_object(this);
 }
 
 void SimulatedGameObject::render(const Context& ctx) const
@@ -61,6 +62,8 @@ void SimulatedGameObject::render(const Context& ctx) const
 	ShaderProgram::setUniform(2, ctx.camera().getProjView());
 
 	m_mesh->draw_triangles();
+
+	m_selector.render(ctx, *this);
 }
 
 void SimulatedGameObject::render_ui(const Context& gc)
@@ -92,11 +95,8 @@ void SimulatedGameObject::render_ui(const Context& gc)
 
 	ImGui::Separator();
 
-	if (ImGui::TreeNode("Elastic Simulator")) {
-		m_sim.render_ui(gc, this);
-		ImGui::Separator();
-		ImGui::TreePop();
-	}
+
+	m_selector.render_ui(gc, this);
 
 	ImGui::PopID();
 }
@@ -109,7 +109,7 @@ void SimulatedGameObject::update(const Context& gc)
 		return;
 	}
 
-	m_sim.update(gc, this);
+	m_selector.update(gc, this);
 }
 
 void SimulatedGameObject::late_update(const Context& gc)
@@ -120,7 +120,7 @@ void SimulatedGameObject::late_update(const Context& gc)
 		return;
 	}
 
-	m_sim.late_update(gc, this);
+	m_selector.late_update(gc, this);
 	m_mesh->update();
 }
 
@@ -138,8 +138,8 @@ void SimulatedGameObject::serialize(Archive& archive)
 {
 	archive(cereal::base_class<GameObject>(this));
 
-	archive(TF_SERIALIZE_NVP_MEMBER(m_sim));
 	archive(TF_SERIALIZE_NVP_MEMBER(m_mesh));
+	archive(TF_SERIALIZE_NVP_MEMBER(m_selector));
 }
 
 

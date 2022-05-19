@@ -5,9 +5,8 @@
 #include "GameObject.hpp"
 #include "Camera.hpp"
 #include "graphics/ShaderProgram.hpp"
-#include "sim/IFEM.hpp"
+#include "ElasticSimulator.hpp"
 #include "physics/PhysicsSystem.hpp"
-#include "utils/CircularBuffer.hpp"
 #include "utils/serialization.hpp"
 
 class Context;
@@ -40,6 +39,9 @@ public:
 	PhysicsSystem& physics() { return m_physic_sys; }
 	const PhysicsSystem& physics() const { return m_physic_sys; }
 
+	ElasticSimulator& elastic_sim() { return m_elastic_simulator; }
+	const ElasticSimulator& elastic_sim() const { return m_elastic_simulator; }
+
 private:
 	Camera m_camera;
 	glm::vec3 m_clear_color;
@@ -52,11 +54,12 @@ private:
 	bool m_show_objects_window = true;
 	bool m_show_inspector_window = false;
 	bool m_show_simulation_window = true;
-	bool m_show_simulation_metrics = true;
 
 	// Physics
 	PhysicsSystem m_physic_sys;
 
+	// Elastic Simulation
+	ElasticSimulator m_elastic_simulator;
 
 	// Serialization
 	template<typename Archive>

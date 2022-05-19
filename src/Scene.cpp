@@ -27,6 +27,10 @@ void Scene::update(const Context& ctx)
 		obj->update(ctx);
 	}
 
+	if (ctx.is_simulation_running()) {
+		m_elastic_simulator.update(ctx);
+	}
+
 	for (const std::shared_ptr<GameObject>& obj : m_gameObjects) {
 		obj->late_update(ctx);
 	}
@@ -41,7 +45,6 @@ void Scene::update_ui(const Context& ctx)
 			ImGui::Checkbox("GameObjects Window", &m_show_objects_window);
 			ImGui::Checkbox("Inspector Window", &m_show_inspector_window);
 			ImGui::Checkbox("Simulation Window", &m_show_simulation_window);
-			ImGui::Checkbox("Simulation Metrics", &m_show_simulation_metrics);
 			ImGui::EndMenu();
 		}
 		ImGui::EndMainMenuBar();
@@ -102,6 +105,15 @@ void Scene::update_ui(const Context& ctx)
 		ImGui::End();
 	}
 
+	if (m_show_simulation_window) {
+		ImGui::SetNextWindowSize(ImVec2(250, 280), ImGuiCond_FirstUseEver);
+		if (ImGui::Begin("Simulation Engine", &m_show_objects_window)) {
+			m_elastic_simulator.render_ui(ctx);
+		}
+		ImGui::End();
+	}
+
+	
 	
 	/*
 	Context::FilePickerCallback callback =
@@ -128,9 +140,13 @@ void Scene::render(const Context& ctx)
 
 void Scene::start_simulation(Context& ctx)
 {
+	m_elastic_simulator.reset();
+
 	for (const std::shared_ptr<GameObject>& obj : m_gameObjects) {
 		obj->start_simulation(ctx);
 	}
+
+	m_elastic_simulator.start_simulation(ctx);
 }
 
 void Scene::add_gameObject(const std::shared_ptr<GameObject>& obj)
@@ -150,6 +166,7 @@ void Scene::save(Archive& archive) const
 	archive(TF_SERIALIZE_NVP_MEMBER(m_camera));
 	archive(TF_SERIALIZE_NVP_MEMBER(m_clear_color));
 	archive(TF_SERIALIZE_NVP_MEMBER(m_gameObjects));
+	archive(TF_SERIALIZE_NVP_MEMBER(m_elastic_simulator)); // TODO: remove this in the future
 
 	int32_t selected_idx = -1;
 	if (m_selected_object != m_gameObjects.end()) {
@@ -170,6 +187,7 @@ void Scene::load(Archive& archive)
 	archive(TF_SERIALIZE_NVP_MEMBER(m_camera));
 	archive(TF_SERIALIZE_NVP_MEMBER(m_clear_color));
 	archive(TF_SERIALIZE_NVP_MEMBER(m_gameObjects));
+	archive(TF_SERIALIZE_NVP_MEMBER(m_elastic_simulator));
 
 	int32_t selected_idx = -1;
 	archive(TF_SERIALIZE_NVP("selected", selected_idx));

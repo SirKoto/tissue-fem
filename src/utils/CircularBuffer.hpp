@@ -29,6 +29,10 @@ public:
 		}
 	}
 
+	void clear() {
+		m_buffer.clear();
+	}
+
 	const T* data() const { return m_buffer.data(); }
 	size_t size() const { return m_buffer.size(); }
 	size_t offset() const { return m_next; }

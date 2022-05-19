@@ -7,30 +7,31 @@
 #include "sim/IFEM.hpp"
 #include "utils/CircularBuffer.hpp"
 #include "physics/RayIntersection.hpp"
-#include "extra/PrimitiveSelector.hpp"
-#include "utils/serialization.hpp"
+#include "gameObject/SimulatedGameObject.hpp"
 
-class SimulatedGameObject;
 class Context;
-namespace gobj {
-
-class ElasticSim final{
+class ElasticSimulator {
 public:
 
-	ElasticSim();
+	ElasticSimulator();
 
-	void render_ui(const Context& ctx, SimulatedGameObject* parent);
-	void update(const Context& ctx, SimulatedGameObject* parent);
-	void late_update(const Context& ctx, SimulatedGameObject* parent);
-	void render(const Context& ctx, const SimulatedGameObject& parent) const;
-	void start_simulation(const Context& ctx, const SimulatedGameObject& parent);
+	void add_simulated_object(SimulatedGameObject* obj);
+
+	void reset();
+
+	void start_simulation(const Context& ctx);
+
+	void update(const Context& ctx);
+
+	void render_ui(const Context& ctx);
 
 private:
 	sim::Parameters m_params;
 	std::unique_ptr<sim::IFEM> m_sim;
 	struct Constraint;
 	std::map<uint32_t, Constraint> m_constrained_nodes;
-	gobj::PrimitiveSelector m_selector;
+
+	std::vector<SimulatedGameObject*> m_simulated_objects;
 
 	uint32_t m_last_frame_iterations = 1;
 	std::chrono::duration<double> m_last_step_time_cost;
@@ -48,18 +49,17 @@ private:
 	typedef physics::Primitive Primitive;
 	// Constraint
 	struct Constraint {
-		Constraint(const glm::vec3& n, const Primitive* primitive) : normal(n), primitive(primitive){}
+		Constraint(const glm::vec3& n, const Primitive* primitive) : normal(n), primitive(primitive) {}
 		Constraint(const glm::vec3& n, const Primitive* primitive, bool delete_next) : normal(n), primitive(primitive), to_delete(delete_next) {}
 		glm::vec3 normal;
 		const Primitive* primitive;
 		bool to_delete = false;
 	};
 
+	// TODO: remove
 	// Serialization
 	template<typename Archive>
 	void serialize(Archive& archive);
 
 	TF_SERIALIZE_PRIVATE_MEMBERS
 };
-
-} // namespace gobj

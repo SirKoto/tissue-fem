@@ -12,7 +12,6 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "gameObject/SimulatedGameObject.hpp"
-#include "gameObject/ElasticSim.hpp"
 #include "meshes/TetMesh.hpp"
 #include "sim/SimpleFEM.hpp"
 

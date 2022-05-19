@@ -40,6 +40,8 @@ public:
 	float objective_fps() const { return m_objective_fps; }
 
 	const Scene& get_scene() const { return *m_engine->m_scene; }
+	const ElasticSimulator& get_simulator() const { return m_engine->m_scene->elastic_sim(); }
+	ElasticSimulator& get_simulator() { return m_engine->m_scene->elastic_sim(); }
 
 	bool has_simulation_started() const { return m_engine->m_simulation_mode; }
 
