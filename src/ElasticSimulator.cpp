@@ -2,10 +2,12 @@
 
 #include "Context.hpp"
 #include "sim/SimpleFEM.hpp"
+#include "sim/ParallelFEM.hpp"
 
-ElasticSimulator::ElasticSimulator() : m_params(1000.0f, 0.3f)
+ElasticSimulator::ElasticSimulator() : 
+	m_params(1000.0f, 0.3f), 
+	m_last_step_time_cost(1.0/60.0)
 {
-	m_sim = std::make_unique<sim::SimpleFem>();
 }
 
 void ElasticSimulator::add_simulated_object(SimulatedGameObject* obj)
@@ -33,6 +35,17 @@ void ElasticSimulator::start_simulation(const Context& ctx)
 	objs.reserve(m_simulated_objects.size());
 	for (const SimulatedEntity& e : m_simulated_objects) {
 		objs.push_back(e.obj->get_mesh().get());
+	}
+
+	switch (m_simulator_type) {
+	case SimulatorType::SimpleFEM:
+		m_sim = std::make_unique<sim::SimpleFem>();
+		break;
+	case SimulatorType::ParallelFEM:
+		m_sim = std::make_unique<sim::ParallelFEM>();
+		break;
+	default:
+		assert(false);
 	}
 
 	m_sim->initialize(objs);
@@ -182,6 +195,11 @@ void ElasticSimulator::render_ui(const Context& ctx)
 {
 	m_params.draw_ui();
 
+	ImGui::BeginDisabled(ctx.has_simulation_started());
+	ImGui::Combo("Simulator type", reinterpret_cast<int*>(&m_simulator_type),
+		"SimpleFEM\0ParallelFEM");
+	ImGui::EndDisabled();
+
 	ImGui::Checkbox("Simulation Metrics", &m_show_simulation_metrics);
 
 	ImGui::Text("Iterations in step: %i", m_last_frame_iterations);
@@ -306,6 +324,7 @@ void ElasticSimulator::serialize(Archive& archive)
 {
 	archive(TF_SERIALIZE_NVP_MEMBER(m_params));
 	archive(TF_SERIALIZE_NVP_MEMBER(m_show_simulation_metrics));
+	archive(TF_SERIALIZE_NVP_MEMBER(m_simulator_type));
 
 }
 

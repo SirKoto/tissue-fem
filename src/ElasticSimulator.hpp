@@ -36,10 +36,16 @@ private:
 
 	uint32_t m_last_frame_iterations = 1;
 	std::chrono::duration<double> m_last_step_time_cost;
-	float m_update_meshes_time;
-	float m_remove_constraints_time;
-	float m_physics_time;
+	float m_update_meshes_time = 0.0f;
+	float m_remove_constraints_time = 0.0f;
+	float m_physics_time = 0.0f;
 
+	enum class SimulatorType {
+		SimpleFEM = 0,
+		ParallelFEM = 1
+	};
+
+	SimulatorType m_simulator_type = SimulatorType::ParallelFEM;
 
 	bool m_show_simulation_metrics = false;
 

@@ -16,6 +16,7 @@ add_executable(${PROJECT_NAME}
 
 	sim/IFEM.hpp		sim/IFEM.cpp
 	sim/SimpleFEM.hpp	sim/SimpleFEM.cpp
+	sim/ParallelFEM.hpp	sim/ParallelFEM.cpp
 
 	sim/solvers/ConjugateGradient.hpp	sim/solvers/ConjugateGradient.cpp
 
@@ -56,3 +57,8 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC PROJECT_DIR=$<IF:$<BOOL:${USE_
 
 # Set as default project for visual studio
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})
+
+find_package(OpenMP)
+if(OpenMP_CXX_FOUND)
+    target_link_libraries(${PROJECT_NAME} PUBLIC OpenMP::OpenMP_CXX)
+endif()
