@@ -33,6 +33,7 @@ public:
 	const Camera& camera() const { return m_engine->m_scene->camera(); }
 
 	float get_time() const { return m_time; }
+	float get_sim_time() const { return m_time - m_simulation_start_time; }
 
 	float delta_time() const { return m_delta_time; }
 
@@ -80,6 +81,7 @@ private:
 	Engine* m_engine;
 
 	float m_time = 0.0f;
+	float m_simulation_start_time = 0.0f;
 	float m_delta_time = 0.0f;
 
 	float m_objective_fps = 60.0f;
@@ -106,4 +108,5 @@ private:
 
 	void handle_file_picker();
 
+	friend class Engine;
 };

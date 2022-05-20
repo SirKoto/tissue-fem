@@ -135,6 +135,7 @@ void Engine::run()
 
         if (m_first_simulation_frame) {
             m_first_simulation_frame = false;
+            m_ctx->m_simulation_start_time = m_ctx->get_time();
             m_scene->start_simulation(*m_ctx);
             m_simulation_mode = true;
         }
