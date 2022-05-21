@@ -51,7 +51,6 @@ private:
 	SMat m_system;
 	struct Constraint;
 	std::map<uint32_t, Constraint> m_constraints3;
-	SMat m_S;
 	Vec m_Sc;
 	Vec m_constraint_forces;
 	Vec m_z;

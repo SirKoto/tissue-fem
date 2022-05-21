@@ -65,13 +65,10 @@ void ParallelFEM::initialize(const std::vector<const TetMesh*>& meshes)
 	m_z.resize(3 * m_nodes.size()); m_z.setZero();
 	m_position_alteration.resize(3 * m_nodes.size());
 	m_constraint_forces.resize(3 * m_nodes.size());
-	m_S.resize(3 * m_nodes.size(), 3 * m_nodes.size());
-	// Reserve 3 values per column, as it is the maximum that will be in a constrain matrix
-	m_S.reserve(Eigen::VectorXi::Constant(3 * m_nodes.size(), 3));
-
 
 	// Build the sparse matrix
 	this->build_sparse_system();
+	m_system = m_dfdx_system;
 
 	m_cg_solver.resize(3 * m_nodes.size());
 }
@@ -167,10 +164,8 @@ void ParallelFEM::step(Float dt, const Parameters& cfg)
 
 	m_metric_time.blocks_assign = (float)timer.getDuration<Timer::Seconds>().count();
 	timer.reset();
-	// add (df/dx * v) to the rhs
-	m_rhs += dt * dt * (m_dfdx_system * m_v);
-	// add Δt * df/dx * y
-	m_rhs += dt * (m_dfdx_system * m_position_alteration);
+	// add Δt^2 * (df/dx * v) + Δt * df/dx * y to the rhs
+	m_rhs += dt * (m_dfdx_system * ((dt * m_v) + m_position_alteration));
 
 	// subtract gravity from the y entries
 	for (size_t i = 0; i < m_nodes.size(); ++i) {
@@ -181,27 +176,10 @@ void ParallelFEM::step(Float dt, const Parameters& cfg)
 	m_dfdx_system *= -(dt * dt) - cfg.beta_rayleigh() * dt;
 	m_dfdx_system.diagonal().array() += cfg.mass() * (Float(1.0) - cfg.alpha_rayleigh() * dt);
 
-
 	// Fill S
-	m_S.setZero();
-	std::map<uint32_t, Constraint>::const_iterator c = m_constraints3.begin();
-	for (uint32_t i = 0;
-		i < m_nodes.size(); ++i) {
-		const uint32_t idx = 3 * i;
-		if (c != m_constraints3.end() && c->first == i) {
-			for (uint32_t j = 0; j < 3; ++j) {
-				for (uint32_t k = 0; k < 3; ++k) {
-					m_S.insert(idx + k, idx + j) = c->second.constraint(k, j);
-				}
-			}
-			++c;
-		}
-		else {
-			m_S.insert(idx + 0, idx + 0) = Float(1.0);
-			m_S.insert(idx + 1, idx + 1) = Float(1.0);
-			m_S.insert(idx + 2, idx + 2) = Float(1.0);
-		}
-	}
+
+	m_metric_time.system_finish = (float)timer.getDuration<Timer::Seconds>().count();
+	timer.reset();
 
 	// Pre-filtered Preconditioned Conjugate Gradient
 	// (SAS^T + I - S)y = Sc
@@ -209,16 +187,72 @@ void ParallelFEM::step(Float dt, const Parameters& cfg)
 	//                c = b - Az
 
 	// Compute rhs
-	m_Sc = m_S * (m_rhs - m_dfdx_system * m_z);
+	m_Sc = (m_rhs - m_dfdx_system * m_z);
+	for (const std::pair<uint32_t, Constraint>& c : m_constraints3) {
+		const uint32_t idx = 3 * c.first;
+		m_Sc.segment<3>(idx) = c.second.constraint * m_Sc.segment<3>(idx);
+	}
 
 	// Apply SAS^T, S symetric
-	m_system = m_S * m_dfdx_system * m_S;
+	m_system = m_dfdx_system;
+	assert(m_system.isCompressed());
+#pragma omp parallel for
+	for (int32_t col = 0; col < m_nodes.size(); ++col) {
+		SMat::InnerIterator it0(m_system, 3 * col + 0);
+		SMat::InnerIterator it1(m_system, 3 * col + 1);
+		SMat::InnerIterator it2(m_system, 3 * col + 2);
+		std::map<uint32_t, Constraint>::const_iterator c_col = m_constraints3.find(col);
+		while (it0) {
+			uint32_t row = it0.index() / 3;
+			std::map<uint32_t, Constraint>::const_iterator c_row = m_constraints3.find(row);
+			bool needs_update = c_col != m_constraints3.end() || c_row != m_constraints3.end();
+			if (needs_update) {
+				Mat3 A;
+				for (uint32_t i = 0; i < 3; ++i) {
+					A(i, 0) = (&it0.value())[i];
+					A(i, 1) = (&it1.value())[i];
+					A(i, 2) = (&it2.value())[i];
+				}
 
-	// SAS^T + I - S
-	m_system -= m_S;
-	m_system.diagonal().array() += Float(1.0);
+				Mat3 SAS;
+				if (c_col != m_constraints3.end() && c_row != m_constraints3.end()) {
+					SAS = c_col->second.constraint * A * c_row->second.constraint;
+				}
+				else if (c_col != m_constraints3.end()) {
+					SAS = c_col->second.constraint * A;
+				}
+				else {
+					SAS = A * c_row->second.constraint;
+				}
 
-	m_metric_time.system_finish = (float)timer.getDuration<Timer::Seconds>().count();
+				for (uint32_t i = 0; i < 3; ++i) {
+					(&it0.valueRef())[i] = SAS(i, 0);
+					(&it1.valueRef())[i] = SAS(i, 1);
+					(&it2.valueRef())[i] = SAS(i, 2);
+				}
+
+				// SAS^T + I - S
+				if (row == col) {
+					for (uint32_t i = 0; i < 3; ++i) {
+						(&it0.valueRef())[i] -= c_row->second.constraint(i, 0);
+						(&it1.valueRef())[i] -= c_row->second.constraint(i, 1);
+						(&it2.valueRef())[i] -= c_row->second.constraint(i, 2);
+					}
+					(&it0.valueRef())[0] += Float(1);
+					(&it1.valueRef())[1] += Float(1);
+					(&it2.valueRef())[2] += Float(1);
+				}
+			}
+
+			// advance
+			for (uint32_t i = 0; i < 3; ++i) {
+				++it0; ++it1; ++it2;
+			}
+		}
+	}
+
+
+	m_metric_time.constraints = (float)timer.getDuration<Timer::Seconds>().count();
 	timer.reset();
 
 #if false

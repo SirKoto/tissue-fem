@@ -4,6 +4,10 @@
 #include "utils/serialization.hpp"
 #include "utils/Timer.hpp"
 #include <fstream>
+#include <thread>
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 
 static void glfw_error_callback(int error, const char* description)
@@ -27,6 +31,12 @@ gl_message_callback(GLenum source,
 
 Engine::Engine() : m_ctx(std::make_unique<Context>(this))
 {
+
+#ifdef _OPENMP
+    // Set parallelism
+    omp_set_num_threads(std::thread::hardware_concurrency());
+#endif
+
     // Setup window
     {
         glfwSetErrorCallback(glfw_error_callback);

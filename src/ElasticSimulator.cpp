@@ -246,7 +246,7 @@ void ElasticSimulator::render_ui(const Context& ctx)
 					(int)m_metric_times_buffer.size(),
 					(int)m_metric_times_buffer.offset(),
 					sizeof(*m_metric_times_buffer.data()));
-				ImPlot::PlotLine("System finish",
+				ImPlot::PlotLine("System build",
 					&m_metric_times_buffer.data()->first,
 					&m_metric_times_buffer.data()->second.times.system_finish,
 					(int)m_metric_times_buffer.size(),
@@ -255,6 +255,12 @@ void ElasticSimulator::render_ui(const Context& ctx)
 				ImPlot::PlotLine("Solve",
 					&m_metric_times_buffer.data()->first,
 					&m_metric_times_buffer.data()->second.times.solve,
+					(int)m_metric_times_buffer.size(),
+					(int)m_metric_times_buffer.offset(),
+					sizeof(*m_metric_times_buffer.data()));
+				ImPlot::PlotLine("Constraints build",
+					&m_metric_times_buffer.data()->first,
+					&m_metric_times_buffer.data()->second.times.constraints,
 					(int)m_metric_times_buffer.size(),
 					(int)m_metric_times_buffer.offset(),
 					sizeof(*m_metric_times_buffer.data()));

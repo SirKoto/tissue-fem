@@ -174,6 +174,7 @@ void SimpleFem::step(Float dt, const Parameters& cfg)
 	m_dfdx_system *=  - (dt * dt) - cfg.beta_rayleigh() * dt;
 	m_dfdx_system.diagonal().array() += cfg.mass() * (Float(1.0) - cfg.alpha_rayleigh() * dt);
 
+	m_metric_time.system_finish = (float)timer.getDuration<Timer::Seconds>().count();
 
 	// Fill S
 	m_S.setZero();
@@ -212,7 +213,7 @@ void SimpleFem::step(Float dt, const Parameters& cfg)
 	m_system -= m_S;
 	m_system.diagonal().array() += Float(1.0);
 
-	m_metric_time.system_finish = (float)timer.getDuration<Timer::Seconds>().count();
+	m_metric_time.constraints = (float)timer.getDuration<Timer::Seconds>().count();
 	timer.reset();
 
 #if false
