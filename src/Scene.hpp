@@ -42,6 +42,13 @@ public:
 	ElasticSimulator& elastic_sim() { return m_elastic_simulator; }
 	const ElasticSimulator& elastic_sim() const { return m_elastic_simulator; }
 
+	struct SceneTimeUpdate {
+		float update;
+		float simulation_update;
+		float late_update;
+	};
+	const SceneTimeUpdate& get_scene_time_update() const { return m_scene_time_update; }
+
 private:
 	Camera m_camera;
 	glm::vec3 m_clear_color;
@@ -60,6 +67,9 @@ private:
 
 	// Elastic Simulation
 	ElasticSimulator m_elastic_simulator;
+
+	
+	SceneTimeUpdate m_scene_time_update;
 
 	// Serialization
 	template<typename Archive>

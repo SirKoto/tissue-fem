@@ -47,6 +47,19 @@ private:
 	void signal_start_simulation();
 	void stop_simulation();
 
+	struct EngineTimings {
+		float time;
+		float window_poll;
+		float imgui_new_frame;
+		float context_update;
+		float scene_draw_ui;
+		float scene_update;
+		float imgui_render_cpu;
+		float imgui_render_gpu;
+		float scene_render;
+		Scene::SceneTimeUpdate scene_times;
+	};
+
 	friend class Context;
 };
 

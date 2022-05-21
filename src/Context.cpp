@@ -127,6 +127,7 @@ void Context::draw_ui()
 			ImGui::Checkbox("ImGui Demo Window", &m_show_imgui_demo_window);
 			ImGui::Checkbox("ImPlot Demo Window", &m_show_implot_demo_window);
 			ImGui::Checkbox("Camera Window", &m_show_camera_window);
+			ImGui::Checkbox("Profiling Window", &m_show_profiling_window);
 			ImGui::EndMenu();
 		}
 
@@ -218,6 +219,18 @@ void Context::draw_ui()
 	if (m_show_camera_window) {
 		if (ImGui::Begin("Camera", &m_show_camera_window)) {
 			m_engine->m_scene->camera().draw_ui();
+		}
+		ImGui::End();
+	}
+
+	if (m_show_profiling_window) {
+		ImGui::SetNextWindowSize(ImVec2(450, 380), ImGuiCond_FirstUseEver);
+		const ImGuiViewport* main_viewport = ImGui::GetMainViewport();
+		ImGui::SetNextWindowPos(ImVec2(
+			main_viewport->WorkPos.x + main_viewport->WorkSize.x - 400,
+			main_viewport->WorkPos.y + 340), ImGuiCond_FirstUseEver);
+		if (ImGui::Begin("Profiling", &m_show_profiling_window)) {
+			ui_draw_profiling();
 		}
 		ImGui::End();
 	}
@@ -372,5 +385,55 @@ void Context::handle_file_picker()
 	}
 
 
+}
+
+void Context::ui_draw_profiling()
+{
+	ImGui::SliderFloat("Past seconds", &m_metrics_past_seconds, 0.1f, 30.0f, "%.1f");
+
+	if (ImPlot::BeginPlot("Engine", ImVec2(-1, 200))) {
+		ImPlot::SetupAxes("time (s)", "dt (s)");
+		float x = m_engine_timings.size() > 0 ? m_engine_timings.back().time : 0.0f;
+		ImPlot::SetupAxisLimits(ImAxis_X1, x - m_metrics_past_seconds, x, ImGuiCond_Always);
+		ImPlot::SetupAxisLimits(ImAxis_Y1, 0, 0.03);
+		auto plot_engine_timings = [&](const char* id, const float* data) -> void {
+			ImPlot::PlotLine(id,
+				&m_engine_timings.data()->time,
+				data,
+				(int)m_engine_timings.size(),
+				(int)m_engine_timings.offset(),
+				sizeof(*m_engine_timings.data()));
+		};
+		plot_engine_timings("Window poll", &m_engine_timings.data()->window_poll);
+		plot_engine_timings("Context update", &m_engine_timings.data()->context_update);
+		plot_engine_timings("Scene draw ui", &m_engine_timings.data()->scene_draw_ui);
+		plot_engine_timings("Scene update", &m_engine_timings.data()->scene_update);
+		plot_engine_timings("Scene render", &m_engine_timings.data()->scene_render);
+		plot_engine_timings("ImGui new Frame", &m_engine_timings.data()->imgui_new_frame);
+		plot_engine_timings("ImGui render cpu", &m_engine_timings.data()->imgui_render_cpu);
+		plot_engine_timings("ImGui render gpu", &m_engine_timings.data()->imgui_render_gpu);
+
+		ImPlot::EndPlot();
+	}
+
+	if (ImPlot::BeginPlot("Scene", ImVec2(-1, 200))) {
+		ImPlot::SetupAxes("time (s)", "dt (s)");
+		float x = m_engine_timings.size() > 0 ? m_engine_timings.back().time : 0.0f;
+		ImPlot::SetupAxisLimits(ImAxis_X1, x - m_metrics_past_seconds, x, ImGuiCond_Always);
+		ImPlot::SetupAxisLimits(ImAxis_Y1, 0, 0.03);
+		auto plot_engine_timings = [&](const char* id, const float* data) -> void {
+			ImPlot::PlotLine(id,
+				&m_engine_timings.data()->time,
+				data,
+				(int)m_engine_timings.size(),
+				(int)m_engine_timings.offset(),
+				sizeof(*m_engine_timings.data()));
+		};
+		plot_engine_timings("Update", &m_engine_timings.data()->scene_times.update);
+		plot_engine_timings("Simulation update", &m_engine_timings.data()->scene_times.simulation_update);
+		plot_engine_timings("Late Update", &m_engine_timings.data()->scene_times.late_update);
+
+		ImPlot::EndPlot();
+	}
 }
 

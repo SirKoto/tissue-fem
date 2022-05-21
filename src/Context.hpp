@@ -91,6 +91,7 @@ private:
 	bool m_show_imgui_demo_window = false;
 	bool m_show_implot_demo_window = false;
 	bool m_show_camera_window = false;
+	bool m_show_profiling_window = true;
 
 	bool m_file_picker_open = false;
 	bool m_show_world_grid = false;
@@ -106,7 +107,13 @@ private:
 	std::string m_file_picker_error;
 	FilePickerCallback m_file_picker_callback;
 
+	
+	CircularBuffer<Engine::EngineTimings> m_engine_timings;
+	float m_metrics_past_seconds = 30.0f;
+
 	void handle_file_picker();
+
+	void ui_draw_profiling();
 
 	friend class Engine;
 };

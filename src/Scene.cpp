@@ -5,6 +5,7 @@
 
 #include "meshes/Plane.hpp"
 #include "gameObject/StaticColliderGameObject.hpp"
+#include "utils/Timer.hpp"
 
 #include <glad/glad.h>
 #include <glm/gtc/type_ptr.hpp>
@@ -23,17 +24,25 @@ void Scene::update(const Context& ctx)
 {
 	m_camera.update();
 
+	Timer timer;
+
 	for (const std::shared_ptr<GameObject>& obj : m_gameObjects) {
 		obj->update(ctx);
 	}
+
+	m_scene_time_update.update = (float)timer.getDuration<Timer::Seconds>().count(); timer.reset();
 
 	if (ctx.is_simulation_running()) {
 		m_elastic_simulator.update(ctx);
 	}
 
+	m_scene_time_update.simulation_update = (float)timer.getDuration<Timer::Seconds>().count(); timer.reset();
+
 	for (const std::shared_ptr<GameObject>& obj : m_gameObjects) {
 		obj->late_update(ctx);
 	}
+
+	m_scene_time_update.late_update = (float)timer.getDuration<Timer::Seconds>().count();
 }
 
 void Scene::update_ui(const Context& ctx)

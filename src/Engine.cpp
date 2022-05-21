@@ -2,6 +2,7 @@
 
 #include "Context.hpp"
 #include "utils/serialization.hpp"
+#include "utils/Timer.hpp"
 #include <fstream>
 
 
@@ -109,12 +110,15 @@ Engine::~Engine()
 
 void Engine::run()
 {
-
+    Timer timer;
+    EngineTimings timings;
     while (!m_error && !glfwWindowShouldClose(m_window)) {
 
 
         // Poll and handle events (inputs, window resize, etc.)
         glfwPollEvents();
+
+        timings.window_poll = (float)timer.getDuration<Timer::Seconds>().count(); timer.reset();
 
         // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
@@ -124,14 +128,22 @@ void Engine::run()
         ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
         ImGuizmo::BeginFrame();
 
+        timings.imgui_new_frame = (float)timer.getDuration<Timer::Seconds>().count(); timer.reset();
+
         // Update global context
         m_ctx->update();
 
         m_ctx->draw_ui();
 
+        timings.context_update = (float)timer.getDuration<Timer::Seconds>().count(); timer.reset();
+
         m_scene->update_ui(*m_ctx);
 
+        timings.scene_draw_ui = (float)timer.getDuration<Timer::Seconds>().count(); timer.reset();
+
         m_scene->update(*m_ctx);
+
+        timings.scene_times = m_scene->get_scene_time_update();
 
         if (m_first_simulation_frame) {
             m_first_simulation_frame = false;
@@ -140,9 +152,13 @@ void Engine::run()
             m_simulation_mode = true;
         }
         
+        timings.scene_update = (float)timer.getDuration<Timer::Seconds>().count(); timer.reset();
 
         // Rendering
         ImGui::Render();
+
+        timings.imgui_render_cpu = (float)timer.getDuration<Timer::Seconds>().count(); timer.reset();
+
         int display_w, display_h;
         glfwGetFramebufferSize(m_window, &display_w, &display_h);
         glViewport(0, 0, display_w, display_h);
@@ -153,9 +169,16 @@ void Engine::run()
         glEnable(GL_DEPTH_TEST);
         m_scene->render(*m_ctx);
 
+        timings.scene_render = (float)timer.getDuration<Timer::Seconds>().count(); timer.reset();
+
         // Render UI
         glDisable(GL_DEPTH_TEST);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+        timings.imgui_render_gpu = (float)timer.getDuration<Timer::Seconds>().count(); timer.reset();
+        timings.time = m_ctx->get_time();
+
+        m_ctx->m_engine_timings.push(timings);
 
         glfwSwapBuffers(m_window);
     }
