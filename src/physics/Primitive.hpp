@@ -10,6 +10,11 @@
 class GameObject;
 namespace physics {
 
+struct Projection {
+	float u, v;
+	float z;
+};
+
 class Primitive {
 public:
 	Primitive() = default;
@@ -19,6 +24,7 @@ public:
 	virtual float distance(const glm::vec3& p) const = 0;
 	virtual std::optional<SurfaceIntersection> intersect(const Ray& ray, const float max_t) const = 0;
 	virtual BBox world_bbox() const = 0;
+	virtual Projection plane_project(const glm::vec3& p) const = 0;
 	virtual void draw_ui() = 0;
 };
 

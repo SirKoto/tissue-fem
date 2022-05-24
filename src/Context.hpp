@@ -84,14 +84,14 @@ private:
 	float m_simulation_start_time = 0.0f;
 	float m_delta_time = 0.0f;
 
-	float m_objective_fps = 60.0f;
-	float m_objective_dt = 1.0f / 60.0f;
+	float m_objective_fps = 59.0f;
+	float m_objective_dt = 1.0f / 59.0f;
 
 	// Windows
 	bool m_show_imgui_demo_window = false;
 	bool m_show_implot_demo_window = false;
 	bool m_show_camera_window = false;
-	bool m_show_profiling_window = true;
+	bool m_show_profiling_window = false;
 
 	bool m_file_picker_open = false;
 	bool m_show_world_grid = false;

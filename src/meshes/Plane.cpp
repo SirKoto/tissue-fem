@@ -66,20 +66,28 @@ void Plane::draw_ui()
 float Plane::distance(const glm::vec3& p) const
 {
 	// Project point into the plane
-	float d_n = glm::dot(m_normal, p - m_point);
-	float d_r = glm::dot(m_right, p - m_point);
-	float d_c = glm::dot(m_cross, p - m_point);
+	physics::Projection pr = Plane::plane_project(p);
 	
-	if (std::abs(d_r) < m_max_uvs[0] && std::abs(d_c) < m_max_uvs[1]) {
-		return std::abs(d_n);
+	if (std::abs(pr.u) < m_max_uvs[0] && std::abs(pr.v) < m_max_uvs[1]) {
+		return std::abs(pr.z);
 	}
 	else {
-		d_r = d_r > 0.0f ? std::min(d_r, m_max_uvs[0]) : std::max(d_r, -m_max_uvs[0]);
-		d_c = d_c > 0.0f ? std::min(d_c, m_max_uvs[1]) : std::max(d_c, -m_max_uvs[1]);
+		pr.u = pr.u > 0.0f ? std::min(pr.u, m_max_uvs[0]) : std::max(pr.u, -m_max_uvs[0]);
+		pr.v = pr.v > 0.0f ? std::min(pr.v, m_max_uvs[1]) : std::max(pr.v, -m_max_uvs[1]);
 		// Compute closest point
-		glm::vec3 p_in_plane = m_point + m_right * d_r + m_cross * d_c;
+		glm::vec3 p_in_plane = m_point + m_right * pr.u + m_cross * pr.v;
 
 		return glm::distance(p, p_in_plane);
 	}
 	
+}
+
+physics::Projection Plane::plane_project(const glm::vec3& p) const
+{
+	physics::Projection pr;
+	pr.z = glm::dot(m_normal, p - m_point);
+	pr.u = glm::dot(m_right, p - m_point);
+	pr.v = glm::dot(m_cross, p - m_point);
+
+	return pr;
 }

@@ -33,7 +33,11 @@ void ParallelFEM::initialize(const std::vector<const TetMesh*>& meshes)
 	for (size_t mesh_idx = 0; mesh_idx < meshes.size(); ++mesh_idx) {
 		const TetMesh* mesh = meshes[mesh_idx];
 		assert(mesh != nullptr);
-		m_nodes.insert(m_nodes.end(), mesh->nodes().begin(), mesh->nodes().end());
+
+		for (const Eigen::Vector3f& p : mesh->nodes()) {
+			m_nodes.push_back(p.cast<Float>());
+		}
+
 		for (size_t e = 0; e < mesh->elements().size(); ++e) {
 			Vec4i element = mesh->elements()[e];
 			element[0] += offsets[mesh_idx];
@@ -216,13 +220,13 @@ void ParallelFEM::step(Float dt, const Parameters& cfg)
 
 				Mat3 SAS;
 				if (c_col != m_constraints3.end() && c_row != m_constraints3.end()) {
-					SAS = c_col->second.constraint * A * c_row->second.constraint;
+					SAS = c_row->second.constraint * A * c_col->second.constraint;
 				}
 				else if (c_col != m_constraints3.end()) {
-					SAS = c_col->second.constraint * A;
+					SAS = A * c_col->second.constraint ;
 				}
 				else {
-					SAS = A * c_row->second.constraint;
+					SAS = c_row->second.constraint * A;
 				}
 
 				for (uint32_t i = 0; i < 3; ++i) {
@@ -251,7 +255,7 @@ void ParallelFEM::step(Float dt, const Parameters& cfg)
 		}
 	}
 
-
+	
 	m_metric_time.constraints = (float)timer.getDuration<Timer::Seconds>().count();
 	timer.reset();
 
@@ -316,11 +320,11 @@ void ParallelFEM::update_objects(TetMesh* mesh,
 	}
 
 	for (uint32_t i = from_sim_idx; i < to_sim_idx; ++i) {
-		Vec3 pos = m_nodes[i].cast<float>();
+		Eigen::Vector3f pos = m_nodes[i].cast<float>();
 		if (add_position_alteration && it_dx && it_dx.index() == 3 * i) {
-			pos.x() += it_dx.value(); ++it_dx;
-			pos.y() += it_dx.value(); ++it_dx;
-			pos.z() += it_dx.value(); ++it_dx;
+			pos.x() += (float)it_dx.value(); ++it_dx;
+			pos.y() += (float)it_dx.value(); ++it_dx;
+			pos.z() += (float)it_dx.value(); ++it_dx;
 		}
 		mesh->update_node((int32_t)(i - from_sim_idx), pos);
 	}

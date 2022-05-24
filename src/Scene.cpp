@@ -115,6 +115,10 @@ void Scene::update_ui(const Context& ctx)
 	}
 
 	if (m_show_simulation_window) {
+		const ImGuiViewport* main_viewport = ImGui::GetMainViewport();
+		ImGui::SetNextWindowPos(ImVec2(
+			main_viewport->WorkPos.x + 50,
+			main_viewport->WorkPos.y + 340), ImGuiCond_FirstUseEver);
 		ImGui::SetNextWindowSize(ImVec2(250, 280), ImGuiCond_FirstUseEver);
 		if (ImGui::Begin("Simulation Engine", &m_show_simulation_window)) {
 			m_elastic_simulator.render_ui(ctx);

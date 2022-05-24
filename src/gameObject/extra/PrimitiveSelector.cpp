@@ -125,7 +125,7 @@ void PrimitiveSelector::Selection::render_ui(const Context& ctx, SimulatedGameOb
 
 	glm::vec3 centroid = glm::vec3(0.0f);
 	for (const uint32_t& node : m_nodes) {
-		centroid += sim::cast_vec3(parent->get_mesh()->nodes()[node]);
+		centroid += parent->get_mesh()->nodes_glm()[node];
 	}
 	centroid /= (float)m_nodes.size();
 	glm::mat4 transform(1.0f);

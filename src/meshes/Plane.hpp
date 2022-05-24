@@ -37,6 +37,8 @@ public:
 	std::optional<SurfaceIntersection> intersect(const Ray& ray, const float max_t) const override final;
 	BBox world_bbox() const override final;
 	void draw_ui() override final;
+	physics::Projection plane_project(const glm::vec3& p) const override final;
+
 private:
 	glm::vec3 m_normal = glm::vec3(0.0f, 1.0f, 0.0f);
 	glm::vec3 m_right = glm::vec3(0.0f);

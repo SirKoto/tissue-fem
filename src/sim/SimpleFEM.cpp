@@ -32,7 +32,10 @@ void SimpleFem::initialize(const std::vector<const TetMesh*>& meshes)
 	for (size_t mesh_idx = 0; mesh_idx < meshes.size(); ++mesh_idx) {
 		const TetMesh* mesh = meshes[mesh_idx];
 		assert(mesh != nullptr);
-		m_nodes.insert(m_nodes.end(), mesh->nodes().begin(), mesh->nodes().end());
+		for (const Eigen::Vector3f& p : mesh->nodes()) {
+			m_nodes.push_back(p.cast<Float>());
+		}
+
 		for (size_t e = 0; e < mesh->elements().size(); ++e) {
 			Vec4i element = mesh->elements()[e];
 			element[0] += offsets[mesh_idx];
@@ -277,11 +280,11 @@ void SimpleFem::update_objects(TetMesh* mesh,
 	}
 
 	for (uint32_t i = from_sim_idx; i < to_sim_idx; ++i) {
-		Vec3 pos = m_nodes[i].cast<float>();
+		Eigen::Vector3f pos = m_nodes[i].cast<float>();
 		if (add_position_alteration && it_dx && it_dx.index() == 3 * i) {
-			pos.x() += it_dx.value(); ++it_dx;
-			pos.y() += it_dx.value(); ++it_dx;
-			pos.z() += it_dx.value(); ++it_dx;
+			pos.x() += (float)it_dx.value(); ++it_dx;
+			pos.y() += (float)it_dx.value(); ++it_dx;
+			pos.z() += (float)it_dx.value(); ++it_dx;
 		}
 		mesh->update_node((int32_t)(i - from_sim_idx), pos);
 	}

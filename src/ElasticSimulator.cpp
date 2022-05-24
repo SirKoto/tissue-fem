@@ -58,19 +58,20 @@ void ElasticSimulator::update(const Context& ctx)
 	const float dt = std::min(ctx.delta_time(), 1.0f / 30.0f);
 
 	// Dynamic update of sub-steps
-	uint32_t max_repetitions;
-	if (ctx.delta_time() > ctx.objective_dt() && m_last_frame_iterations > 1) {
-		max_repetitions = m_last_frame_iterations - 1;
+	uint32_t num_substeps;
+	if (dt > ctx.objective_dt() && m_last_frame_iterations > 1) {
+		num_substeps = m_last_frame_iterations - 1;
 	}
 	else {
-		max_repetitions = m_last_frame_iterations;
+		num_substeps = m_last_frame_iterations;
 
 		const double avg_time = m_last_step_time_cost.count() / m_last_frame_iterations;
 
 		if (m_last_step_time_cost.count() + avg_time < ctx.objective_dt()) {
-			max_repetitions += 1;
+			num_substeps += 1;
 		}
 	}
+	num_substeps = std::min(m_max_substeps, num_substeps);
 
 	m_update_meshes_time = 0.0f;
 	m_remove_constraints_time = 0.0f;
@@ -79,7 +80,7 @@ void ElasticSimulator::update(const Context& ctx)
 	// Full-step timer
 	const auto init_step_timer = std::chrono::high_resolution_clock::now();
 
-	for (uint32_t repetitions = 0; repetitions < max_repetitions; ++repetitions) {
+	for (uint32_t repetitions = 0; repetitions < num_substeps; ++repetitions) {
 		for (const SimulatedEntity& e : m_simulated_objects) {
 			// Add constraints for interaction
 			const std::map<uint32_t, gobj::PrimitiveSelector::Delta>& movements = 
@@ -97,7 +98,7 @@ void ElasticSimulator::update(const Context& ctx)
 
 					if (m.second.delta == glm::vec3(0.0f) || !intersection.has_value()) {
 						m_sim->add_constraint(sim_node_idx, glm::vec3(0.0f));
-						m_sim->add_position_alteration(sim_node_idx, m.second.delta / (float)max_repetitions);
+						m_sim->add_position_alteration(sim_node_idx, m.second.delta / (float)num_substeps);
 						m_constrained_nodes.emplace(sim_node_idx, Constraint(glm::vec3(0.0f), nullptr, true));
 					}
 				}
@@ -105,7 +106,7 @@ void ElasticSimulator::update(const Context& ctx)
 		}
 
 		// Solve system
-		m_sim->step((sim::Float)dt / (sim::Float)max_repetitions, m_params);
+		m_sim->step((sim::Float)dt / (sim::Float)num_substeps, m_params);
 
 		// Clear constraints after using them
 		m_sim->clear_frame_alterations();
@@ -114,9 +115,21 @@ void ElasticSimulator::update(const Context& ctx)
 		// Remove constraints that are applying negative constraint forces or marked as to_delete
 		for (std::map<uint32_t, Constraint>::const_iterator it = m_constrained_nodes.begin(); it != m_constrained_nodes.end();) {
 			const uint32_t sim_node_idx = it->first;
+			const glm::vec3 p = sim::cast_vec3(m_sim->get_node(sim_node_idx));
+			// Move node ontop of its face if it has "moved"
+			if (it->second.primitive != nullptr) {
+				physics::Projection pr = it->second.primitive->plane_project(p);
+				if (pr.z < 0.0f) {
+					glm::vec3 delta_x = it->second.normal *
+						std::nextafter(-pr.z, std::numeric_limits<float>::infinity());
+					m_sim->add_position_alteration(
+						sim_node_idx, delta_x);
+				}
+			}
+
 			const glm::vec3 constraint_force = sim::cast_vec3(m_sim->get_force_constraint(sim_node_idx));
 			const float dot = glm::dot(constraint_force, it->second.normal);
-			const float distance = it->second.primitive != nullptr ? it->second.primitive->distance(sim::cast_vec3(m_sim->get_node(sim_node_idx))) : 0.0f;
+			const float distance = it->second.primitive != nullptr ? it->second.primitive->distance(p) : 0.0f;
 			if (it->second.to_delete || dot < -std::numeric_limits<float>::epsilon() ||
 				distance > 1e-3f) {
 				m_sim->erase_constraint(sim_node_idx);
@@ -131,7 +144,10 @@ void ElasticSimulator::update(const Context& ctx)
 			// Add constraints for surface faces with static objects
 			for (const auto& surface_vert : e.obj->get_mesh()->global_to_local_surface_vertices()) {
 				uint32_t node_idx = surface_vert.first;
-				uint32_t sim_node_idx = e.offset + surface_vert.first;
+				
+			//for(uint32_t node_idx = 0; node_idx < e.obj->get_mesh()->nodes().size(); ++node_idx) {
+				uint32_t sim_node_idx = e.offset + node_idx;
+
 				if (m_constrained_nodes.count(node_idx)) {
 					continue;
 				}
@@ -188,7 +204,7 @@ void ElasticSimulator::update(const Context& ctx)
 	const auto end_step_timer = std::chrono::high_resolution_clock::now();
 
 	m_last_step_time_cost = end_step_timer - init_step_timer;
-	m_last_frame_iterations = max_repetitions;
+	m_last_frame_iterations = num_substeps;
 
 	// Update metrics
 	m_metric_times_buffer.push({ ctx.get_sim_time(),
@@ -211,6 +227,10 @@ void ElasticSimulator::render_ui(const Context& ctx)
 	ImGui::EndDisabled();
 
 	ImGui::Checkbox("Simulation Metrics", &m_show_simulation_metrics);
+
+	uint32_t step = 1;
+	ImGui::InputScalar("Max substeps", ImGuiDataType_U32, &m_max_substeps, &step);
+	m_max_substeps = std::max(m_max_substeps, 1u);
 
 	ImGui::Text("Iterations in step: %i", m_last_frame_iterations);
 
@@ -331,7 +351,7 @@ void ElasticSimulator::serialize(Archive& archive)
 	archive(TF_SERIALIZE_NVP_MEMBER(m_params));
 	archive(TF_SERIALIZE_NVP_MEMBER(m_show_simulation_metrics));
 	archive(TF_SERIALIZE_NVP_MEMBER(m_simulator_type));
-
+	archive(TF_SERIALIZE_NVP_MEMBER(m_max_substeps));
 }
 
 TF_SERIALIZE_TEMPLATE_EXPLICIT_IMPLEMENTATION(ElasticSimulator)

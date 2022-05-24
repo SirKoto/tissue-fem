@@ -46,7 +46,7 @@ private:
 	};
 
 	SimulatorType m_simulator_type = SimulatorType::ParallelFEM;
-
+	uint32_t m_max_substeps = 6;
 	bool m_show_simulation_metrics = false;
 
 	// Metrics

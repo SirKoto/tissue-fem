@@ -10,7 +10,7 @@
 namespace sim
 {
 
-typedef float Float;
+typedef double Float;
 typedef Eigen::SparseMatrix<Float> SMat;
 typedef Eigen::SparseVector<Float> SVec;
 typedef Eigen::Matrix<Float, Eigen::Dynamic, 1> Vec;
@@ -23,7 +23,7 @@ typedef Eigen::Matrix<Float, 9, 9> Mat9;
 typedef Eigen::Matrix<Float, 12, 12> Mat12;
 typedef Eigen::Matrix<Float, 9, 12> Mat9x12;
 
-inline glm::vec3 cast_vec3(const Vec3& v) { return glm::vec3(v.x(), v.y(), v.z()); }
+inline glm::vec3 cast_vec3(const Vec3& v) { return glm::vec3((float)v.x(), (float)v.y(), (float)v.z()); }
 inline Vec3 cast_vec3(const glm::vec3& v) { return Vec3(v.x, v.y, v.z); }
 
 Mat9x12 compute_dFdx(const Mat3& DmInv);
