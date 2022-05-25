@@ -290,7 +290,8 @@ void SimpleFem::update_objects(TetMesh* mesh,
 	}
 }
 
-void SimpleFem::add_constraint(uint32_t node, const glm::vec3& v, const glm::vec3& dir)
+void SimpleFem::add_constraint(uint32_t node, const glm::vec3& v,
+	const glm::vec3& dir, Float )
 {
 	std::map<uint32_t, Constraint>::iterator it = m_constraints3.find(node);
 

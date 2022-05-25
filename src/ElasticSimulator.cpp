@@ -178,7 +178,8 @@ void ElasticSimulator::update(const Context& ctx)
 						if (perp_velocity < 0.0f) {
 							m_sim->add_constraint(sim_node_idx,
 								glm::vec3(0.0f),
-								intersection->normal);
+								intersection->normal,
+								m_tangential_friction);
 							// Cache the constrained node
 							m_constrained_nodes.emplace(sim_node_idx, Constraint(intersection->normal, intersection->primitive));
 						}
@@ -228,9 +229,12 @@ void ElasticSimulator::render_ui(const Context& ctx)
 
 	ImGui::Checkbox("Simulation Metrics", &m_show_simulation_metrics);
 
+	ImGui::InputFloat("Friction", &m_tangential_friction, 0.01f);
+
 	uint32_t step = 1;
 	ImGui::InputScalar("Max substeps", ImGuiDataType_U32, &m_max_substeps, &step);
 	m_max_substeps = std::max(m_max_substeps, 1u);
+	
 
 	ImGui::Text("Iterations in step: %i", m_last_frame_iterations);
 
@@ -352,6 +356,7 @@ void ElasticSimulator::serialize(Archive& archive)
 	archive(TF_SERIALIZE_NVP_MEMBER(m_show_simulation_metrics));
 	archive(TF_SERIALIZE_NVP_MEMBER(m_simulator_type));
 	archive(TF_SERIALIZE_NVP_MEMBER(m_max_substeps));
+	archive(TF_SERIALIZE_NVP_MEMBER(m_tangential_friction));
 }
 
 TF_SERIALIZE_TEMPLATE_EXPLICIT_IMPLEMENTATION(ElasticSimulator)

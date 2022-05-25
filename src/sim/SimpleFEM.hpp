@@ -29,7 +29,7 @@ public:
 		uint32_t from_sim_idx, uint32_t to_sim_idx, 
 		bool add_position_alteration) override final;
 	
-	void add_constraint(uint32_t node, const glm::vec3& v, const glm::vec3& dir) override final;
+	void add_constraint(uint32_t node, const glm::vec3& v, const glm::vec3& dir, Float friction) override final;
 
 	void add_constraint(uint32_t node, const glm::vec3& v) override final;
 

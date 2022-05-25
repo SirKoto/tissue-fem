@@ -65,7 +65,9 @@ public:
 		bool add_position_alteration = false) = 0;
 
 	// Add a velocity constraint 
-	virtual void add_constraint(uint32_t node, const glm::vec3& v, const glm::vec3& dir) = 0;
+	virtual void add_constraint(uint32_t node, const glm::vec3& v, 
+		const glm::vec3& dir,
+		Float friction = Float(0)) = 0;
 	// Constrain all degrees of freedom
 	virtual void add_constraint(uint32_t node, const glm::vec3& v) = 0;
 	virtual void erase_constraint(uint32_t node) = 0;

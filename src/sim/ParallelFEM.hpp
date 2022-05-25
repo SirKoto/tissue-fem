@@ -27,7 +27,8 @@ public:
 		uint32_t from_sim_idx, uint32_t to_sim_idx,
 		bool add_position_alteration) override final;
 
-	void add_constraint(uint32_t node, const glm::vec3& v, const glm::vec3& dir) override final;
+	void add_constraint(uint32_t node, const glm::vec3& v,
+		const glm::vec3& dir, Float friction) override final;
 
 	void add_constraint(uint32_t node, const glm::vec3& v) override final;
 
@@ -79,6 +80,7 @@ private:
 	struct Constraint {
 		Vec3 dir;
 		Mat3 constraint;
+		Float friction = Float(0);
 	};
 
 	// sparse_cache has pointers to the 3x3 region of the sparse matrix where node i
@@ -90,7 +92,8 @@ private:
 
 	void build_sparse_system();
 
-	void assign_sparse_block(const Eigen::Block<const Mat12, 3, 3>& m, uint32_t i, uint32_t j);
+	template<typename T>
+	void assign_sparse_block(const Eigen::Block<const T, 3, 3>& m, uint32_t i, uint32_t j);
 
 	void set_system_to_zero();
 

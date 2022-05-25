@@ -78,7 +78,8 @@ void ParallelFEM::initialize(const std::vector<const TetMesh*>& meshes)
 }
 
 
-void ParallelFEM::assign_sparse_block(const Eigen::Block<const Mat12, 3, 3>& m, uint32_t node_i, uint32_t node_j) {
+template<typename T>
+void ParallelFEM::assign_sparse_block(const Eigen::Block<const T, 3, 3>& m, uint32_t node_i, uint32_t node_j) {
 
 	const SMatPtrs& cols = m_sparse_cache.at(std::make_pair(node_i, node_j));
 
@@ -177,11 +178,25 @@ void ParallelFEM::step(Float dt, const Parameters& cfg)
 	}
 
 	// Apply rayleigh damping df/dv = -alpha * M - beta * df/dx
+	// Optimized:	M - Δt^2 * df/dx - Δt * df/dv 
+	//				M - Δt^2 * df/dx - Δt * (-alpha * M - beta * df/dx)
+	//				M * (1 - Δt * alpha) - * df/dx (Δt^2 + Δt * beta)
 	m_dfdx_system *= -(dt * dt) - cfg.beta_rayleigh() * dt;
 	m_dfdx_system.diagonal().array() += cfg.mass() * (Float(1.0) - cfg.alpha_rayleigh() * dt);
 
-	// Fill S
+	// Add tangential friction forces f = -k * v
+	// And tangential friction damping as df/dv= -k * (I - n · n^T)
+	for (const std::pair<uint32_t, Constraint>& c : m_constraints3) {
+		if (c.second.friction != Float(0)) {
+			const Float k = c.second.friction;
+			const Mat3 friction_dfdv = - dt * k * c.second.constraint;
+			assign_sparse_block(friction_dfdv.block<3, 3>(0, 0), c.first, c.first);
 
+			m_rhs.segment<3>(3 * c.first) -= dt * k * m_v.segment<3>(3 * c.first);
+		}
+	}
+
+	// Fill S
 	m_metric_time.system_finish = (float)timer.getDuration<Timer::Seconds>().count();
 	timer.reset();
 
@@ -330,7 +345,8 @@ void ParallelFEM::update_objects(TetMesh* mesh,
 	}
 }
 
-void ParallelFEM::add_constraint(uint32_t node, const glm::vec3& v, const glm::vec3& dir)
+void ParallelFEM::add_constraint(uint32_t node, const glm::vec3& v, 
+	const glm::vec3& dir, Float friction)
 {
 	std::map<uint32_t, Constraint>::iterator it = m_constraints3.find(node);
 
@@ -347,7 +363,8 @@ void ParallelFEM::add_constraint(uint32_t node, const glm::vec3& v, const glm::v
 	m_constraints3.emplace(node,
 		Constraint{
 			d,
-			Mat3::Identity() - (d * d.transpose())
+			Mat3::Identity() - (d * d.transpose()),
+			friction
 		}
 	);
 }
