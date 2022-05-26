@@ -41,6 +41,8 @@ private:
 
 	std::unique_ptr<Context> m_ctx;
 
+	double m_min_delta_time = 1 / 60.0f;
+
 	bool reload_scene(const std::filesystem::path& path, std::string* error);
 	bool save_scene(const std::filesystem::path& path, std::string* error);
 

@@ -59,19 +59,19 @@ void ElasticSimulator::update(const Context& ctx)
 
 	// Dynamic update of sub-steps
 	uint32_t num_substeps;
-	if (dt > ctx.objective_dt() && m_last_frame_iterations > 1) {
+	if (m_last_step_time_cost.count() > ctx.objective_dt() && m_last_frame_iterations > 1) {
 		num_substeps = m_last_frame_iterations - 1;
 	}
 	else {
 		num_substeps = m_last_frame_iterations;
 
-		const double avg_time = m_last_step_time_cost.count() / m_last_frame_iterations;
-
-		if (m_last_step_time_cost.count() + avg_time < ctx.objective_dt()) {
+		const double avg_time = m_last_step_time_cost.count() / (double)m_last_frame_iterations;
+		if ((m_last_step_time_cost.count() + avg_time) < ctx.objective_dt()) {
 			num_substeps += 1;
 		}
 	}
 	num_substeps = std::min(m_max_substeps, num_substeps);
+	m_metric_substeps_buffer.push(std::make_pair(ctx.get_sim_time(), (float) num_substeps));
 
 	m_update_meshes_time = 0.0f;
 	m_remove_constraints_time = 0.0f;
@@ -80,7 +80,7 @@ void ElasticSimulator::update(const Context& ctx)
 	// Full-step timer
 	const auto init_step_timer = std::chrono::high_resolution_clock::now();
 
-	for (uint32_t repetitions = 0; repetitions < num_substeps; ++repetitions) {
+	for (uint32_t substep = 0; substep < num_substeps; ++substep) {
 		for (const SimulatedEntity& e : m_simulated_objects) {
 			// Add constraints for interaction
 			const std::map<uint32_t, gobj::PrimitiveSelector::Delta>& movements = 
@@ -105,8 +105,10 @@ void ElasticSimulator::update(const Context& ctx)
 			}
 		}
 
+		float step_dt = dt / (float)num_substeps;
+
 		// Solve system
-		m_sim->step((sim::Float)dt / (sim::Float)num_substeps, m_params);
+		m_sim->step((sim::Float)step_dt, m_params);
 
 		// Clear constraints after using them
 		m_sim->clear_frame_alterations();
@@ -148,7 +150,7 @@ void ElasticSimulator::update(const Context& ctx)
 			//for(uint32_t node_idx = 0; node_idx < e.obj->get_mesh()->nodes().size(); ++node_idx) {
 				uint32_t sim_node_idx = e.offset + node_idx;
 
-				if (m_constrained_nodes.count(node_idx)) {
+				if (m_constrained_nodes.count(sim_node_idx)) {
 					continue;
 				}
 
@@ -236,7 +238,7 @@ void ElasticSimulator::render_ui(const Context& ctx)
 	m_max_substeps = std::max(m_max_substeps, 1u);
 	
 
-	ImGui::Text("Iterations in step: %i", m_last_frame_iterations);
+	ImGui::Text("Iterations in step: %u", m_last_frame_iterations);
 
 	if (m_show_simulation_metrics) {
 		ImGui::SetNextWindowSize(ImVec2(450, 380), ImGuiCond_FirstUseEver);
@@ -341,6 +343,20 @@ void ElasticSimulator::render_ui(const Context& ctx)
 					(int)m_metric_times_buffer.size(),
 					(int)m_metric_times_buffer.offset(),
 					sizeof(*m_metric_times_buffer.data()));
+				ImPlot::EndPlot();
+			}
+
+			if (ImPlot::BeginPlot("Substeps", ImVec2(-1, 160))) {
+				ImPlot::SetupAxes("time (s)", "substeps");
+				float x = m_metric_times_buffer.size() > 0 ? m_metric_times_buffer.back().first : 0.0f;
+				ImPlot::SetupAxisLimits(ImAxis_X1, x - m_metrics_past_seconds, x, ImGuiCond_Always);
+
+				ImPlot::PlotLine("##substeps",
+					&m_metric_substeps_buffer.data()->first,
+					&m_metric_substeps_buffer.data()->second,
+					(int)m_metric_substeps_buffer.size(),
+					(int)m_metric_substeps_buffer.offset(),
+					sizeof(*m_metric_substeps_buffer.data()));
 				ImPlot::EndPlot();
 			}
 		}

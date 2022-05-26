@@ -60,6 +60,8 @@ private:
 		float physics;
 	};
 	CircularBuffer<std::pair<float, Metrics>> m_metric_times_buffer;
+	CircularBuffer<std::pair<float, float>> m_metric_substeps_buffer;
+
 	float m_metrics_past_seconds = 20.0f;
 
 	typedef physics::Primitive Primitive;

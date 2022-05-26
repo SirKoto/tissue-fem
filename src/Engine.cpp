@@ -55,7 +55,7 @@ Engine::Engine() : m_ctx(std::make_unique<Context>(this))
         }
         glfwMakeContextCurrent(m_window);
 
-        // glfwSwapInterval(0); // Disable vsync
+        glfwSwapInterval(0); // Disable vsync
     }
 
     bool err = gladLoadGL() == 0;
@@ -124,6 +124,7 @@ void Engine::run()
     EngineTimings timings;
     while (!m_error && !glfwWindowShouldClose(m_window)) {
 
+        const auto time_frame_start = std::chrono::high_resolution_clock::now();
 
         // Poll and handle events (inputs, window resize, etc.)
         glfwPollEvents();
@@ -191,6 +192,13 @@ void Engine::run()
         m_ctx->m_engine_timings.push(timings);
 
         glfwSwapBuffers(m_window);
+
+        // Loop to waste time
+        std::chrono::high_resolution_clock::time_point time_frame_end;
+        do {
+            time_frame_end = std::chrono::high_resolution_clock::now();
+        } while (m_min_delta_time > Timer::Seconds(time_frame_end - time_frame_start).count());
+
     }
 }
 

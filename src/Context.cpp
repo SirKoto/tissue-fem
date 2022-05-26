@@ -24,6 +24,7 @@ Context::Context(Engine* engine) :
 	m_engine(engine)
 {
 	assert(m_engine != nullptr);
+	m_delta_times_buffer.fill(1.0f / 60.0f);
 }
 
 void Context::update()
@@ -32,7 +33,14 @@ void Context::update()
 
 	ImGuiIO& io = ImGui::GetIO();
 
-	m_delta_time = io.DeltaTime;
+	std::rotate(m_delta_times_buffer.begin(), std::next(m_delta_times_buffer.begin()), m_delta_times_buffer.end());
+	m_delta_times_buffer.back() = io.DeltaTime;
+	// Recover from a breakpoint
+	if (m_delta_times_buffer.back() > 1.0f) {
+		m_delta_times_buffer.back() = 1 / 60.0f;
+	}
+
+	m_delta_time = std::accumulate(m_delta_times_buffer.begin(), m_delta_times_buffer.end(), 0.0f) / (float)m_delta_times_buffer.size();
 
 	if (!io.WantCaptureKeyboard) {
 		if (io.KeysDown[GLFW_KEY_E]) {
@@ -133,7 +141,13 @@ void Context::draw_ui()
 
 		if (ImGui::BeginMenu("Edit"))
 		{
-			if (ImGui::InputFloat("Aim FPS", &m_objective_fps, 1.0f)) {
+			int32_t max_fps =(int32_t)std::round( 1.0 / m_engine->m_min_delta_time );
+			if (ImGui::InputInt("Max FPS", &max_fps)) {
+				max_fps = std::max(max_fps, 10);
+				m_engine->m_min_delta_time = 1.0 / (double)max_fps;
+			}
+
+			if (ImGui::InputFloat("Objective FPS", &m_objective_fps, 1.0f)) {
 				m_objective_dt = 1.0f / m_objective_fps;
 			}
 			ImGui::EndMenu();

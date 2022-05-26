@@ -83,6 +83,7 @@ private:
 	float m_time = 0.0f;
 	float m_simulation_start_time = 0.0f;
 	float m_delta_time = 0.0f;
+	std::array<float, 4> m_delta_times_buffer;
 
 	float m_objective_fps = 59.0f;
 	float m_objective_dt = 1.0f / 59.0f;
