@@ -7,7 +7,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 
-Camera::Camera() : m_position(5,5,15), m_front(0,0,-1), 
+Camera::Camera() : m_position(0,1,15), m_front(0,0,-1), 
 	m_up(0,1,0), m_yaw(-90.f),m_pitch(0), 
 	m_mouse_sensitivity(0.1f), m_speed(4.5f), m_zoom(45.f)
 {

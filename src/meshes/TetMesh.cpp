@@ -109,9 +109,9 @@ bool TetMesh::load_tetgen(std::filesystem::path path, std::string* out_err)
 	{
 		stream.open(surfaces_path);
 
-		int32_t num_faces, tmp;
+		int32_t num_faces, marked_faces_bool;
 
-		stream >> num_faces >> tmp;
+		stream >> num_faces >> marked_faces_bool;
 		if (num_faces == 0) {
 			err_out("No faces");
 			return false;
@@ -121,9 +121,12 @@ bool TetMesh::load_tetgen(std::filesystem::path path, std::string* out_err)
 		int32_t idx;
 		while (num_faces-- > 0) {
 			stream >> idx;
-			stream >> surface_faces[idx][0] >> surface_faces[idx][1] >> surface_faces[idx][2];
+			stream >> surface_faces[idx][0] >> surface_faces[idx][2] >> surface_faces[idx][1];
+			if (marked_faces_bool) {
+				stream.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+			}
 			if (stream.fail()) {
-				err_out("Something went wrong when loading .ele");
+				err_out("Something went wrong when loading .face");
 				return false;
 			}
 		}

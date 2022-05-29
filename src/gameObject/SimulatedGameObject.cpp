@@ -81,9 +81,13 @@ void SimulatedGameObject::render_ui(const Context& gc)
 	ImGui::PushID(m_name.c_str());
 
 
-	if (ImGui::TreeNode("Mesh ops##mesh ops")) {
-		ImGui::BeginDisabled(m_disable_interaction);
+	if (ImGui::TreeNode("Mesh data##mesh ops")) {
 
+		ImGui::Text("Num Nodes %u", m_mesh->nodes().size());
+		ImGui::Text("Num Elements %u", m_mesh->elements().size());
+		ImGui::Text("Surface mesh %u triangles", m_mesh->global_to_local_surface_vertices().size());
+
+		ImGui::BeginDisabled(m_disable_interaction);
 		if (ImGui::Button("Flip face orientation")) {
 			m_mesh->flip_face_orientation();
 		}
