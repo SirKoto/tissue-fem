@@ -97,9 +97,13 @@ void ElasticSimulator::update(const Context& ctx)
 					std::optional<SurfaceIntersection> intersection = ctx.get_scene().physics().intersect(ray, 1.0f);
 
 					if (m.second.delta == glm::vec3(0.0f) || !intersection.has_value()) {
-						m_sim->add_constraint(sim_node_idx, glm::vec3(0.0f));
+						glm::vec3 vel = m.second.delta / dt / (float)num_substeps;
+						m_sim->add_constraint(sim_node_idx, vel);
+						m_constrained_nodes.emplace(sim_node_idx, Constraint(vel, nullptr, true));
+
+						/*m_sim->add_constraint(sim_node_idx, glm::vec3(0.0f));
 						m_sim->add_position_alteration(sim_node_idx, m.second.delta / (float)num_substeps);
-						m_constrained_nodes.emplace(sim_node_idx, Constraint(glm::vec3(0.0f), nullptr, true));
+						m_constrained_nodes.emplace(sim_node_idx, Constraint(glm::vec3(0.0f), nullptr, true));*/
 					}
 				}
 			}
@@ -202,6 +206,11 @@ void ElasticSimulator::update(const Context& ctx)
 		m_update_meshes_time = std::chrono::duration<float>(end_sub_step_timer - update_meshes_timer).count();
 		m_remove_constraints_time = std::chrono::duration<float>(physics_timer - remove_constraints_timer).count();
 		m_physics_time = std::chrono::duration<float>(update_meshes_timer - physics_timer).count();
+
+		if (!m_sim->simulation_converged()) {
+			ctx.trigger_pause_simulation();
+			break;
+		}
 	}
 
 	const auto end_step_timer = std::chrono::high_resolution_clock::now();

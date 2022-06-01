@@ -48,6 +48,12 @@ public:
 
 	bool is_simulation_running() const { return m_engine->m_simulation_mode && m_engine->m_run_simulation; }
 
+	void trigger_pause_simulation() const {
+		if (has_simulation_started()) {
+			m_engine->m_run_simulation = false;
+		}
+	}
+
 	typedef std::function<bool(const Context&, 
 		Scene& scene,
 		const std::filesystem::path&, 

@@ -123,6 +123,16 @@ void Context::draw_ui()
 					obj->get_transform().rotate(glm::vec3(0.0f, 1.0f, 0.0f), glm::radians(180.0f));
 					m_engine->m_scene->add_gameObject(std::move(obj));
 				}
+				if (ImGui::MenuItem("Armadillo Complex")) {
+					const std::filesystem::path proj_dir(PROJECT_DIR);
+					const std::filesystem::path file = proj_dir / "resources/models/armadilloSimp/armadilloComp.ele";
+					std::shared_ptr<SimulatedGameObject> obj = std::make_shared<SimulatedGameObject>();
+					bool loaded = obj->load_tetgen(file);
+					assert(loaded);
+					obj->get_transform().scale(0.01f);
+					obj->get_transform().rotate(glm::vec3(1.0f, 0.0f, 0.0f), glm::radians(-90.0f));
+					m_engine->m_scene->add_gameObject(std::move(obj));
+				}
 				if (ImGui::MenuItem("Sphere")) {
 					const std::filesystem::path proj_dir(PROJECT_DIR);
 					const std::filesystem::path file = proj_dir / "resources/models/sphere/sphere.ele";

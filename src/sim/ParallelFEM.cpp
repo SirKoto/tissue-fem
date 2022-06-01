@@ -16,6 +16,8 @@ ParallelFEM::ParallelFEM()
 
 void ParallelFEM::initialize(const std::vector<const TetMesh*>& meshes)
 {
+	m_converged = true;
+
 	uint32_t num_elements = 0;
 	uint32_t num_nodes = 0;
 	std::vector<uint32_t> offsets;
@@ -282,12 +284,24 @@ void ParallelFEM::step(Float dt, const Parameters& cfg)
 		std::cerr << "Can't build system" << std::endl;
 	}
 	m_delta_v = solver.solve(m_Sc);
+	m_converged = solver.info() != Eigen::Success;
+#elif false
+	Eigen::SimplicialLDLT<SMat> solver(m_system);
+	//solver.setTolerance(1e-4);
+	//solver.setMaxIterations(20 * m_nodes.size());
 	if (solver.info() != Eigen::Success) {
+		std::cerr << "Can't build system" << std::endl;
+	}
+	m_delta_v = solver.solve(m_Sc);
+	converged = solver.info() != Eigen::Success;
+#else
+	m_converged = m_cg_solver.solve(m_system, m_Sc, &m_delta_v);
+#endif
+
+	if (!m_converged) {
 		std::cerr << "System did not converge" << std::endl;
 	}
-#else
-	m_cg_solver.solve(m_system, m_Sc, &m_delta_v);
-#endif
+
 	m_v += m_delta_v + m_z;
 
 	m_metric_time.solve = (float)timer.getDuration<Timer::Seconds>().count();
@@ -443,6 +457,7 @@ Float ParallelFEM::compute_volume() const
 void ParallelFEM::build_sparse_system()
 {
 	m_sparse_cache.clear();
+	m_sparse_cache.reserve(m_elements.size() * 4 * 4);
 	m_dfdx_system.setZero();
 
 	// Add all nodes with connectivity

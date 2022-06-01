@@ -88,10 +88,12 @@ public:
 		float constraints = 0.0f;
 		float solve = 0.0f;
 	};
-	MetricTimes get_metric_times() { return m_metric_time; }
+	MetricTimes get_metric_times() const { return m_metric_time; }
+	bool simulation_converged() const { return m_converged; }
 
 protected:
 	MetricTimes m_metric_time;
+	bool m_converged = true;
 };
 
 class EnergyDensity {

@@ -15,7 +15,7 @@ void ConjugateGradient::resize(size_t size)
 	m_A_res_precond.resize((Eigen::Index)size);
 }
 
-void ConjugateGradient::solve(const SMat& A, const Vec& b, Vec* x_)
+bool ConjugateGradient::solve(const SMat& A, const Vec& b, Vec* x_)
 {
 	assert(x_ != nullptr);
 	Vec& x = *x_;
@@ -61,6 +61,8 @@ void ConjugateGradient::solve(const SMat& A, const Vec& b, Vec* x_)
 
 		delta = newDelta;
 	}
+
+	return it <= max_iterations;
 }
 
 void ConjugateGradient::apply_jacobi_precond(const SMat& A, const Vec& b, Vec* x_) const

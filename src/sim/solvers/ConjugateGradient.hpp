@@ -15,7 +15,7 @@ public:
 
 	void resize(size_t size);
 
-	void solve(const SMat& A, const Vec& b, Vec* x);
+	bool solve(const SMat& A, const Vec& b, Vec* x);
 
 private:
 

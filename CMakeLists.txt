@@ -25,6 +25,14 @@ set(COPY_DATA
     ${MODEL_PATH}/armadilloSimp/armadSimp.ele
     ${MODEL_PATH}/armadilloSimp/armadSimp.face
     ${MODEL_PATH}/armadilloSimp/armadSimp.node
+
+    ${MODEL_PATH}/armadilloSimp/armadilloComp.ele
+    ${MODEL_PATH}/armadilloSimp/armadilloComp.face
+    ${MODEL_PATH}/armadilloSimp/armadilloComp.node
+
+    ${MODEL_PATH}/sphere/sphere.ele
+    ${MODEL_PATH}/sphere/sphere.face
+    ${MODEL_PATH}/sphere/sphere.node
 )
 
 foreach(data ${COPY_DATA})
