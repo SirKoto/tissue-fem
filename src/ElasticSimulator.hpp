@@ -29,7 +29,7 @@ private:
 	sim::Parameters m_params;
 	std::unique_ptr<sim::IFEM> m_sim;
 	struct Constraint;
-	std::map<uint32_t, Constraint> m_constrained_nodes;
+	std::unordered_map<uint32_t, Constraint> m_constrained_nodes;
 
 	struct SimulatedEntity;
 	std::vector<SimulatedEntity> m_simulated_objects;

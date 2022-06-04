@@ -130,6 +130,9 @@ void ParallelFEM::step(Float dt, const Parameters& cfg)
 		if (functionType == EnergyFunction::HookeanSmith19) {
 			energy.HookeanSmith19(F, cfg.mu(), cfg.lambda());
 		}
+		else if (functionType == EnergyFunction::HookeanSmith19Eigen) {
+			energy.HookeanSmith19Eigendecomposition(F, cfg.mu(), cfg.lambda());
+		}
 		else if (functionType == EnergyFunction::Corrotational) {
 			energy.Corrotational(F, cfg.mu(), cfg.lambda());
 		}
@@ -191,7 +194,7 @@ void ParallelFEM::step(Float dt, const Parameters& cfg)
 	for (const std::pair<uint32_t, Constraint>& c : m_constraints3) {
 		if (c.second.friction != Float(0)) {
 			const Float k = c.second.friction;
-			const Mat3 friction_dfdv = - dt * k * c.second.constraint;
+			const Mat3 friction_dfdv =  dt * k * c.second.constraint;
 			assign_sparse_block(friction_dfdv.block<3, 3>(0, 0), c.first, c.first);
 
 			m_rhs.segment<3>(3 * c.first) -= dt * k * m_v.segment<3>(3 * c.first);

@@ -32,10 +32,15 @@ void ElasticSimulator::start_simulation(const Context& ctx)
 	m_metric_times_buffer.clear();
 
 	std::vector<const TetMesh*> objs;
+	uint32_t surface_verts = 0;
 	objs.reserve(m_simulated_objects.size());
 	for (const SimulatedEntity& e : m_simulated_objects) {
 		objs.push_back(e.obj->get_mesh().get());
+		surface_verts += (uint32_t)e.obj->get_mesh()->global_to_local_surface_vertices().size();
 	}
+
+	m_constrained_nodes.reserve(surface_verts / 6);
+
 
 	switch (m_simulator_type) {
 	case SimulatorType::SimpleFEM:
@@ -49,6 +54,7 @@ void ElasticSimulator::start_simulation(const Context& ctx)
 	}
 
 	m_sim->initialize(objs);
+
 }
 
 void ElasticSimulator::update(const Context& ctx)
@@ -97,13 +103,13 @@ void ElasticSimulator::update(const Context& ctx)
 					std::optional<SurfaceIntersection> intersection = ctx.get_scene().physics().intersect(ray, 1.0f);
 
 					if (m.second.delta == glm::vec3(0.0f) || !intersection.has_value()) {
-						glm::vec3 vel = m.second.delta / dt / (float)num_substeps;
+						/*glm::vec3 vel = m.second.delta / dt / (float)num_substeps;
 						m_sim->add_constraint(sim_node_idx, vel);
-						m_constrained_nodes.emplace(sim_node_idx, Constraint(vel, nullptr, true));
+						m_constrained_nodes.emplace(sim_node_idx, Constraint(vel, nullptr, true));*/
 
-						/*m_sim->add_constraint(sim_node_idx, glm::vec3(0.0f));
+						m_sim->add_constraint(sim_node_idx, glm::vec3(0.0f));
 						m_sim->add_position_alteration(sim_node_idx, m.second.delta / (float)num_substeps);
-						m_constrained_nodes.emplace(sim_node_idx, Constraint(glm::vec3(0.0f), nullptr, true));*/
+						m_constrained_nodes.emplace(sim_node_idx, Constraint(glm::vec3(0.0f), nullptr, true));
 					}
 				}
 			}
@@ -119,7 +125,7 @@ void ElasticSimulator::update(const Context& ctx)
 
 		const auto remove_constraints_timer = std::chrono::high_resolution_clock::now();
 		// Remove constraints that are applying negative constraint forces or marked as to_delete
-		for (std::map<uint32_t, Constraint>::const_iterator it = m_constrained_nodes.begin(); it != m_constrained_nodes.end();) {
+		for (std::unordered_map<uint32_t, Constraint>::const_iterator it = m_constrained_nodes.begin(); it != m_constrained_nodes.end();) {
 			const uint32_t sim_node_idx = it->first;
 			const glm::vec3 p = sim::cast_vec3(m_sim->get_node(sim_node_idx));
 			// Move node ontop of its face if it has "moved"
@@ -148,10 +154,10 @@ void ElasticSimulator::update(const Context& ctx)
 		const auto physics_timer = std::chrono::high_resolution_clock::now();
 		for (const SimulatedEntity& e : m_simulated_objects) {
 			// Add constraints for surface faces with static objects
-			for (const auto& surface_vert : e.obj->get_mesh()->global_to_local_surface_vertices()) {
+			/*for (const auto& surface_vert : e.obj->get_mesh()->global_to_local_surface_vertices()) {
 				uint32_t node_idx = surface_vert.first;
-				
-			//for(uint32_t node_idx = 0; node_idx < e.obj->get_mesh()->nodes().size(); ++node_idx) {
+			*/	
+			for(uint32_t node_idx = 0; node_idx < e.obj->get_mesh()->nodes().size(); ++node_idx) {
 				uint32_t sim_node_idx = e.offset + node_idx;
 
 				if (m_constrained_nodes.count(sim_node_idx)) {

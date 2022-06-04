@@ -99,6 +99,7 @@ protected:
 class EnergyDensity {
 public:
 	void HookeanSmith19(const Mat3& F, Float mu, Float lambda);
+	void HookeanSmith19Eigendecomposition(const Mat3& F, Float mu, Float lambda);
 	void Corrotational(const Mat3& F, Float mu, Float lambda);
 	void HookeanBW08(const Mat3& F, Float mu, Float lambda);
 
@@ -114,7 +115,8 @@ private:
 enum EnergyFunction {
 	HookeanSmith19 = 0,
 	Corrotational = 1,
-	HookeanBW08 = 2,
+	HookeanSmith19Eigen = 2,
+	HookeanBW08 = 3,
 };
 
 class Parameters {

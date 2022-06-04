@@ -126,6 +126,9 @@ void SimpleFem::step(Float dt, const Parameters& cfg)
 		if (functionType == EnergyFunction::HookeanSmith19) {
 			energy.HookeanSmith19(F, cfg.mu(), cfg.lambda());
 		}
+		else if (functionType == EnergyFunction::HookeanSmith19Eigen) {
+			energy.HookeanSmith19Eigendecomposition(F, cfg.mu(), cfg.lambda());
+		}
 		else if (functionType == EnergyFunction::Corrotational) {
 			energy.Corrotational(F, cfg.mu(), cfg.lambda());
 		}
