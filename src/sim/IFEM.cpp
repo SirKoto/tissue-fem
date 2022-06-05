@@ -2,6 +2,8 @@
 
 #include <glm/gtc/constants.hpp>
 #include <imgui.h>
+#undef NDEBUG
+#include <cassert>
 
 namespace sim {
 
@@ -245,24 +247,15 @@ void EnergyDensity::HookeanSmith19Eigendecomposition(const Mat3& F, Float mu, Fl
 	Mat3 scaling_eigensystem;
 	for (uint32_t i = 0; i < 3; ++i) {
 		scaling_eigensystem(i, i) = mu + lambda * I3 * I3 / (s[i] * s[i]);
-		for (uint32_t j = i + 1; j < 3; ++j) {
-			uint32_t k;
-			if (i == 0) {
-				if (j == 1) {
-					k = 2;
-				}
-				else {
-					k = 1;
-				}
-			}
-			else {
-				k = 0;
-			}
-			Float value = s[k] * (lambda * (2 * I3 - Float(1)) - mu);
-			scaling_eigensystem(i, j) = value;
-			scaling_eigensystem(j, i) = value;
-		}
 	}
+	scaling_eigensystem(0, 1) = s[2] * (lambda * (2 * I3 - Float(1)) - mu);
+	scaling_eigensystem(1, 0) = s[2] * (lambda * (2 * I3 - Float(1)) - mu);
+	scaling_eigensystem(0, 2) = s[1] * (lambda * (2 * I3 - Float(1)) - mu);
+	scaling_eigensystem(2, 0) = s[1] * (lambda * (2 * I3 - Float(1)) - mu);
+	scaling_eigensystem(1, 2) = s[0] * (lambda * (2 * I3 - Float(1)) - mu);
+	scaling_eigensystem(2, 1) = s[0] * (lambda * (2 * I3 - Float(1)) - mu);
+
+
 
 	const auto eigenvalues_scaling = scaling_eigensystem.eigenvalues();
 
@@ -289,14 +282,14 @@ void EnergyDensity::HookeanSmith19Eigendecomposition(const Mat3& F, Float mu, Fl
 	else {
 		this->m_hessian.setZero();
 
-		Vec3 depressed_cubic;
+		/*Vec3 depressed_cubic;
 		for (uint32_t i = 0; i < 3; ++i) {
 			depressed_cubic[i] = Float(2) * std::sqrt(I2 / Float(3)) * std::cos(
 				1 / Float(3) * (std::acos(Float(3) * I3 / I2 * std::sqrt(Float(3) / I2)) +
 				2 * glm::pi<Float>() * (Float(i) - Float(1))
 					));
 			assert(depressed_cubic[i] == depressed_cubic[i]);
-		}
+		}*/
 
 		std::array<Mat3, 3> D;
 
@@ -305,21 +298,23 @@ void EnergyDensity::HookeanSmith19Eigendecomposition(const Mat3& F, Float mu, Fl
 		D[1] = U;
 		for (uint32_t i = 0; i < 3; ++i) D[1].col(i) *= V.transpose()(1, i);
 		D[2] = U;
-		for (uint32_t i = 0; i < 3; ++i) D[2].col(i) *= V.transpose()(2, i);
+		for (uint32_t i = 0; i < 3; ++i) D[2].col(i) *= V.transpose()(2, i);	
 
 		// First 3 eigenmatrices
 		Mat3 Q;
 		for (uint32_t i = 0; i < 3; ++i) {
 			Q.setZero();
 			Vec3 z;
-			z[0] = s[0] * s[2] + s[1] * depressed_cubic[i];
-			z[1] = s[1] * s[2] + s[0] * depressed_cubic[i];
-			z[2] = depressed_cubic[i] * depressed_cubic[i] - s[2] * s[2];
+			z[0] = s[0] * s[2] + s[1] * eigenvalues[i];
+			z[1] = s[1] * s[2] + s[0] * eigenvalues[i];
+			z[2] = eigenvalues[i] * eigenvalues[i] - s[2] * s[2];
 
 			for (uint32_t j = 0; j < 3; ++j) {
 				Q += z[j] * D[j];
 			}
 
+			Q.normalize();
+			assert(std::abs(Q.squaredNorm() - Float(1)) < Float(1e-6));
 			m_hessian += eigenvalues[i] * Q.reshaped() * Q.reshaped().transpose();
 		}
 
@@ -328,37 +323,37 @@ void EnergyDensity::HookeanSmith19Eigendecomposition(const Mat3& F, Float mu, Fl
 		r.row(0) = -V.col(1);
 		r.row(1) = V.col(0);
 		r.row(2).setZero();
-		Q = glm::one_over_root_two<Float>() * U * r;
+		Q = glm::one_over_root_two<Float>() * U * r; assert(std::abs(Q.squaredNorm() - Float(1)) < Float(1e-6));
 		m_hessian += eigenvalues[3] * Q.reshaped() * Q.reshaped().transpose();
 		// 4rt eigenmatrix
 		r.row(0).setZero();
 		r.row(1) = V.col(2);
 		r.row(2) = -V.col(1);
-		Q = glm::one_over_root_two<Float>() * U * r;
+		Q = glm::one_over_root_two<Float>() * U * r; assert(std::abs(Q.squaredNorm() - Float(1)) < Float(1e-6));
 		m_hessian += eigenvalues[4] * Q.reshaped() * Q.reshaped().transpose();
 		// 5th eigenmatrix
 		r.row(0) = V.col(2);
 		r.row(1).setZero();
 		r.row(2) = -V.col(0);
-		Q = glm::one_over_root_two<Float>() * U * r;
+		Q = glm::one_over_root_two<Float>() * U * r; assert(std::abs(Q.squaredNorm() - Float(1)) < Float(1e-6));
 		m_hessian += eigenvalues[5] * Q.reshaped() * Q.reshaped().transpose();
 		// 6th eigenmatrix
 		r.row(0) = V.col(1);
 		r.row(1) = V.col(0);
 		r.row(2).setZero();
-		Q = glm::one_over_root_two<Float>() * U * r;
+		Q = glm::one_over_root_two<Float>() * U * r; assert(std::abs(Q.squaredNorm() - Float(1)) < Float(1e-6));
 		m_hessian += eigenvalues[6] * Q.reshaped() * Q.reshaped().transpose();
 		// 7th eigenmatrix
 		r.row(0).setZero();
 		r.row(1) = V.col(2);
 		r.row(2) = V.col(1);
-		Q = glm::one_over_root_two<Float>() * U * r;
+		Q = glm::one_over_root_two<Float>() * U * r; assert(std::abs(Q.squaredNorm() - Float(1)) < Float(1e-6));
 		m_hessian += eigenvalues[7] * Q.reshaped() * Q.reshaped().transpose();
 		// 8th eigenmatrix
 		r.row(0) = V.col(2);
 		r.row(1).setZero();
 		r.row(2) = V.col(0);
-		Q = glm::one_over_root_two<Float>() * U * r;
+		Q = glm::one_over_root_two<Float>() * U * r; assert(std::abs(Q.squaredNorm() - Float(1)) < Float(1e-6));
 
 		m_hessian += eigenvalues[8] * Q.reshaped() * Q.reshaped().transpose();
 	}

@@ -61,7 +61,7 @@ void ElasticSimulator::update(const Context& ctx)
 {
 	assert(ctx.is_simulation_running());
 
-	const float dt = std::min(ctx.delta_time(), 1.0f / 30.0f);
+	const float dt = 1.0f / 60.0f;// std::min(ctx.delta_time(), 1.0f / 30.0f);
 
 	// Dynamic update of sub-steps
 	uint32_t num_substeps;
