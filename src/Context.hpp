@@ -82,6 +82,8 @@ public:
 		return m_engine->m_scene->physics().insert_primitive(primitive);
 	}
 
+	void write_file_csv(const std::function<void(std::ostream&)>& callback) const;
+
 private:
 
 	Engine* m_engine;
@@ -102,7 +104,7 @@ private:
 	bool m_show_camera_window = false;
 	bool m_show_profiling_window = false;
 
-	bool m_file_picker_open = false;
+	mutable bool m_file_picker_open = false;
 	bool m_show_world_grid = false;
 	bool m_show_guizmos = true;
 
@@ -119,6 +121,8 @@ private:
 	
 	CircularBuffer<Engine::EngineTimings> m_engine_timings;
 	float m_metrics_past_seconds = 30.0f;
+
+	mutable std::function<void(std::ostream&)> m_file_callback_write;
 
 	void handle_file_picker();
 

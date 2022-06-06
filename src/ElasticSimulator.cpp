@@ -261,6 +261,44 @@ void ElasticSimulator::render_ui(const Context& ctx)
 		ImGui::SetNextWindowPos(ImVec2(main_viewport->WorkPos.x + 650, main_viewport->WorkPos.y + 20), ImGuiCond_FirstUseEver);
 		if (ImGui::Begin("Simulation Metrics", &m_show_simulation_metrics)) {
 
+			if (ImGui::Button("Write CSV")) {
+				std::function<void(std::ostream&)> callback = [this](std::ostream& stream) {
+					// Write header
+					stream << "Time,Blocks assign,SystemFinish,Constraints,Solve,Volume,Step,UpdateMesh,RemoveConstraints,Physics,\n";
+
+					for (size_t i = m_metric_times_buffer.offset(); i < m_metric_times_buffer.size(); ++i) {
+						float time = (m_metric_times_buffer.data() + i)->first;
+						const Metrics& m = (m_metric_times_buffer.data() + i)->second;
+						stream << time << ',' << 
+							m.times.blocks_assign << ',' <<
+							m.times.system_finish << ',' <<
+							m.times.constraints << ',' <<
+							m.times.solve << ',' <<
+							m.volume << ',' <<
+							m.step_time << ',' <<
+							m.update_meshes << ',' <<
+							m.remove_constraints << ',' <<
+							m.physics << ',' << '\n';
+					}
+					for (size_t i = 0; i < m_metric_times_buffer.offset(); ++i) {
+						float time = (m_metric_times_buffer.data() + i)->first;
+						const Metrics& m = (m_metric_times_buffer.data() + i)->second;
+						stream << time << ',' <<
+							m.times.blocks_assign << ',' <<
+							m.times.system_finish << ',' <<
+							m.times.constraints << ',' <<
+							m.times.solve << ',' <<
+							m.volume << ',' <<
+							m.step_time << ',' <<
+							m.update_meshes << ',' <<
+							m.remove_constraints << ',' <<
+							m.physics << ',' << '\n';
+					}
+				};
+
+				ctx.write_file_csv(callback);
+			}
+
 			ImGui::SliderFloat("Past seconds", &m_metrics_past_seconds, 0.1f, 30.0f, "%.1f");
 
 

@@ -18,6 +18,7 @@
 
 const char* STRING_IGFD_LOAD_MODEL = "FilePickerModel";
 const char* STRING_IGFD_SAVE_AS = "FilePickerSaveAs";
+const char* STRING_IGFD_SAVE_CSV = "FilePickerSavCsv";
 const char* STRING_IGFD_LOAD = "FilePickerLoad";
 
 Context::Context(Engine* engine) :
@@ -358,6 +359,17 @@ bool Context::add_manipulation_guizmo(glm::mat4* transform, Context::GuizmosInte
 		(float*)delta_transform);
 }
 
+void Context::write_file_csv(const std::function<void(std::ostream&)>& callback) const
+{
+	m_file_callback_write = callback;
+
+	m_file_picker_open = true;
+	ImGuiFileDialog::Instance()->OpenDialog(
+		STRING_IGFD_SAVE_CSV,
+		"Save CSV As", ".csv",
+		".", "", 1, nullptr, ImGuiFileDialogFlags_ConfirmOverwrite);
+}
+
 void Context::open_file_picker(
 	const char* window_title,
 	const char* filter, 
@@ -422,6 +434,29 @@ void Context::handle_file_picker()
 				m_engine->m_scene_path = "";
 				ImGui::OpenPopup("PopupErrorFileDialog");
 			}
+		}
+
+		filedialog->Close();
+	}
+	
+	if (filedialog->Display(STRING_IGFD_SAVE_CSV, ImGuiWindowFlags_NoCollapse, ImVec2(0, 280))) {
+
+		m_file_picker_open = false;
+
+		if (filedialog->IsOk()) {
+
+			std::filesystem::path file = filedialog->GetFilePathName();
+			std::ofstream stream(file, std::ios::out | std::ios::trunc);
+
+			if (stream) {
+				m_file_callback_write(stream);
+				stream.close();
+			}
+			else {
+				m_file_picker_error = "Error writing csv in " + file.string();
+				ImGui::OpenPopup("PopupErrorFileDialog");
+			}
+			
 		}
 
 		filedialog->Close();
