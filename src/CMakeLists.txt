@@ -32,6 +32,7 @@ add_executable(${PROJECT_NAME}
 	utils/Icosphere.hpp	utils/Icosphere.cpp
 	utils/BBox.hpp	utils/BBox.cpp
 	utils/CircularBuffer.hpp
+	utils/sifakis_svd.hpp
 	utils/serialization.hpp
 	utils/serialization/BaseArchive.hpp
 	utils/serialization/JsonArchive.hpp

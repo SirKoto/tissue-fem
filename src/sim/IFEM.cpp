@@ -5,6 +5,8 @@
 #undef NDEBUG
 #include <cassert>
 
+#include "utils/sifakis_svd.hpp"
+
 namespace sim {
 
 
@@ -148,11 +150,31 @@ Mat9 compute_H3(const Mat3& F)
 
 void EnergyDensity::Corrotational(const Mat3& F, Float mu, Float lambda)
 {
-	Eigen::JacobiSVD<Mat3> svd(F, Eigen::ComputeFullU | Eigen::ComputeFullV);
+	// Eigen::JacobiSVD<Mat3> svd(F, Eigen::ComputeFullU | Eigen::ComputeFullV);
 
-	Mat3 U = svd.matrixU();
-	Vec3 s = svd.singularValues();
-	Mat3 V = svd.matrixV();
+	Eigen::Matrix3f F_float = F.cast<float>();
+	Eigen::Matrix3f U_float, V_float;
+	Eigen::Vector3f s_float;
+	SifakisSVD::svd<4>(
+		F_float(0, 0), F_float(0, 1), F_float(0, 2),
+		F_float(1, 0), F_float(1, 1), F_float(1, 2),
+		F_float(2, 0), F_float(2, 1), F_float(2, 2),
+
+		U_float(0, 0), U_float(0, 1), U_float(0, 2),
+		U_float(1, 0), U_float(1, 1), U_float(1, 2),
+		U_float(2, 0), U_float(2, 1), U_float(2, 2),
+
+		V_float(0, 0), V_float(0, 1), V_float(0, 2),
+		V_float(1, 0), V_float(1, 1), V_float(1, 2),
+		V_float(2, 0), V_float(2, 1), V_float(2, 2),
+
+		s_float[0], s_float[1], s_float[2]);
+		
+
+
+	Mat3 U = U_float.cast<Float>();
+	Vec3 s = s_float.cast<Float>();
+	Mat3 V = V_float.cast<Float>();
 
 	const Float detU = U.determinant();
 	const Float detV = V.determinant();
