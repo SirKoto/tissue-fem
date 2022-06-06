@@ -85,7 +85,7 @@ void SimulatedGameObject::render_ui(const Context& gc)
 
 		ImGui::Text("Num Nodes %u", m_mesh->nodes().size());
 		ImGui::Text("Num Elements %u", m_mesh->elements().size());
-		ImGui::Text("Surface mesh %u triangles", m_mesh->global_to_local_surface_vertices().size());
+		ImGui::Text("Surface mesh %u nodes", m_mesh->global_to_local_surface_vertices().size());
 
 		ImGui::BeginDisabled(m_disable_interaction);
 		if (ImGui::Button("Flip face orientation")) {

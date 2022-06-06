@@ -154,16 +154,15 @@ void EnergyDensity::Corrotational(const Mat3& F, Float mu, Float lambda)
 	Vec3 s = svd.singularValues();
 	Mat3 V = svd.matrixV();
 
-	Mat3 L = Mat3::Identity();
-	L(2, 2) = (U * V.transpose()).determinant();
-	s(2) *= L(2, 2);
-	Float detU = U.determinant();
-	Float detV = V.determinant();
+	const Float detU = U.determinant();
+	const Float detV = V.determinant();
 	if (detU < Float(0.0) && detV > Float(0.0)) {
-		U = U * L;
+		s[2] *= Float(-1);
+		U.row(2) *= Float(-1);
 	}
 	else if (detU > Float(0.0) && detV < Float(0.0)) {
-		V = V * L;
+		s[2] *= Float(-1);
+		V.row(2) *= Float(-1);
 	}
 
 	Mat3 R = U * V.transpose();
@@ -232,16 +231,15 @@ void EnergyDensity::HookeanSmith19Eigendecomposition(const Mat3& F, Float mu, Fl
 	Vec3 s = svd.singularValues();
 	Mat3 V = svd.matrixV();
 
-	Mat3 L = Mat3::Identity();
-	L(2, 2) = (U * V.transpose()).determinant();
-	s(2) *= L(2, 2);
-	Float detU = U.determinant();
-	Float detV = V.determinant();
+	const Float detU = U.determinant();
+	const Float detV = V.determinant();
 	if (detU < Float(0.0) && detV > Float(0.0)) {
-		U = U * L;
+		s[2] *= Float(-1);
+		U.row(2) *= Float(-1);
 	}
 	else if (detU > Float(0.0) && detV < Float(0.0)) {
-		V = V * L;
+		s[2] *= Float(-1);
+		V.row(2) *= Float(-1);
 	}
 
 	Mat3 scaling_eigensystem;

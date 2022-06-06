@@ -30,9 +30,17 @@ set(COPY_DATA
     ${MODEL_PATH}/armadilloSimp/armadilloComp.face
     ${MODEL_PATH}/armadilloSimp/armadilloComp.node
 
+    ${MODEL_PATH}/armadilloSimp/armadilloComp_bad.ele
+    ${MODEL_PATH}/armadilloSimp/armadilloComp_bad.face
+    ${MODEL_PATH}/armadilloSimp/armadilloComp_bad.node
+
     ${MODEL_PATH}/sphere/sphere.ele
     ${MODEL_PATH}/sphere/sphere.face
     ${MODEL_PATH}/sphere/sphere.node
+
+    ${MODEL_PATH}/sphere/sphere_bad.ele
+    ${MODEL_PATH}/sphere/sphere_bad.face
+    ${MODEL_PATH}/sphere/sphere_bad.node
 )
 
 foreach(data ${COPY_DATA})
