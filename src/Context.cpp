@@ -40,7 +40,7 @@ void Context::update()
 		m_delta_times_buffer.back() = 1 / 60.0f;
 	}
 
-	m_delta_time = std::accumulate(m_delta_times_buffer.begin(), m_delta_times_buffer.end(), 0.0f) / (float)m_delta_times_buffer.size();
+	m_dynamic_delta_time = std::accumulate(m_delta_times_buffer.begin(), m_delta_times_buffer.end(), 0.0f) / (float)m_delta_times_buffer.size();
 
 	if (!io.WantCaptureKeyboard) {
 		if (io.KeysDown[GLFW_KEY_E]) {
@@ -186,6 +186,23 @@ void Context::draw_ui()
 			if (ImGui::InputFloat("Objective FPS", &m_objective_fps, 1.0f)) {
 				m_objective_dt = 1.0f / m_objective_fps;
 			}
+
+			ImGui::Text("Simulation delta time:");
+			if (ImGui::RadioButton("Dynamic", m_use_dynamic_dt)) {
+				m_use_dynamic_dt = true;
+			}
+			ImGui::SameLine();
+			if (ImGui::RadioButton("Static", !m_use_dynamic_dt)) {
+				m_use_dynamic_dt = false;
+			}
+
+			ImGui::BeginDisabled(m_use_dynamic_dt);
+			float dynamic_fps = 1.0f / m_static_dt;
+			if (ImGui::InputFloat("Static dt simulation", &dynamic_fps, 1.0f)) {
+				m_static_dt = 1.0f / dynamic_fps;
+			}
+			ImGui::EndDisabled();
+
 			ImGui::EndMenu();
 		}
 

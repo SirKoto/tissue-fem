@@ -35,7 +35,7 @@ public:
 	float get_time() const { return m_time; }
 	float get_sim_time() const { return m_time - m_simulation_start_time; }
 
-	float delta_time() const { return m_delta_time; }
+	float delta_time() const { return m_use_dynamic_dt ? m_dynamic_delta_time : m_static_dt; }
 
 	float objective_dt() const { return m_objective_dt; }
 	float objective_fps() const { return m_objective_fps; }
@@ -88,11 +88,13 @@ private:
 
 	float m_time = 0.0f;
 	float m_simulation_start_time = 0.0f;
-	float m_delta_time = 0.0f;
+	float m_dynamic_delta_time = 0.0f;
 	std::array<float, 4> m_delta_times_buffer;
 
 	float m_objective_fps = 59.0f;
 	float m_objective_dt = 1.0f / 59.0f;
+	float m_static_dt = 1.0f / 60.0f;
+	bool m_use_dynamic_dt = true;
 
 	// Windows
 	bool m_show_imgui_demo_window = false;
