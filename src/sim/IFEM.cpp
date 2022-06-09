@@ -2,7 +2,7 @@
 
 #include <glm/gtc/constants.hpp>
 #include <imgui.h>
-#undef NDEBUG
+//#undef NDEBUG
 #include <cassert>
 
 #include "utils/sifakis_svd.hpp"

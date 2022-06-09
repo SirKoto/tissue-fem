@@ -33,6 +33,8 @@ private:
 	bool m_run_simulation = true;
 	bool m_first_simulation_frame = false;
 
+	uint32_t m_num_threads;
+
 	GLFWwindow* m_window;
 
 	std::unique_ptr<Scene> m_scene;
@@ -48,6 +50,8 @@ private:
 
 	void signal_start_simulation();
 	void stop_simulation();
+
+	void set_num_threads(uint32_t num);
 
 	struct EngineTimings {
 		float time;

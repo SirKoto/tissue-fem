@@ -204,6 +204,12 @@ void Context::draw_ui()
 			}
 			ImGui::EndDisabled();
 
+			int32_t step = 1;
+			uint32_t threads = m_engine->m_num_threads;
+			if (ImGui::InputScalar("Num threads",ImGuiDataType_U32, &threads, &step)) {
+				m_engine->set_num_threads(threads);
+			}
+
 			ImGui::EndMenu();
 		}
 

@@ -34,7 +34,8 @@ Engine::Engine() : m_ctx(std::make_unique<Context>(this))
 
 #ifdef _OPENMP
     // Set parallelism
-    omp_set_num_threads(std::thread::hardware_concurrency());
+    m_num_threads = std::thread::hardware_concurrency();
+    omp_set_num_threads(m_num_threads);
 #endif
 
     // Setup window
@@ -312,4 +313,10 @@ void Engine::stop_simulation()
     m_simulation_mode = false;
     m_run_simulation = true;
     m_first_simulation_frame = false;
+}
+
+void Engine::set_num_threads(uint32_t num)
+{
+   m_num_threads = std::min(num, std::thread::hardware_concurrency());
+   omp_set_num_threads(m_num_threads);
 }
