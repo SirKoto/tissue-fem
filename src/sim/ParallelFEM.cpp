@@ -181,17 +181,24 @@ void ParallelFEM::step(Float dt, const Parameters& cfg)
 	m_tmp += m_position_alteration;	// add Δt * df/dx * y
 	m_rhs.noalias() += dt * (m_dfdx_system * m_tmp);
 
-	// subtract gravity from the y entries
-	for (size_t i = 0; i < m_nodes.size(); ++i) {
-		m_rhs(3 * i + 1) -= dt * cfg.mass() * cfg.gravity();
-	}
-
 	// Apply rayleigh damping df/dv = -alpha * M - beta * df/dx
 	// Optimized:	M - Δt^2 * df/dx - Δt * df/dv 
 	//				M - Δt^2 * df/dx - Δt * (-alpha * M - beta * df/dx)
 	//				M * (1 - Δt * alpha) - * df/dx (Δt^2 + Δt * beta)
 	m_dfdx_system *= -(dt * dt) - cfg.beta_rayleigh() * dt;
-	m_dfdx_system.diagonal().array() += cfg.mass() * (Float(1.0) - cfg.alpha_rayleigh() * dt);
+	{
+		const Float value_alpha = cfg.mass() * (Float(1.0) - cfg.alpha_rayleigh() * dt);
+#pragma omp parallel for
+		for (int32_t i = 0; i < m_nodes.size(); ++i) {
+			const SMatPtrs& cols = m_sparse_cache.at(std::make_pair(i, i));
+			cols[0][0] += value_alpha;
+			cols[1][1] += value_alpha;
+			cols[2][2] += value_alpha;
+
+			// subtract gravity from the y entries
+			m_rhs(3 * i + 1) -= dt * cfg.mass() * cfg.gravity();
+		}
+	}
 
 	// Add tangential friction forces f = -k * v
 	// And tangential friction damping as df/dv= -k * (I - n · n^T)
@@ -215,7 +222,7 @@ void ParallelFEM::step(Float dt, const Parameters& cfg)
 	//                c = b - Az
 
 	// Compute rhs
-	m_Sc = (m_rhs - m_dfdx_system * m_z);
+	m_Sc.noalias() = (m_rhs - m_dfdx_system * m_z);
 	for (const std::pair<uint32_t, Constraint>& c : m_constraints3) {
 		const uint32_t idx = 3 * c.first;
 		m_Sc.segment<3>(idx) = c.second.constraint * m_Sc.segment<3>(idx);
@@ -323,7 +330,8 @@ void ParallelFEM::step(Float dt, const Parameters& cfg)
 	}
 
 	// Assign new positions to the nodes
-	for (size_t i = 0; i < m_nodes.size(); ++i) {
+#pragma omp parallel for
+	for (int32_t i = 0; i < m_nodes.size(); ++i) {
 		m_nodes[i].x() += dt * m_v[3 * i + 0];
 		m_nodes[i].y() += dt * m_v[3 * i + 1];
 		m_nodes[i].z() += dt * m_v[3 * i + 2];

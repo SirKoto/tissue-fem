@@ -173,14 +173,20 @@ void SimpleFem::step(Float dt, const Parameters& cfg)
 	m_tmp += m_position_alteration;	// add Δt * df/dx * y
 	m_rhs.noalias() += dt * (m_dfdx_system * m_tmp);
 
-	// subtract gravity from the y entries
-	for (size_t i = 0; i < m_nodes.size(); ++i) {
-		m_rhs(3 * i + 1) -= dt * cfg.mass() * cfg.gravity();
-	}
-
 	// Apply rayleigh damping df/dv = -alpha * M - beta * df/dx
 	m_dfdx_system *=  - (dt * dt) - cfg.beta_rayleigh() * dt;
-	m_dfdx_system.diagonal().array() += cfg.mass() * (Float(1.0) - cfg.alpha_rayleigh() * dt);
+	{
+		const Float value = cfg.mass() * (Float(1.0) - cfg.alpha_rayleigh() * dt);
+		for (int32_t i = 0; i < m_nodes.size(); ++i) {
+			const SMatPtrs& cols = m_sparse_cache.at(std::make_pair(i, i));
+			cols[0][0] += value;
+			cols[1][1] += value;
+			cols[2][2] += value;
+
+			// subtract gravity from the y entries
+			m_rhs(3 * i + 1) -= dt * cfg.mass() * cfg.gravity();
+		}
+	}
 
 	m_metric_time.system_finish = (float)timer.getDuration<Timer::Seconds>().count();
 
@@ -211,7 +217,7 @@ void SimpleFem::step(Float dt, const Parameters& cfg)
 	//                c = b - Az
 	
 	// Compute rhs
-	m_Sc = m_S * (m_rhs - m_dfdx_system * m_z);
+	m_Sc.noalias() = m_S * (m_rhs - m_dfdx_system * m_z);
 	
 
 	// Apply SAS^T, S symetric
