@@ -72,6 +72,8 @@ void ParallelFEM::initialize(const std::vector<const TetMesh*>& meshes)
 	m_position_alteration.resize(3 * m_nodes.size());
 	m_constraint_forces.resize(3 * m_nodes.size());
 
+	m_tmp.resize(3 * m_nodes.size());
+
 	// Build the sparse matrix
 	this->build_sparse_system();
 	m_system = m_dfdx_system;
@@ -175,7 +177,9 @@ void ParallelFEM::step(Float dt, const Parameters& cfg)
 	m_metric_time.blocks_assign = (float)timer.getDuration<Timer::Seconds>().count();
 	timer.reset();
 	// add Δt^2 * (df/dx * v) + Δt * df/dx * y to the rhs
-	m_rhs += dt * (m_dfdx_system * ((dt * m_v) + m_position_alteration));
+	m_tmp.noalias() = dt * m_v;
+	m_tmp += m_position_alteration;	// add Δt * df/dx * y
+	m_rhs.noalias() += dt * (m_dfdx_system * m_tmp);
 
 	// subtract gravity from the y entries
 	for (size_t i = 0; i < m_nodes.size(); ++i) {

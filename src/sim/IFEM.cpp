@@ -69,7 +69,7 @@ Mat9x12 compute_dFdx(const Mat3& DmInv)
 	return PFPx;
 }
 
-Vec9 vec(const Mat3& m)
+Vec9 vec_slow(const Mat3& m)
 {
 	Vec9 ret;
 	ret << m(0, 0), m(1, 0), m(2, 0),
@@ -119,9 +119,9 @@ Mat9 compute_H1(const Mat3& U, const Vec3& s, const Mat3& V)
 	T2 = invSqrt2 * U * T2 * V.transpose();
 
 	// flatten
-	Vec9 t0 = vec(T0);
-	Vec9 t1 = vec(T1);
-	Vec9 t2 = vec(T2);
+	const Eigen::Reshaped<Mat3, 9, 1> t0 = T0.reshaped();
+	const Eigen::Reshaped<Mat3, 9, 1> t1 = T1.reshaped();
+	const Eigen::Reshaped<Mat3, 9, 1> t2 = T2.reshaped();
 
 	Mat9 H = (Float(2) / (s.x() + s.y())) * (t0 * t0.transpose());
 	H += (Float(2) / (s.y() + s.z())) * (t1 * t1.transpose());

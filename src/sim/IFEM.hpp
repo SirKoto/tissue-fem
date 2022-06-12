@@ -37,15 +37,15 @@ inline Mat3 compute_Ds(const Vec4i& element, const std::vector<Vec3>& nodes) {
 	return Ds;
 }
 
-Vec9 vec(const Mat3& m);
+Vec9 vec_slow(const Mat3& m);
 Mat3 cross_matrix(const Vec3& v);
 
 inline Float compute_I1(const Mat3& S) { return S.trace(); }
 inline Float compute_I2(const Mat3& F) { return (F.transpose() * F).trace(); }
 inline Float compute_I3(const Mat3& F) { return F.determinant(); }
 
-inline Vec9 compute_g1(const Mat3& R) { return vec(R); }
-inline Vec9 compute_g2(const Mat3& F) { return Float(2.0) * vec(F); }
+inline const Eigen::Reshaped<const Mat3, 9, 1> compute_g1(const Mat3& R) { return R.reshaped(); }
+inline const Vec9 compute_g2(const Mat3& F) { return Float(2.0) * F.reshaped(); }
 Vec9 compute_g3(const Mat3& F);
 
 Mat9 compute_H1(const Mat3& U, const Vec3& singular_values, const Mat3& V);

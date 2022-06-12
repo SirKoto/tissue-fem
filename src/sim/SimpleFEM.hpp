@@ -59,6 +59,8 @@ private:
 	Vec m_z;
 	SVec m_position_alteration;
 
+	Vec m_tmp;
+
 	std::vector<Mat3> m_DmInvs;
 
 	std::vector<Float> m_volumes;

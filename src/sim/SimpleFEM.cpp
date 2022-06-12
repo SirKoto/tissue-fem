@@ -71,6 +71,7 @@ void SimpleFem::initialize(const std::vector<const TetMesh*>& meshes)
 	// Reserve 3 values per column, as it is the maximum that will be in a constrain matrix
 	m_S.reserve(Eigen::VectorXi::Constant(3 * m_nodes.size(), 3));
 
+	m_tmp.resize(3 * m_nodes.size());
 
 	// Build the sparse matrix
 	this->build_sparse_system();
@@ -166,10 +167,11 @@ void SimpleFem::step(Float dt, const Parameters& cfg)
 
 	m_metric_time.blocks_assign = (float)timer.getDuration<Timer::Seconds>().count();
 	timer.reset();
+
 	// add (df/dx * v) to the rhs
-	m_rhs += dt * dt * (m_dfdx_system * m_v);
-	// add Δt * df/dx * y
-	m_rhs += dt * (m_dfdx_system * m_position_alteration);
+	m_tmp.noalias() = dt * m_v;
+	m_tmp += m_position_alteration;	// add Δt * df/dx * y
+	m_rhs.noalias() += dt * (m_dfdx_system * m_tmp);
 
 	// subtract gravity from the y entries
 	for (size_t i = 0; i < m_nodes.size(); ++i) {
@@ -246,7 +248,8 @@ void SimpleFem::step(Float dt, const Parameters& cfg)
 		m_constraint_forces.setZero();
 	}
 	else {
-		m_constraint_forces = m_dfdx_system * m_delta_v - m_rhs;
+		m_constraint_forces.noalias() = m_dfdx_system * m_delta_v;
+		m_constraint_forces.noalias() -= m_rhs;
 	}
 
 	// Assign new positions to the nodes

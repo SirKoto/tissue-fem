@@ -75,7 +75,12 @@ void ConjugateGradient::apply_jacobi_precond(const SMat& A, const Vec& b, Vec* x
 	assert(x.rows() == m_residual.rows());
 
 	for (Eigen::Index i = 0; i < A.rows(); ++i) {
-		x(i) = (Float(1) / A.diagonal()(i)) * b(i);
+		if (A.diagonal()(i) != Float(0)) {
+			x(i) = (Float(1) / A.diagonal()(i)) * b(i);
+		}
+		else {
+			x(i) = b(i);
+		}
 	}
 }
 
