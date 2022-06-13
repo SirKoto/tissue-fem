@@ -23,8 +23,11 @@ private:
 	Vec m_dir;
 	Vec m_Adir;
 	Vec m_A_res_precond;
+	Vec m_jacobi_precond;
 
-	void apply_jacobi_precond(const SMat& A, const Vec&b, Vec* x) const;
+	void apply_jacobi_precond(const Vec&b, Vec* x) const;
+
+	void init_jacobi_precond(const SMat& A);
 
 }; // class ConjugateGradient
 

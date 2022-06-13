@@ -237,7 +237,7 @@ void SimpleFem::step(Float dt, const Parameters& cfg)
 	if (solver.info() != Eigen::Success) {
 		std::cerr << "Can't build system" << std::endl;
 	}
-	m_delta_v = solver.solve(m_Sc);
+	m_delta_v = solver.solveWithGuess(m_Sc, m_delta_v);
 	if (solver.info() != Eigen::Success) {
 		std::cerr << "System did not converge" << std::endl;
 	}

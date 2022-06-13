@@ -78,7 +78,9 @@ void ParallelFEM::initialize(const std::vector<const TetMesh*>& meshes)
 	this->build_sparse_system();
 	m_system = m_dfdx_system;
 
+#if (PARALLEL_FEM_SOLVER == CG_CUSTOM)
 	m_cg_solver.resize(3 * m_nodes.size());
+#endif
 }
 
 
@@ -290,25 +292,20 @@ void ParallelFEM::step(Float dt, const Parameters& cfg)
 	m_metric_time.constraints = (float)timer.getDuration<Timer::Seconds>().count();
 	timer.reset();
 
-#if false
-	Eigen::ConjugateGradient<SMat> solver(m_system);
-	//solver.setTolerance(1e-4);
-	//solver.setMaxIterations(20 * m_nodes.size());
-	if (solver.info() != Eigen::Success) {
+#if (PARALLEL_FEM_SOLVER == CG_EIGEN)
+	m_cg_solver.compute(m_system);
+	m_cg_solver.setTolerance(1e-4);
+
+	if (m_cg_solver.info() != Eigen::Success) {
 		std::cerr << "Can't build system" << std::endl;
+		m_converged = false;
 	}
-	m_delta_v = solver.solve(m_Sc);
-	m_converged = solver.info() != Eigen::Success;
-#elif false
-	Eigen::SimplicialLDLT<SMat> solver(m_system);
-	//solver.setTolerance(1e-4);
-	//solver.setMaxIterations(20 * m_nodes.size());
-	if (solver.info() != Eigen::Success) {
-		std::cerr << "Can't build system" << std::endl;
+	else {
+		m_delta_v = m_cg_solver.solve(m_Sc);
+		m_converged = m_cg_solver.info() == Eigen::Success;
 	}
-	m_delta_v = solver.solve(m_Sc);
-	converged = solver.info() != Eigen::Success;
-#else
+#elif (PARALLEL_FEM_SOLVER == CG_CUSTOM)
+
 	m_converged = m_cg_solver.solve(m_system, m_Sc, &m_delta_v);
 #endif
 

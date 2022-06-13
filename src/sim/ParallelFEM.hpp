@@ -45,6 +45,10 @@ public:
 	Float compute_volume() const override final;
 
 private:
+#define CG_EIGEN 0
+#define CG_CUSTOM 1
+#define PARALLEL_FEM_SOLVER CG_EIGEN
+
 	Vec m_delta_v;
 	Vec m_v;
 	Vec m_rhs;
@@ -67,7 +71,13 @@ private:
 	std::vector<Eigen::Vector4i> m_elements;
 	std::vector<Vec3> m_nodes;
 
+#if (PARALLEL_FEM_SOLVER == CG_CUSTOM)
 	ConjugateGradient m_cg_solver;
+#elif (PARALLEL_FEM_SOLVER == CG_EIGEN)
+	Eigen::ConjugateGradient<SMat> m_cg_solver;
+#else
+	static_assert(false, "Wrong value of PARALLEL_FEM_SOLVER");
+#endif
 
 	struct hash_pair {
 		template <class T1, class T2>
