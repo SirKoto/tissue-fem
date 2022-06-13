@@ -301,7 +301,7 @@ void ParallelFEM::step(Float dt, const Parameters& cfg)
 		m_converged = false;
 	}
 	else {
-		m_delta_v = m_cg_solver.solve(m_Sc);
+		m_delta_v = m_cg_solver.solveWithGuess(m_Sc, m_delta_v);
 		m_converged = m_cg_solver.info() == Eigen::Success;
 	}
 #elif (PARALLEL_FEM_SOLVER == CG_CUSTOM)
