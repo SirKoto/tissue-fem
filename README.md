@@ -12,6 +12,12 @@ Implemented different energy models:
 - Corotational
 
 ## Build
+Make sure you have downloaded all the submodules and dependencies.
+
+If not, run:
+```bash
+git submodule update --init --recursive
+```
 
 This project can easily be built with CMake
 ```bash
