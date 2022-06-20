@@ -416,7 +416,7 @@ void Parameters::draw_ui()
 
 	ImGui::Combo("Energy function",
 		reinterpret_cast<int*>(&m_enum_energy),
-		"HookeanSmith19\0Corrotational\0HoomeanSmith19EigenMatrices\0HookeanBW08\0");
+		"HookeanSmith19\0Corotational\0HoomeanSmith19EigenMatrices\0HookeanBW08\0");
 
 	ImGui::PopID();
 }

@@ -47,7 +47,7 @@ public:
 private:
 #define CG_EIGEN 0
 #define CG_CUSTOM 1
-#define PARALLEL_FEM_SOLVER CG_EIGEN
+#define PARALLEL_FEM_SOLVER CG_CUSTOM
 
 	Vec m_delta_v;
 	Vec m_v;
